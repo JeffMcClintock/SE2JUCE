@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Float Scaler2" name="Float Scaler2" category="Sub-Controls/Conversion" helpUrl="converters.htm" graphicsApi="none">
+    <GUI>
+      <Pin id="0" name="Value Out" datatype="float" direction="out" />
+      <Pin id="1" name="Multiply by" datatype="float" default="1" direction="in" />
+      <Pin id="2" name="Add" datatype="float" direction="in" />
+      <Pin id="3" name="Value In" datatype="float" direction="in" />
+    </GUI>
+  </Plugin>
+</PluginList>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE Sinc Lowpass Filter" name="Sinc Lowpass Filter" category="Filters" graphicsApi="none" helpUrl="SincLowpassFilter.htm">
+		<Audio>
+			<Pin id="0" name="Signal" direction="in" datatype="float" rate="audio" default="0"/>
+			<Pin id="1" name="Taps" direction="in" datatype="int" default="171" metadata="range 7, 171"/>
+      <Pin id="2" name="Output" direction="out" datatype="float" rate="audio"/>
+      <Pin id="3" name="Output2" direction="out" datatype="float" rate="audio"/>
+    </Audio>
+	</Plugin>
+</PluginList>
+
+

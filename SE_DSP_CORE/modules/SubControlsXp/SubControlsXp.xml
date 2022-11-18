@@ -1,0 +1,259 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Concat" name="Concat" category="Sub-Controls/Conversion/String" helpUrl="Sub-control-converters.htm">
+    <GUI>
+      <Pin name="Text" datatype="string"/>
+      <Pin name="Text" datatype="string"/>
+      <Pin name="Concatenated" datatype="string" direction="out"/>
+    </GUI>
+  </Plugin>
+  <Plugin id="SE MPE Control" name="MPE Control" category="Special">
+    <GUI>
+      <Pin name="Allocation Mode" datatype="int" private="true" hostConnect="MpeMode"/>
+      <Pin name="list items" datatype="string" private="true" hostConnect="MpeMode" parameterField="EnumList"/>
+      <Pin name="Menu Selection" datatype="int" direction ="out" />
+      <Pin name="Menu Items" datatype="string" direction ="out" />
+    </GUI>
+  </Plugin>
+  <Plugin id="SE Vector Knob C" name="Vector Knob C" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Background" datatype="string" default="FF222222" />
+      <Pin name="Forground" datatype="string" default="FFCCCCCC" />
+      <Pin name="Read-only" datatype="bool" isMinimised="true" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Menu Combiner" name="Menu Combiner" category="Sub-Controls/Conversion">
+    <GUI>
+      <Pin name="A Choice" datatype="int" />
+      <Pin name="A List" datatype="string" />
+      <Pin name="B Choice" datatype="int" />
+      <Pin name="B List" datatype="string" />
+      <Pin name="Choice" datatype="int" direction="out" />
+      <Pin name="Item List" datatype="string" direction="out" />
+      <Pin name="A Support Momentary" datatype="bool" isMinimised="true" />
+      <Pin name="B Suport Momentary" datatype="bool" isMinimised="true" />
+      <Pin name="A Submenu" datatype="string" isMinimised="true" default="Sub-Menu1" />
+      <Pin name="B Submenu" datatype="string" isMinimised="true" default="Sub-Menu2" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Structure Group2" name="Structure Group" category="Controls" graphicsApi="GmpiGui">
+    <GUI graphicsApi="GmpiGui" DisplayOnPanel="false">
+      <Pin name="Text" datatype="string" default="Structure Group" isMinimised="true"/>
+      <Pin name="Color" datatype="string" default="40575CDB" isMinimised="true"/>
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Vector Knob2" name="Vector Knob B" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Background" datatype="string" default="FF000000" />
+      <Pin name="Forground" datatype="string"  default="FFFFFFFF" />
+      <Pin name="Read-only" datatype="bool" isMinimised="true"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Vector Pan Knob" name="Vector Pan Knob" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Background" datatype="string" default="FF333333" />
+      <Pin name="Forground" datatype="string" default="FFFF0000" />
+      <Pin name="Read-only" datatype="bool" isMinimised="true"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Vector Knob" name="Vector Knob" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Background" datatype="string" default="FF333333" />
+      <Pin name="Forground" datatype="string" default="FFFF0000" />
+      <Pin name="Read-only" datatype="bool" isMinimised="true"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Vector Ring" name="Vector Ring" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Background" datatype="string" default="FF333333" />
+      <Pin name="Forground" datatype="string" default="FFFF0000" />
+      <Pin name="Read-only" datatype="bool" default="1" isMinimised="true"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Vector Bar" name="Vector Bar" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Background" datatype="string" default="FF333333" />
+      <Pin name="Forground" datatype="string" default="FFFF0000" />
+      <Pin name="Read-only" datatype="bool" default="1" isMinimised="true"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Rectangle XP" name="Rectangle" category="Sub-Controls" graphicsApi="GmpiGui">
+    <GUI>
+      <Pin name="Corner Radius" datatype="float" default="10" isMinimised="true" />
+      <Pin name="Top Left" datatype="bool" default="1" isMinimised="true" />
+      <Pin name="Top Right" datatype="bool" default="1" isMinimised="true" />
+      <Pin name="Bottom Left" datatype="bool" default="1" isMinimised="true" />
+      <Pin name="Bottom Right" datatype="bool" default="1" isMinimised="true" />
+      <Pin name="Top Color" datatype="string" default="FF9A9AAA" />
+      <Pin name="Bottom Color" datatype="string" default="FF858595" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Graphics Frame Rate" name="Graphics Frame Rate" category="Diagnostic" >
+    <GUI graphicsApi="GmpiGui" />
+  </Plugin>
+  
+  <Plugin id="SE Popup Menu XP" name="Popup Menu" category="Sub-Controls" graphicsApi="GmpiGui">
+    <GUI>
+      <Pin name="Choice" datatype="int" />
+      <Pin name="Item List" datatype="string" />
+      <Pin name="Style" datatype="string" default="normal" />
+      <Pin name="Writeable" datatype="bool" default="1" />
+      <Pin name="Greyed" datatype="bool" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Heading" datatype="string" default="Menu" />
+      <Pin name="Momentary" datatype="bool" />
+      <Pin name="Enable Special Strings" datatype="bool" private="true" default="1"/>
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Panel Group" name="Panel Group" category="Controls" graphicsApi="GmpiGui">
+    <GUI>
+      <Pin name="Text" datatype="string" default="Group" />
+    </GUI>
+  </Plugin>
+  <Plugin id="SE Plain Image" name="Plain Image" category="Sub-Controls" graphicsApi="GmpiGui">
+    <GUI>
+      <Pin name="Filename" datatype="string" default="background" isFilename="true" metadata="bmp" />
+      <Pin name="Display" datatype="enum" isMinimised="true" metadata="Fixed Size, Tiled, Stretch" />
+    </GUI>
+  </Plugin>
+  <Plugin id="SE ImageTinted XP" name="Image Tinted (XP)" category="Debug/DirectX" graphicsApi="GmpiGui">
+    <GUI>
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Filename" datatype="string" default="knob_sm" isFilename="true" metadata="bmp" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" direction="out" private="true" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Frame Count" datatype="int" private="true" />
+      <Pin name="Frame Count" datatype="int" direction="out" />
+      <!--
+      <Pin name="Mouse Response" datatype="enum" default="-1" isMinimised="true" metadata="auto=-1, vertical=0, horizontal=1, clicks=2, rotary=3, step=4" />
+      -->
+      <Pin name="Hue" datatype="float" direction="out" private="true" />
+      <Pin name="Saturation" datatype="float" direction="out" private="true" />
+      <Pin name="Brightness" datatype="float" direction="out" private="true" />
+      <Pin name="Hue" datatype="float" />
+      <Pin name="Saturation" datatype="float" default="1" />
+      <Pin name="Brightness" datatype="float" default="1" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="ImageJoystick" name="Joystick Image" category="Sub-Controls" graphicsApi="GmpiGui" >
+    <GUI>
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Filename" datatype="string" default="joystick_knob" isFilename="true" metadata="bmp" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" direction="out" private="true" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Frame Count" datatype="int" private="true" />
+      <Pin name="Frame Count" datatype="int" direction="out" />
+      <Pin name="Position X" datatype="float" />
+      <Pin name="Position Y" datatype="float" />
+      <Pin name="Jump to Mouse" datatype="bool" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="Image3" name="Image2" category="Sub-Controls" graphicsApi="GmpiGui" >
+    <GUI>
+      <Pin name="Animation Position" datatype="float" />
+      <Pin name="Filename" datatype="string" default="knob_sm" isFilename="true" metadata="bmp" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" direction="out" private="true" />
+      <Pin name="Mouse Down" datatype="bool" />
+      <Pin name="Frame Count" datatype="int" private="true" />
+      <Pin name="Frame Count" datatype="int" direction="out" />
+      <Pin name="Mouse Response" datatype="enum" default="-1" isMinimised="true" metadata="off=-2, auto=-1, vertical=0, horizontal=1, clicks=2, rotary=3, step=4" />
+    </GUI>
+  </Plugin>
+  
+  <!-- Drop-in replacement for TextEntry3 -->
+  <Plugin id="SE Text Entry4" name="Text Entry4" category="Sub-Controls" graphicsApi="GmpiGui">
+    <GUI>
+      <Pin name="Text" datatype="string" />
+      <Pin name="Style" datatype="string" default="normal" />
+      <Pin name="Multiline" datatype="bool" />
+      <Pin name="Writeable" datatype="bool" default="1" />
+      <Pin name="Greyed" datatype="bool" />
+      <Pin name="Hint" datatype="string" />
+      <Pin name="Menu Items" datatype="string" />
+      <Pin name="Menu Selection" datatype="int" />
+      <Pin name="Mouse Down" datatype="bool" direction="out" private="true"/>
+      <Pin name="Mouse Down" datatype="bool" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE List Entry4" name="List Entry4" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin id="0" name="Choice" datatype="int" />
+      <Pin id="1" name="Item List" datatype="string" />
+      <Pin id="2" name="Style" datatype="string" default="normal" />
+      <Pin id="3" name="Writeable" datatype="bool" default="1" />
+      <Pin id="4" name="Greyed" datatype="bool" />
+      <Pin id="5" name="Hint" datatype="string" />
+      <Pin id="6" name="Menu Items" datatype="string" />
+      <Pin id="7" name="Menu Selection" datatype="int" />
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Listbox" name="Listbox" category="Sub-Controls">
+    <GUI graphicsApi="GmpiGui">
+      <Pin id="0" name="Choice" datatype="int" />
+      <Pin id="1" name="Item List" datatype="string" />
+      <Pin id="2" name="Style" datatype="string" default="normal" />
+      <Pin id="3" name="Writeable" datatype="bool" default="1" />
+      <Pin id="4" name="Greyed" datatype="bool" />
+      <Pin id="5" name="Hint" datatype="string" />
+      <Pin id="6" name="Menu Items" datatype="string" />
+      <Pin id="7" name="Menu Selection" datatype="int" />
+    </GUI>
+  </Plugin>
+
+</PluginList>

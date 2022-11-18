@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+  <Plugin id="SE Polyphony Control" name="Polyphony Control" category="Old" graphicsApi="none" helpUrl="synthedit.chm::/mdl_sdk3/PolyphonyControl.htm">
+    <GUI>
+      <Pin id="0" name="Host Polyphony" direction="in" datatype="int" hostConnect="Polyphony" />
+      <Pin id="1" name="Host Polyphony Reserve" direction="in" datatype="int" hostConnect="ReserveVoices" />
+      <Pin id="2" name="Host VoiceAllocationMode" direction="in" datatype="int" hostConnect="VoiceAllocationMode"/>
+      <Pin id="3" name="Polyphony" direction="out" datatype="int"/>
+      <Pin id="4" name="Item List" direction="out" datatype="string"/>
+      <Pin id="5" name="Polyphony Reserve" direction="out" datatype="int"/>
+      <Pin id="6" name="Item List" direction="out" datatype="string"/>
+      <Pin id="7" name="Allocation Mode" direction="out" datatype="int" />
+      <Pin id="8" name="Item List" direction="out" datatype="string" />
+      <Pin id="9" name="Mono Note Priority" direction="out" datatype="int"/>
+      <Pin id="10" name="Item List" direction="out" datatype="string"/>
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Polyphony Control2" name="Polyphony Control" category="MIDI" graphicsApi="none" helpUrl="synthedit.chm::/mdl_sdk3/PolyphonyControl.htm">
+    <GUI>
+      <Pin name="Host Polyphony" direction="in" datatype="int" hostConnect="Polyphony" />
+      <Pin name="Host Polyphony Reserve" direction="in" datatype="int" hostConnect="ReserveVoices" />
+      <Pin name="Host VoiceAllocationMode" direction="in" datatype="int" hostConnect="VoiceAllocationMode"/>
+      <Pin name="Host PortamentoTime" hostConnect="Portamento" />
+      <Pin name="Host BenderRange" hostConnect="BenderRange" />
+      
+      <Pin name="Polyphony" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+      <Pin name="Polyphony Reserve" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+      <Pin name="Voice Stealing" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+      
+      <Pin name="Mono Mode" direction="out" datatype="bool" />
+      <Pin name="Mono Retrigger" direction="out" datatype="bool" />
+      <Pin name="Mono Note Priority" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+
+      <Pin name="Glide" direction="out"/>
+      <Pin name="Glide Mode" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+      <Pin name="Glide Timing" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+
+      <Pin name="BenderRange" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+
+      <Pin name="Voice Refresh" direction="out" datatype="int"/>
+      <Pin name="Item List" direction="out" datatype="string"/>
+    </GUI>
+  </Plugin>
+</PluginList>
+
+

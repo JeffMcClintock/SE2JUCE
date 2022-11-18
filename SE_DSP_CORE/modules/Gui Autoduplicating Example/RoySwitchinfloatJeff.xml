@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Roy SwitchIn(Float) Jeff" name="Roy SwitchIn(Float) Jeff" category="RoyTech Modules/Switches/Gui In" helpUrl="SE Roy SwitchIn(Float) Jeff.html">
+    <GUI>
+      <Pin name="Choice" datatype="int" />
+      <Pin name="Value" datatype="float" direction="out" />
+      <Pin name="Spare" datatype="float" autoRename="true" autoDuplicate="true" />
+    </GUI>
+  </Plugin>
+</PluginList>

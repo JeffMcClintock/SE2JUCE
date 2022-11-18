@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE TestMidi" name="Test MIDI" category="MIDI" graphicsApi="HWND" helpUrl="TestMidi.htm">
+		<Audio>
+			<Pin id="0" name="MIDI Out" direction="out" datatype="midi"/>
+		</Audio>
+	</Plugin>
+</PluginList>
+
+

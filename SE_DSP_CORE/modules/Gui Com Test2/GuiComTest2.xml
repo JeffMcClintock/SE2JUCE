@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE GUI COM Test2" name="sendMessageToAudio test" category="SDK Examples" >
+		<Audio>
+			<Pin id="0" name="InX" direction="in" datatype="float" rate="audio"/>
+			<Pin id="1" name="Out" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+    <GUI graphicsApi="GmpiGui">
+		</GUI>
+	</Plugin>
+</PluginList>
+
+

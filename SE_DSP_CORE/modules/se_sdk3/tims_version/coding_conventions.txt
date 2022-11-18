@@ -1,0 +1,235 @@
+GMPI API and SDK Coding Conventions
+-----------------------------------
+
+These are the coding and naming conventions for the GMPI API and C++ SDK.
+They are not going to fit everyone's preferred conventions perfectly.  In
+fact, they probably won't fit ANYONE perfectly.  They do seem to be a good
+compromise, however.
+
+The conventions themselves are not the real product.  The consistency they
+provide is.  The GMPI API and reference SDK will adhere to these
+conventions.  If you come across something in the API or SDK that does not
+follow these, it is almost certainly wrong.
+
+FIXME: use namespaces for C++?
+
+1. Prefixes
+
+  1.1.  All exposed variables, typedefs, classes, structures, macros,
+  functions, etc. must be prefixed.  Exposed structure definitions that make
+  up the API's interface system are prefixed with "IGMPI_".  All other
+  exposed entities must be prefixed with "GMPI_".
+
+  Examples:
+	struct IGMPI_Unknown
+	typedef GMPI_Result
+
+2. Datatype names
+
+  2.1.  All structures, classes, and other datatypes are named similarly.
+  After the prefix (see item #1), the name begins with a capital letter,
+  followed by lower-case letters, with the first letter of each word
+  capitalized.  This is commonly known as BumpyCaps naming.
+
+  2.2.  If an acronym is used as part of a variable name, it is treated as a
+  normal word, with only the first letter capitalized.
+
+  Examples:
+	struct IGMPI_PluginMethods
+	class GMPI_SdkPlugin
+
+3. Method and function names
+
+  3.1.  Methods and functions are named like datatypes (see item #2).
+
+  3.2.  Exposed functions (not members of a class) must be prefixed (see
+  item #1), while methods (members of a class) are not.
+
+  Examples:
+	(function) GMPI_DllOpen()
+	(method) QueryInterface()
+
+4. Variable names
+
+  4.1.  The wider the scope of a variable, the more detailed it's name
+  should be.
+
+  4.2.  Variables are named like methods (see item #3), except that the
+  first letter of the first word is not capitalized.  Arguments to functions
+  are named by the same conventions as local variables.
+
+  4.3.  Member variables must be prefixed with 'm_'.
+
+  Examples:
+	(local variable) plug
+	(file-scope variable) theFactory
+	(data member) m_host
+
+5. Constants
+
+  5.1.  Constants are named with all caps, whether they are compile-time
+  constants (#define), enums, or const variables.  Between words in a
+  constant's name is a single underscore ('_') character.
+
+  5.2.  Use const variables where possible, enums where consts don't work,
+  and #defines where absolutely needed.
+
+  Examples:
+	const GMPI_Guid GMPI_IID_UNKNOWN;
+	enum  { GMPI_SUCCESS };
+	#define GMPI_API_VERSION
+
+6. Braces
+
+  6.1.  Opening braces of control statements are placed on the same line as
+  the control statement, with the matching closing brace aligned with the
+  left edge of the control statement.
+
+  6.2.  Opening braces of functions and class definitions are placed on the
+  next line, aligned with the left edge of the previous line.
+
+  6.3.  Curly braces should always be used, even when not strictly required.
+
+  Examples:
+	if (condition) {
+	}
+
+	class GMPI_Unknown
+	{
+	}
+
+7. Indenting
+
+  7.1.  Each successive level of nesting, such as an 'if' block or a 'while'
+  loop, is indented by one level beyond the the previous block.
+
+  7.2.  Each indent is one tab character.
+
+  7.3.  Function and method definitions start at column 0, with all code
+  within the function indented one level.
+
+  Examples:
+	if (condition1) {
+		DoSomething();
+	}
+
+8. Line length
+
+  8.1.  Lines of code should not exceed 78 characters.
+
+  8.2.  Line wraps must occur at logical points, whenever possible.
+
+  8.3.  If a line of code must be wrapped to the next line, the wrapped line is
+  indented by two levels.  The only exception to this is a list of boolean
+  operations, which may be aligned with the above operations, if it
+  clarifies the code.
+
+  8.4.  If a line of code must wrap more than once, each line after the
+  first is indented to the same level, which is two levels deeper than the
+  first line of code.
+
+  Examples:
+	if (AVeryLongFunctionCall(argument1,
+			argument2, argument3,
+			argument4)) {
+		DoSomething();
+	}
+
+	if ((condition1 && condition2)
+	 || (condition3 && !condition4))
+
+9. Parentheses
+
+  9.1.  Parentheses in function calls are adjoined to the function name,
+  with no whitespace.
+
+  9.2.  Parentheses in control statements are seperated from the control
+  statement by a single space.
+
+  9.3.  Non-required parentheses should be used only when they clarify the
+  code.
+
+  Examples:
+	FunctionCall(argument1);
+
+	if (condition)
+
+	if ((a && b) || (c && !d))
+
+10. Whitespace
+
+  10.1.  When declaring a pointer or reference, the '*' or '&' character
+  is adjoined to the datatype, not the variable.  Note that this makes lists
+  of pointer declarations impossible.  For that reason, variables should be
+  declared one at a time.
+
+  10.2.  Array declarations, and index operations adjoin the '[' character to
+  the array name.
+
+  10.3.  Logical, boolean, and mathematical operators should be surrounded
+  by whitespace, except where condesing the statement clarifies the code.
+
+  10.4.  Extra whitespace in complex statements should be used only when it
+  clarifies the code.
+
+  10.5.  Logical blocks of code within a function should be seperated by one
+  blank line.
+
+  Examples:
+	void* opaque;
+	Thing& reference;
+	int array[1024];
+	if ((foo&1) || (bar&1))
+
+11. Comments
+
+  11.1.  Use C-style comments.
+
+  11.2.  Single line comments start and end on the same line.
+
+  11.3.  Multi-line comments open and close on blank lines.
+
+  11.4.  Multi-line comments should be full sentences.  Single line comments
+  may be sentence fragments.
+
+  11.5.  Any non-trivial piece of code should be commented.
+
+  Examples:
+	/* single line comment */
+
+	/*
+	 * This is a multi-line
+	 * comment.
+	 */
+
+12. Integer types
+
+  12.1.  If the range of an integer does not matter, the variable should be
+  declared as a C primitive type.
+
+  12.2.  If the range of an integer variable matters, or if the variable is
+  used as a bitmask, the variable must be declared as an explicit width,
+  using C99 integer types.
+
+  12.3.  Any exposed interface that potentially propogates data across
+  compiler boundaries (host to plugin or vice versa) must use explicit width
+  integers.
+
+  Examples:
+	int i;		/* range doesn't matter */
+	uint32_t flags	/* bit-width does matter */
+
+13. File names
+
+  13.1.  A C++ class must be defined in a .cpp file with the same name as
+  the class.  If the class is exposed outside of a single file, it must be
+  declared in a .h file with the same name as the class.
+
+  Examples:
+	class Foo is defined in Foo.cpp and declared in Foo.h
+
+14. Miscellaneous
+
+  14.1.  Function and method definitions should have the return valuea alone
+  on line before the function name.
+

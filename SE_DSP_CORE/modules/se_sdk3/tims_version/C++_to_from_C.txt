@@ -1,0 +1,36 @@
+Many developers will use the C++ GMPI SDK.  In the interest of
+understanding, here's a quick overview of how the C++ SDK interacts with
+the GMPI API, which is in C.
+
+The SDK is broken into two parts, the plugin SDK and the host SDK.  In
+each part, the SDK provides C++ native access to the C objects and
+methods.  Each part has a plugin object, a host object, etc.
+
+The C++ native classes provide C routines that call the native C++ methods.
+When the GMPI API invokes the C interface, the C++ code is run.  All
+developers need to worry about is the C++ code.  The rest is encapsulated in
+the SDK.
+
+However, there's an important boundary in the details.  A plugin is the
+entity that truly owns the plugin object.  The host just interfaces it.
+The host is the entity that truly owns the host object.  The plugin just
+interfaces to it.  Plugins can extend the plugin object.  Hosts can extend
+the host object.  No problem so far.
+
+However, what if the host wants to extend the plugin object?  The host
+does not own the plugin object, it just interfaces it.  The plugin object
+that the host knows (IGMPI_Plugin) has a certain size in memory.  However,
+that object may actually be part of a larger object, which is owned by the
+plugin code.  The host CAN NOT extend that structure, lest it trample on
+memory it doesn't own.  The same is true for the plugin with respect to
+the host object.
+
+The solution: Intf classes.  These classes provide easy ways to wrap an
+object you don't own but might want to extend.  They are simple interface
+wrappers.  The host creates a PluginIntf object which redirects calls into
+an IGMPI_Plugin object.  The plugin creates a HostIntf object which
+redirects calls into an IGMPI_Host object.
+
+In general, for every class that the host truly owns, the plugin has an
+Intf class.  For every class that the plugin truly owns, the host has an
+Intf class.

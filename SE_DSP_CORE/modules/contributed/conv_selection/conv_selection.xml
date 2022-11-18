@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="conv_selection" name="conv_selection" category="XhunAudio_" graphicsApi="none" helpUrl="">
+		<Audio>
+			<Pin id="0" name="Signal In" direction="in" datatype="float" rate="audio" default="0"/>
+			<Pin id="1" name="Signal Out" direction="out" datatype="float" rate="audio"/>
+			<Pin id="2" name="Coeff. Selection" direction="in" datatype="enum" default="1" metadata="Coeff_ONE=1,Coeff_TWO=2,Coeff_THREE=3"/>
+		</Audio>
+	</Plugin>
+</PluginList>
+
+

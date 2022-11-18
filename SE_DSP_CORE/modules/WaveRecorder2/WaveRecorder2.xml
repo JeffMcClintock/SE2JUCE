@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Wave Recorder2" name="Wave Recorder2" category="Input-Output">
+    <Audio>
+      <Pin name="File Name" datatype="string" default="Wavefile" isFilename="true" metadata="wav" />
+      <Pin name="Format" datatype="enum" isMinimised="true" metadata="16 bit, 32 bit float" />
+      <Pin name="Time Limit" datatype="float" isMinimised="true" />
+      <Pin name="Input" datatype="float" rate="audio" linearInput="true" autoDuplicate="true" />
+    </Audio>
+  </Plugin>
+</PluginList>

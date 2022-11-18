@@ -1,0 +1,38 @@
+* There are two fundamental types of data streams in GMPI: audio data and
+  control data.  Audio data is delivered via buffers of audio-rata samples.
+  Each sample in an audio buffer is the same datatype - the GMPI audio sample
+  datatype for the profile.  Control data is delivered via time-stamped
+  events.  Each event may be one of several datatypes.
+
+* A GMPI compliant platform must support static C++ objects in dynamically
+  loaded and unloaded libraries.  This includes static objects in file
+  scope, function scope and block scope.  For maximum portability, GMPI
+  plugins should avoid using static C++ objects in function or block scopes.
+  Some platforms are known to have problems unloading DLLs with static C++
+  objects.
+
+* When a plugin is created with IGMPI_Factory::CreateInstance(), the object
+  returned (IGMPI_Unknown) is the plugin's "root object".  The root object
+  may or may not be the same object that actually implements any given GMPI
+  interfaces.  The host MUST use the QueryInterface() method to find the
+  specific interface with which it is concerned.  The only GMPI interface
+  which the root object MUST implement is IGMPI_IID_UNKNOWN.
+
+  Similarly, the object passed to IGMPI_Factory::CreateInstance() as the
+  host object (IGMPI_Unknown) is the host's root object.  The root object
+  may or may not be the same object that actually implements any given GMPI
+  interfaces.  The plugin MUST use the QueryInterface() method to find the
+  specific interface with which it is concerned.  The only GMPI interface
+  which the root object MUST implement is IGMPI_IID_UNKNOWN.
+
+* For a given GUID, 'Plugin_IID', which identifies a plugin, the following
+  must be true:
+    - If the plugin's IGMPI_Factory::CreateInstance() method is called
+      with the GUID argument Plugin_IID.  The instance created is
+      returned in a pointer, 'p0'.
+    - If the instance's IGMPI_Plugin::QueryInterface() method is called
+      with the GUID argument Plugin_IID.  The interface pointer returned
+      has the same value as p0.
+    - If the instance's IGMPI_Plugin::QueryInterface() method is called
+      with the GUID argument GMPI_IID_UNKNOWN.  The interface pointer
+      returned has the same value as p0.

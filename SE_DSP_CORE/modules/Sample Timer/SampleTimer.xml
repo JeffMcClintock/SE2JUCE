@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Sample Timer" name="Sample Timer" category="Diagnostic" >
+    <Audio>
+      <Pin name="Trigger Time (samples)" datatype="int" />
+      <Pin name="Signal Out" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+</PluginList>

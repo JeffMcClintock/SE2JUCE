@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE Guitar De-Channelizer" name="Guitar De-Channelizer" category="MIDI" graphicsApi="none" helpUrl="GuitarDechannelizer.htm">
+		<Audio>
+			<Pin id="0" name="MIDI In" direction="in" datatype="midi"/>
+			<Pin id="1" name="MIDI Out" direction="out" datatype="midi"/>
+		</Audio>
+	</Plugin>
+</PluginList>
+
+

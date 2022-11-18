@@ -1,0 +1,49 @@
+# Project: Scope_DevCpp
+# Makefile created by Dev-C++ 4.9.9.2
+
+CPP  = g++.exe
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = Scope_DevCpp_private.res
+OBJ  = ../Scope3/Scope3.o ../Scope3/Scope3Gui.o ../se_sdk3/mp_sdk_audio.o ../se_sdk3/MP_SDK_common.o ../se_sdk3/mp_sdk_gui.o $(RES)
+LINKOBJ  = ../Scope3/Scope3.o ../Scope3/Scope3Gui.o ../se_sdk3/mp_sdk_audio.o ../se_sdk3/MP_SDK_common.o ../se_sdk3/mp_sdk_gui.o $(RES)
+LIBS =  -L"C:/Dev-Cpp/lib" --no-export-all-symbols --add-stdcall-alias -def ../se_sdk3/devc_module.def ../../../../Dev-Cpp/lib/libgdi32.a  
+INCS =  -I"C:/Dev-Cpp/include"  -I"../se_sdk3" 
+CXXINCS =  -I"C:/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Dev-Cpp/include/c++/3.4.2"  -I"C:/Dev-Cpp/include"  -I"../se_sdk3" 
+BIN  = Scope_DevCpp.sem
+CXXFLAGS = $(CXXINCS) -DBUILDING_DLL=1 -DUNICODE -D_UNICODE -DNDEBUG   -Wall
+CFLAGS = $(INCS) -DBUILDING_DLL=1   -Wall
+RM = rm -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before Scope_DevCpp.sem all-after
+
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+DLLWRAP=dllwrap.exe
+DEFFILE=libScope_DevCpp.def
+STATICLIB=libScope_DevCpp.a
+
+$(BIN): $(LINKOBJ)
+	$(DLLWRAP) --output-def $(DEFFILE) --driver-name c++ --implib $(STATICLIB) $(LINKOBJ) $(LIBS) -o $(BIN)
+
+../Scope3/Scope3.o: ../Scope3/Scope3.cpp
+	$(CPP) -c ../Scope3/Scope3.cpp -o ../Scope3/Scope3.o $(CXXFLAGS)
+
+../Scope3/Scope3Gui.o: ../Scope3/Scope3Gui.cpp
+	$(CPP) -c ../Scope3/Scope3Gui.cpp -o ../Scope3/Scope3Gui.o $(CXXFLAGS)
+
+../se_sdk3/mp_sdk_audio.o: ../se_sdk3/mp_sdk_audio.cpp
+	$(CPP) -c ../se_sdk3/mp_sdk_audio.cpp -o ../se_sdk3/mp_sdk_audio.o $(CXXFLAGS)
+
+../se_sdk3/MP_SDK_common.o: ../se_sdk3/MP_SDK_common.cpp
+	$(CPP) -c ../se_sdk3/MP_SDK_common.cpp -o ../se_sdk3/MP_SDK_common.o $(CXXFLAGS)
+
+../se_sdk3/mp_sdk_gui.o: ../se_sdk3/mp_sdk_gui.cpp
+	$(CPP) -c ../se_sdk3/mp_sdk_gui.cpp -o ../se_sdk3/mp_sdk_gui.o $(CXXFLAGS)
+
+Scope_DevCpp_private.res: Scope_DevCpp_private.rc ../Scope3/Scope3.rc 
+	$(WINDRES) -i Scope_DevCpp_private.rc --input-format=rc -o Scope_DevCpp_private.res -O coff  --include-dir ../Scope3

@@ -1,0 +1,25 @@
+LICENSE
+
+
+This code is not public domain.  All the code in this package is copyright
+2005 Jeff McClintock and Tim Hockin.
+
+This is prototype software.  It is in no way endorsed by the MMA or the 
+GMPI working group, or any other organization.  This software comes with
+no warranty or claims of fitness for a purpose.
+
+This software is free for public examination and comments.  You may build
+ this software for the purposes of functional or compatibility testing.
+
+You may modify this software, but you may not redistribute the software in
+any form but the original.  Any modifications to this software must be
+submitted to the copyright holders for potential inclusion.  By modifying
+ and submitting changes to this software, you explicitly grant the
+ copyright holders license to use your modifications in future versions of
+ this software. 
+
+Ownership of this software may eventually be turned over to an independant
+standards body.
+
+If you can not adhere to any provision of this license, you should not 
+modify this software.

@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+  <Plugin id="SE Patch Browser" name="Preset Browser" category="MIDI" helpUrl="http://synthedit.com/downloads/preview#presets">
+    <GUI>
+      <!-- inputs from host -->
+      <Pin name="Preset" datatype="int" hostConnect="Program"/>
+      <Pin name="PresetNamesList" datatype="string" hostConnect="ProgramNamesList"/>
+      <Pin name="PresetCommand" datatype="int" hostConnect="PatchCommands"/>
+      <Pin name="PresetCommandList" datatype="string" hostConnect="PatchCommands" parameterField="EnumList"/>
+
+      <!-- outputs to user controls -->
+      <Pin name="Preset" datatype="int" direction="out" />
+      <Pin name="Preset Names List" datatype="string" direction="out" />
+      <Pin name="PresetCommand" direction="out" datatype="int" />
+      <Pin name="PresetCommands List" direction="out" datatype="string" />
+
+      <!-- (more) inputs from host -->
+      <Pin name="PresetCategoryList" datatype="string" hostConnect="ProgramCategoriesList"/>
+      <Pin name="PresetName" direction="in" datatype="string" hostConnect="ProgramName"/>
+      <Pin name="Preset Name" direction="out" datatype="string"/>
+      <Pin name="PresetCategory" datatype="string" hostConnect="ProgramCategory"/>
+      <Pin name="Preset Category" datatype="string" direction="out" />
+      <Pin name="PresetModified" datatype="bool" hostConnect="Presets/ProgramModified"/>
+      <Pin name="Modified" datatype="bool" direction="out" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Sub-Patch Manager" name="Sub-Patch Manager" category="Debug" >
+    <GUI>
+      <!-- inputs from host -->
+      <Pin name="Program" datatype="int" private="true" hostConnect="Program" />
+      <Pin name="ProgramNamesList" datatype="string" private="true" hostConnect="ProgramNamesList" />
+      <Pin name="ProgramName" datatype="string" private="true" hostConnect="ProgramName" />
+      <Pin name="SubPatchCommand" datatype="int" private="true" hostConnect="SubPatchCommands" />
+      <Pin name="SubPatchCommandList" datatype="string" private="true" hostConnect="SubPatchCommands" parameterField="EnumList" />
+      
+      <!-- outputs to user controls -->
+      <Pin name="Program" datatype="int" direction="out" />
+      <Pin name="Program Names List" datatype="string" direction="out" />
+      <Pin name="Program Name" datatype="string" direction="out" />
+      <Pin name="Command" datatype="int" direction="out" />
+      <Pin name="Commands List" datatype="string" direction="out" />
+      
+      <Pin name="Strict Param Match" datatype="bool" isMinimised="true" default="1" />
+    </GUI>
+  </Plugin>
+  <Plugin id="SE Patch Info" name="Patch Info" category="Old" helpUrl="synthedit.chm::/mdl_sdk3/PatchInfo.htm">
+    <GUI>
+      <!-- inputs from host -->
+      <Pin id="0" name="Program" direction="in" datatype="int" hostConnect="Program"/>
+      <Pin id="1" name="ProgramNamesList" direction="in" datatype="string" hostConnect="ProgramNamesList"/>
+      <Pin id="2" name="ProgramName" direction="in" datatype="string" hostConnect="ProgramName"/>
+      <Pin id="3" name="MidiChannel" direction="in" datatype="int" hostConnect="MidiChannelIn"/>
+      <Pin id="4" name="PatchCommand" direction="in" datatype="int" hostConnect="PatchCommands"/>
+
+      <!-- outputs to user controls -->
+      <Pin id="5" name="Program" direction="out" datatype="int"/>
+      <Pin id="6" name="Program Names List" direction="out" datatype="string"/>
+      <Pin id="7" name="Program Name" direction="out" datatype="string"/>
+      <Pin id="8" name="Channel" direction="out" datatype="int"/>
+      <Pin id="9" name="Channel List" direction="out" datatype="string"/>
+      <Pin id="10" name="PatchCommand" direction="out" datatype="int" />
+      <Pin id="11" name="PatchCommands List" direction="out" datatype="string" />
+
+      <!-- inputs from host -->
+      <Pin id="12" name="PatchCommandList" direction="in" datatype="string" hostConnect="PatchCommands" parameterField="EnumList"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Bool" name="PatchMemory Bool" category="Sub-Controls" helpUrl="Patchmemory.htm">
+    <Parameters>
+      <Parameter id="0" datatype="bool" />
+    </Parameters>
+    
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="bool" parameterId="0" />
+      <Pin id="1" name="Value Out" direction="out" datatype="bool" autoConfigureParameter="true"/>
+    </Audio>
+    
+    <GUI>
+      <Pin id="0" name="Value In" direction="in" datatype="bool" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="Mouse Down" direction="in" datatype="bool" parameterId="0" parameterField="Grab"/>
+      <Pin id="5" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="6" name="Name" direction="out" datatype="string" />
+      <Pin id="7" name="Value" direction="out" datatype="bool" />
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+      <Pin id="11" name="Mouse Down" direction="out" datatype="bool"/>
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE PatchMemory Bool Out" name="PatchMemory Bool Out" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="bool" persistant="false" ignorePatchChange="true" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="bool"  />
+      <Pin id="1" name="PM Value Out" direction="out" datatype="bool" parameterId="0" private ="true" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="PM Value In" direction="in" datatype="bool" parameterId="0" />
+      <Pin id="1" name="PM Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="PM Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="PM Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="bool" />
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Float" name="PatchMemory Float3" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="float" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="float" parameterId="0" />
+      <Pin id="1" name="Value Out" direction="out" datatype="float" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="Value In" direction="in" datatype="float" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="Mouse Down" direction="in" datatype="bool" parameterId="0" parameterField="Grab"/>
+      <Pin id="5" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="6" name="Name" direction="out" datatype="string" />
+      <Pin id="7" name="Value" direction="out" datatype="float" />
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+      <Pin id="11" name="Mouse Down" direction="out" datatype="bool"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Float Out" name="PatchMemory Float Out3" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="float" persistant="false" ignorePatchChange="true" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="float"  />
+      <Pin id="1" name="PM Value Out" direction="out" datatype="float" parameterId="0" private ="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="PM Value In" direction="in" datatype="float" parameterId="0" />
+      <Pin id="1" name="PM Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="PM Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="PM Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="float" />
+      <!-- legacy only. for replacing the Patch Mem Float Out - B. minimised here to hide it. -->
+      <Pin id="7" name="Value Out" direction="in" datatype="float" isMinimised="true"/>
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Float Latchable" name="PatchMemory Float In/Out" category="Experimental" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="float" ignorePatchChange="true" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="PM In" datatype="float" parameterId="0" />
+      <Pin id="1" name="PM Out" direction="out" datatype="float" parameterId="0" private ="true"/>
+      <Pin id="2" name="In Enabled" datatype="bool" />
+      <Pin id="3" name="Value In" datatype="float" />
+      <Pin id="4" name="Value Out" direction="out" datatype="float" />
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="Value In" direction="in" datatype="float" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="Mouse Down" direction="in" datatype="bool" parameterId="0" parameterField="Grab"/>
+      <Pin id="5" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="6" name="Name" direction="out" datatype="string" />
+      <Pin id="7" name="Value" direction="out" datatype="float" />
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+      <Pin id="11" name="Mouse Down" direction="out" datatype="bool"/>      
+    </GUI>
+  </Plugin>
+
+  <!-- legacy only. for replacing the Patch Mem Float Out - B. category 'Debug' to hide it on module list. -->
+  <Plugin id="SE PatchMemory Float Out B2" name="PatchMemory Float Out B2" category="Debug" >
+    <Parameters>
+      <Parameter id="0" datatype="float" ignorePatchChange="true" persistant="false" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="float"  />
+      <Pin id="1" name="PM Value Out" direction="out" datatype="float" parameterId="0" private ="true" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="PM Value In" direction="in" datatype="float" parameterId="0" />
+      <Pin id="1" name="PM Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="PM Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="PM Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="float" />
+      <!-- legacy only. for replacing the Patch Mem Float Out - B -->
+      <Pin id="7" name="Value Out" direction="in" datatype="float"/>
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE PatchMemory Int" name="PatchMemory Int" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="int" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="int" parameterId="0" />
+      <Pin id="1" name="Value Out" direction="out" datatype="int" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="Value In" direction="in" datatype="int" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="Mouse Down" direction="in" datatype="bool" parameterId="0" parameterField="Grab"/>
+      <Pin id="5" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="6" name="Name" direction="out" datatype="string" />
+      <Pin id="7" name="Value" direction="out" datatype="int" />
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+      <Pin id="11" name="Mouse Down" direction="out" datatype="bool"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Int Out" name="PatchMemory Int Out" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="int" persistant="false" ignorePatchChange="true" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="int"  />
+      <Pin id="1" name="PM Value Out" direction="out" datatype="int" parameterId="0" private ="true" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="PM Value In" direction="in" datatype="int" parameterId="0" />
+      <Pin id="1" name="PM Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="PM Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="PM Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="4" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="int" />
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" />
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory List3" name="PatchMemory List3" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="enum" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="int" parameterId="0" />
+      <Pin id="1" name="Value Out" direction="out" datatype="enum" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <!-- Value in would be nice as int, but datatype determins patch-mem datatype-->
+      <!-- better to specify patch-param datatype seperate-->
+      <Pin id="0" name="Value In" direction="in" datatype="int" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="List Values" direction="in" datatype="string" parameterId="0" parameterField="EnumList"/>
+      <Pin id="3" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="4" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <Pin id="5" name="Mouse Down" direction="in" datatype="bool" parameterId="0" parameterField="Grab"/>
+
+      <Pin id="6" name="Name" direction="out" datatype="string" />
+      <Pin id="7" name="Choice" direction="out" datatype="int" />
+
+      <!-- legacy only. for replacing the Patch Mem List - B - ->
+      <Pin id="8" name="List Out" direction="in" datatype="int" isMinimised="true"/> -->
+
+      <Pin id="8" name="Item List" direction="out" datatype="string"/>
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+      <Pin id="11" name="Mouse Down" direction="out" datatype="bool"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Text2" name="PatchMemory Text2" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="string" />
+    </Parameters>
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="string" parameterId="0" />
+      <Pin id="1" name="Value Out" direction="out" datatype="string" autoConfigureParameter="true"/>
+    </Audio>
+    <GUI>
+      <Pin id="0" name="Value In" direction="in" datatype="string" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="File Extension" direction="in" datatype="string" parameterId="0" parameterField="FileExtension"/>
+      <Pin id="3" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="4" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="string" />
+      <Pin id="7" name="File Extension" direction="out" datatype="string"/>
+      <Pin id="8" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="9" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Text Out" name="PatchMemory Text Out" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="string" persistant="false" ignorePatchChange="true" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="string"  />
+      <Pin id="1" name="PM Value Out" direction="out" datatype="string" parameterId="0" private ="true" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="PM Value In" direction="in" datatype="string" parameterId="0" />
+      <Pin id="1" name="PM Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="PM Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="PM Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+      <!--mistake
+      <Pin id="4" name="AnimationIn" direction="in" datatype="float" parameterId="0" parameterField="Normalized"/>
+      -->
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="string" />
+      <!--mistake
+      <Pin id="8" name="Animation Position" direction="out" datatype="float" private="true"/>
+      -->
+      <Pin id="9" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="10" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE PatchMemory Blob" name="PatchMemory Blob" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="blob" />
+    </Parameters>
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="blob" parameterId="0" />
+      <Pin id="1" name="Value Out" direction="out" datatype="blob" autoConfigureParameter="true"/>
+    </Audio>
+    <GUI>
+      <Pin id="0" name="Value In" direction="in" datatype="blob" parameterId="0" />
+      <Pin id="1" name="Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <!--TODO<Pin id="2" name="Type" direction="in" datatype="string" parameterId="0" parameterField="BlobType"/>-->
+      <Pin id="3" name="Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="4" name="Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+
+      <Pin id="5" name="Name" direction="out" datatype="string" />
+      <Pin id="6" name="Value" direction="out" datatype="blob" />
+      <!-- TODO <Pin id="7" name="Type" direction="out" datatype="string"/> -->
+      <Pin id="8" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="9" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE PatchMemory Blob Out" name="PatchMemory Blob Out" category="Sub-Controls" helpUrl="Patchmemory.htm" >
+    <Parameters>
+      <Parameter id="0" datatype="blob" persistant="false" ignorePatchChange="true" />
+    </Parameters>
+
+    <Audio>
+      <Pin id="0" name="Value In" direction="in" datatype="blob"  />
+      <Pin id="1" name="PM Value Out" direction="out" datatype="blob" parameterId="0" private ="true" autoConfigureParameter="true"/>
+    </Audio>
+
+    <GUI>
+      <Pin id="0" name="PM Value In" direction="in" datatype="blob" parameterId="0" />
+      <Pin id="1" name="PM Name In" direction="in" datatype="string" parameterId="0" parameterField="ShortName"/>
+      <Pin id="2" name="PM Menu Items" direction="in" datatype="string" parameterId="0" parameterField="MenuItems"/>
+      <!-- Little unusual, this is an 'in' even though it's purpose is to send to host-->
+      <Pin id="3" name="PM Menu Selection" direction="in" datatype="int" parameterId="0" parameterField="MenuSelection"/>
+
+      <Pin id="4" name="Name" direction="out" datatype="string" />
+      <Pin id="5" name="Value" direction="out" datatype="blob" />
+      <Pin id="6" name="Menu Items" direction="out" datatype="string"/>
+      <Pin id="7" name="Menu Selection" direction="out" datatype="int"/>
+    </GUI>
+  </Plugin>
+</PluginList>

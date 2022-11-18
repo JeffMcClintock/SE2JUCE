@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE Float Limiter" name="Float Limiter" category="Sub-Controls" graphicsApi="none" helpUrl="FloatLimiter.htm">
+		<GUI>
+			<Pin id="0" name="Min" direction="in" datatype="float"/>
+			<Pin id="1" name="Max" direction="in" datatype="float" default="10"/>
+			<Pin id="2" name="Value" direction="in" datatype="float"/>
+		</GUI>
+	</Plugin>
+</PluginList>
+
+

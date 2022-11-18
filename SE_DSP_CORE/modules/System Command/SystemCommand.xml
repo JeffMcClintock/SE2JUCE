@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE System Command" name="System Command" category="Sub-Controls" graphicsApi="none" helpUrl="SystemCommand.htm">
+		<GUI>
+			<Pin id="0" name="Trigger" direction="out" datatype="bool"/>
+			<Pin id="1" name="Command" direction="in" datatype="int"/>
+      <Pin id="2" name="Command List" direction="out" datatype="string"/>
+      <Pin id="3" name="Filename" direction="in" datatype="string"/>
+    </GUI>
+	</Plugin>
+</PluginList>
+
+

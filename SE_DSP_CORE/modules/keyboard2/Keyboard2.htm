@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<link rel="stylesheet" type="text/css" href="se_topic.css"/>
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>Keyboard2</title>
+</head>
+<body>
+<h2>Keyboard2</h2>
+    <p>On screen keyboard.</p>
+    <h3>MIDI</h3>
+    <p>The Keyboard2 does not have a MIDI connection, it responds to MIDI indirectly via 
+        the Patch-Automator module.&nbsp; It also sends MIDI out via the 
+        Patch-Automator.</p>
+<h2>Pins</h2>
+<ul>
+	<li><b>VoiceAllocationMode/Item List </b>- Provides control over Polyphonic and 
+        Monophonic modes. (see below).</li>
+	<li><b>Note Priority/Item List</b> - Provides control over Monophonic note priority 
+        modes.</li>
+	<li><b>Glide Type</b></li>
+	<li><b>Glide Rate</b></li>
+	<li><b>Bend Range</b> - Sets range of Pitch Bender wheel.</li>
+	<li><b>Pitch</b> - Controls oscillator and filter pitch.</li>
+    <li><b>Trigger/Gate</b> - For controlling Envelope modules.</li>
+	<li><b>Velocity</b></li>
+	<li><b>Aftertouch</b></li>
+	<li><b>Raw Pitch/Velocity</b> - Regular Pitch and Velocity pins are &#39;smoothed&#39; to 
+        prevent clicks.&nbsp; These are useful for triggering multi-samples correctly.</li>
+	<li><b>Polyphony </b>- How many notes can sound at one time.</li>
+	<li><b>Polyphony Reserve</b> - How many voices are held in reserve to provide 
+        glitch-free note-stealing. between 3 and 5 is optimum.</li>
+</ul>
+    <h3>
+        Voice Allocation Modes</h3>
+    <h2>
+        Polyphonic Modes</h2>
+    <p>
+        These modes provide for normal polyphonic play.&nbsp; Each key is assigned it&#39;s 
+        own Voice from the available pool. Where the modes differ is how they handle 
+        repeat hits on the same key:</p>
+    <p>
+        <b>Poly</b> - The same voice is re-used. Much like mono mode, Envelopes do not 
+        hard-reset to zero but start from current level. Usefull for synthesizing 
+        keyboard instruments. e.g. Piano.</p>
+    <p>
+        <b>Poly Hard</b> - Each new note is allocated a fresh unused voice. 
+        Envelopes always start from zero. The older voice is faded-out to prevent the old note&#39;s release tail from sounding &#39;under&#39; the new note.<br />
+&nbsp;This mode is designed to prevent clicks during sample playback where the playback 
+        position resets at the start of each note.</p>
+    <p>
+        <b>Poly Overlap </b>- Same as above. Except the older voice continues to sound 
+        along with the new one.&nbsp; Useful for ensemble sounds like string sections 
+        where several instruments can play the same note.</p>
+    <h2>
+        <b>Monophonc modes</b> </h2>
+    <p>
+        Monophonic modes provide only one voice, only one note can sound at one 
+        time.&nbsp; Where the modes differ is how they handle overlapping (legato) 
+        notes.</p>
+    <p>
+    &nbsp;<b>Mono</b> -&nbsp;&nbsp; Envelopes do not hard-reset but continue from 
+        current level. Overlapping (legato) notes blend into each other (Envelopes do 
+        not restart). Good for synthesised monophonic instruments that can glide a 
+        note&#39;s pitch like Cello.</p>
+    <p>
+        <b>Mono (Retrigger)</b> - Overlapping notes cause 
+        Envelopes to restart the attack segment.&nbsp; Good for percussive instruments.</p>
+</body>
+</html>

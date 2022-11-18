@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Oscillator (naive)" name="Oscillator (naive)" category="Waveform">
+    <Audio>
+      <Pin name="Pitch" datatype="float" rate="audio" default="0.5" metadata="100, 0, 10, 0" />
+      <Pin name="Pulse Width" datatype="float" rate="audio" default="0.5" />
+      <Pin name="Waveform" datatype="enum" default="1" metadata="Sine,Saw,Pulse,Tri" />
+      <Pin name="Sync" datatype="float" rate="audio" metadata="100, 0, 5, -5" />
+      <Pin name="Phase Mod" datatype="float" rate="audio" metadata="100, 0, 10, 0" />
+      <Pin name="Audio Out" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+</PluginList>

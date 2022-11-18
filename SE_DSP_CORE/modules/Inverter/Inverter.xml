@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+  <Plugin id="SynthEdit Inverter2" name="Inverter2" category="Modifiers" helpUrl="Inverter2.htm">
+    <Audio>
+      <Pin id="0" name="Signal In" direction="in" datatype="float" rate="audio" linearInput="true" default="0"/>
+      <Pin id="1" name="Signal Out" direction="out" datatype="float" rate="audio"/>
+    </Audio>
+  </Plugin>
+</PluginList>
+
+

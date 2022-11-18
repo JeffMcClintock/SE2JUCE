@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE RMS" name="RMS" category="Math">
+    <Audio>
+      <Pin name="Signal in" datatype="float" rate="audio" />
+      <Pin name="Response Rate" datatype="float" rate="audio" default="0.5"/>
+      <Pin name="Signal Out" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+  
+  <!-- NON Zero-Delay version -->
+  <Plugin id="SE SV Filter2" name="SV Filter2" category="Filters" helpUrl="SvFilter2.htm">
+    <Audio>
+      <Pin name="Signal" datatype="float" rate="audio" default="0"/>
+      <Pin name="Pitch" datatype="float" rate="audio" default="0.5"/>
+      <Pin name="Resonance" datatype="float" rate="audio" default="0.5"/>
+      <Pin name="Strength" datatype="enum" default="0" metadata="1-Stage,2-Stage"/>
+      <Pin name="Mode" datatype="enum" default="0" metadata="Low Pass,High Pass,Band Pass,Band Reject"/>
+      <Pin name="Output" direction="out" datatype="float" rate="audio"/>
+    </Audio>
+  </Plugin>
+  
+  <Plugin id="SE Korg Filter" name="Korg Filter" category="Filters/VA" >
+    <Audio>
+      <Pin id="0" name="Signal" datatype="float" rate="audio"/>
+      <Pin id="1" name="Pitch" datatype="float" rate="audio" default="0.5" />
+      <Pin id="2" name="Resonance" datatype="float" rate="audio" default="0.5" />
+      <Pin id="3" name="Saturation" datatype="float" />
+      <Pin id="4" name="Mode" datatype="enum" metadata="Low Pass" />
+      <Pin id="5" name="Saturator" datatype="bool" />
+      <Pin id="6" name="Output" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+  <Plugin id="SE Moog Filter" name="Moog Filter" category="Filters/VA" >
+    <Audio>
+      <Pin id="0" name="Signal" datatype="float" rate="audio"/>
+      <Pin id="1" name="Pitch" datatype="float" rate="audio" default="0.5" />
+      <Pin id="2" name="Resonance" datatype="float" rate="audio" default="0.5" />
+      <Pin id="3" name="Saturation" datatype="float" private="true" />
+      <Pin id="4" name="Mode" datatype="enum" metadata="Low Pass" />
+      <Pin id="5" name="Saturator" datatype="bool" private="true" />
+      <Pin id="6" name="Output" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+  <Plugin id="SE SV Filter4" name="StateVar Filter" category="Filters/VA" >
+    <Audio>
+      <Pin name="Signal" datatype="float" rate="audio" />
+      <Pin name="Pitch" datatype="float" rate="audio" default="0.5" />
+      <Pin name="Resonance" datatype="float" rate="audio" default="0.5" />
+      <Pin name="Strength" datatype="enum" metadata="1-Stage,2-Stage" />
+      <Pin name="Mode" datatype="enum" metadata="Low Pass,High Pass,Band Pass,Band Reject" />
+      <Pin name="Output" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+  <Plugin id="SE SV Filter4B" name="StateVar Filter (multi)" category="Filters/VA" >
+    <Audio>
+      <Pin name="Signal" datatype="float" rate="audio" />
+      <Pin name="Pitch" datatype="float" rate="audio" default="0.5" />
+      <Pin name="Resonance" datatype="float" rate="audio" default="0.5" />
+      <Pin name="Low Pass" datatype="float" rate="audio" direction="out" />
+      <Pin name="High Pass" datatype="float" rate="audio" direction="out" />
+      <Pin name="Band Pass" datatype="float" rate="audio" direction="out" />
+      <Pin name="Band Reject" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+  <Plugin id="SE Moog Filter test" name="Moog Filter (reference)" category="Filters/VA" >
+    <Audio>
+      <Pin id="0" name="Signal" datatype="float" rate="audio"/>
+      <Pin id="1" name="Pitch" datatype="float" rate="audio" default="0.5" />
+      <Pin id="2" name="Resonance" datatype="float" rate="audio" default="0.5" />
+      <Pin id="3" name="Saturation" datatype="float" private="true" />
+      <Pin id="4" name="Mode" datatype="enum" metadata="Low Pass" />
+      <Pin id="5" name="Saturator" datatype="bool" private="true" />
+      <Pin id="6" name="Output" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+</PluginList>

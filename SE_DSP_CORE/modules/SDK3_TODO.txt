@@ -1,0 +1,137 @@
+
+
+class IMpPlugin : public IMpUnknown
+
+	/*
+	seffResume,		
+	*/
+	// processing about to resume after a period of sleep
+	// virtual MpResult wake() = 0;
+
+
+struct MpFontInfo
+{
+//	char category[20];
+//	char facename[50];
+
+
+class IMpUserInterface : public IMpUnknown
+{
+/*
+	seGuiInitialise = 0,		// initialise
+// replaced by destructor?
+	seGuiClose,			// exit, release all memory and other resources!
+*/
+
+
+class IMpWin32CompositedGraphicsPlugin : public IMpUnknown
+{
+/*
+
+	// not needed?
+	seGuiOnNewConnection,
+	seGuiOnDisconnect,
+
+	// implicit in Initialise and close
+	seGuiOnWindowOpen,
+	seGuiOnWindowClose,
+*/
+
+
+class IMpUserInterfaceHost : public IMpUnknown
+
+	/*
+
+	// can be done without hosts help?
+	seGuiHostGetModuleFilename, // returns full module path
+	// why?
+	seGuiHostGetHostType, // return code 0 =unsuported, 1=module is running in SynthEdit, 2= Module is in a VST plugin (made with SE)
+	// replace with specific host-independant methods where needed.
+	seGuiHostCallVstHost, // pass se_call_vst_host_params structure in ptr
+*/
+
+
+class IMpWin32CompositedGraphicsHost : public IMpUnknown
+{
+	/*
+	// needed?
+	seGuiHostGetParentContext, // Get 'handle' of parent window.  This is an SE handle, not an HWND.  Use seGuiHostGetWindowHandle to convert.
+	seGuiHostMapWindowPoints, // map a point on one window to the co-ordinate system of a 2nd window
+
+	//replaced by Measure
+	seGuiHostSetWindowFlags, - only used for resizeable and no-window flags
+	seGuiHostSetWindowSizeable,
+	seGuiHostSetWindowSize
+
+	// replaced by interfaces
+	seGuiHostSetWindowType,				// pass 1 to provide your GuiModule with a 'real' HWND (else SE draws your module on the parent window)
+
+	seGuiHostGetWindowHandle, - only for HWND windows
+	*/
+
+
+class IMpFactory : public IMpUnknown
+{
+
+enum MpWindowTypes{ MP_WINDOW_TYPE_NONE, MP_WINDOW_TYPE_HWND, MP_WINDOW_TYPE_COMPOSITED };
+
+class IMpHost : public IMpUnknown
+{
+
+/*
+	// replace with iterator over pins.
+	seaudioMasterIsPinConnected,	// 
+	seaudioMasterGetTotalPinCount,	// Total pins of all types
+	seaudioMasterGetInputPinCount,  // Total AUDIO ins
+	seaudioMasterGetOutputPinCount, // total AUDIO outs
+*/
+/*
+	// replace with host controls
+	seaudioMasterGetTime,
+	seaudioMasterGetBlockStartClock,
+	seaudioMasterGetSampleClock,	// get current sampleclock at block start
+
+	// replace with specific host-independant methods where needed.
+	seaudioMasterCallVstHost,		// Call VST Host direct (see se_call_vst_host_params struct)
+*/
+/*
+	// replace with iterator over instances.
+	seaudioMasterGetFirstClone,
+	seaudioMasterGetNextClone,
+*/
+
+/*
+inline bool
+operator<(const MpGuid& left, const MpGuid& right)
+{
+	return (MpGuidCompare(&left, &right) < 0);
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, const MpGuid& guid)
+{
+	char buffer[40];
+	stream << MpGuidString(&guid, buffer);
+	return stream;
+}
+*/
+
+class MpTypeTraits
+{
+/*
+	// size of memory required to store.
+	template<class U> struct VariableLengthStorageTraits
+	{
+		enum { result = false };
+	};
+	template<> struct VariableLengthStorageTraits<std::wstring>
+	{
+		enum { result = true };
+	};
+	template<> struct VariableLengthStorageTraits<struct MpBlob>
+	{
+		enum { result = true };
+	};
+*/
+
+

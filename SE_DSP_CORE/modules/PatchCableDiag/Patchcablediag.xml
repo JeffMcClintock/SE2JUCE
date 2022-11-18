@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE PatchCableDiag" name="PatchCableDiag" category="Diagnostic" >
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="" datatype="blob" private="true" hostConnect="PatchCables" />
+    </GUI>
+  </Plugin>
+</PluginList>

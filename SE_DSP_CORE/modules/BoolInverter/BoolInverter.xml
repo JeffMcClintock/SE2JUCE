@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="SE GUI Bool Inverter" name="Bool Inverter" category="Sub-Controls" >
+		<GUI>
+			<Pin id="0" name="Input" direction="in" datatype="bool"/>
+			<Pin id="1" name="Output" direction="out" datatype="bool"/>
+		</GUI>
+	</Plugin>
+</PluginList>
+
+

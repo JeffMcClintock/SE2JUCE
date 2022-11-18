@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="voltage_to_db" name="voltage_to_db" category="XA" graphicsApi="none" helpUrl="">
+		<Audio>
+			<Pin id="0" name="Volts in" direction="in" datatype="float" rate="audio" default="0"/>
+			<Pin id="1" name="Vref" direction="in" datatype="float" rate="audio" default="1"/>
+			<Pin id="2" name="dB out" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+</PluginList>
+
+

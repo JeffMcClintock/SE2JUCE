@@ -1,0 +1,47 @@
+/* Style sheet for Synthedit Help - Standard Topic Pages  */
+/* Last Updated: 10/02/04 */
+
+
+/* BODY = default paragraph font */
+	body		{bgcolor: #ffffff; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 70%; }
+
+/* Definition */
+	dd			{ margin-left: 30; margin-bottom: 12; }
+	
+/* HYPERLINKS */ 
+	a:link		{color: #0000cc;}
+	a:active	{color: #0000cc;}
+	a:visited	{color: #990099;}	
+
+/* Heading styles */ 
+	h1			{font-size: 125%; margin-top: .4em; margin-bottom: .5em;}
+	h2			{font-size: 110%; margin-top: 2em; margin-bottom: .5em;}
+	h3			{font-size: 100%; margin-top: 2em; margin-bottom: .5em; font-weight: bold;}
+	h4			{font-size: 100%; margin-top: 2em; font-weight: bold;}
+	h5			{font-size: 100%; margin-top: 2em; font-weight: bold;}
+	
+	
+/* Tables */
+	table		{ font-size: 100%; }
+
+.Secthead	{ font-size: 160%; color: #FFFFFF; background-color: 416CBE; }
+.Showme		{ margin-Top: 0em; }
+
+/* Dropdown Stuff /*
+	.expfav      { font-size: 80%; text-align: Right; margin-top: -1em; margin-bottom: 0 }
+	
+	.AnchorClass	{cursor:hand; 
+		color: #990099; 
+		font-weight:normal; 
+		text-decoration: none;
+		top:0pt;} 
+
+	.AnchorClass:hover
+		{cursor:hand; 
+		color: #990099; 
+		font-weight:normal; 
+		text-decoration: underline;
+		top:0pt;}  <br> This file is decompiled by an unregistered version of ChmDecompiler. <br>
+ Regsitered version does not show this message. <br>You can download ChmDecompiler at :
+    <a href="http://www.zipghost.com/" target=_blank> http://www.zipghost.com/ </a>
+    <br><br>

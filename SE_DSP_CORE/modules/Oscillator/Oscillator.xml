@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Oscillator" name="Oscillator" category="Debug">
+    <Audio>
+      <Pin name="Pitch" datatype="float" rate="audio" default="0.5" metadata="100, 0, 10, 0" />
+      <Pin name="Pulse Width" datatype="float" rate="audio" default="0.5" />
+      <Pin name="Waveform" datatype="enum" default="1" metadata="Sine, Saw, Ramp, Triangle, Pulse,White Noise,Pink Noise" />
+      <Pin name="Sync" datatype="float" rate="audio" metadata="100, 0, 5, -5" />
+      <Pin name="Phase Mod" datatype="float" rate="audio" metadata="100, 0, 10, 0" />
+      <Pin name="Audio Out" datatype="float" rate="audio" direction="out" />
+      <Pin name="PM Depth dmy" datatype="float" rate="audio" />
+      <Pin name="Polypod PW" datatype="bool" isMinimised="true" />
+      <Pin name="One-Shot" datatype="enum" metadata="Off,On" />
+      <Pin name="Bypass" datatype="bool" />
+      <Pin name="Economy mode" datatype="bool" isMinimised="true" />
+      <Pin name="Reset Mode" datatype="enum" metadata="VCO (Freerun),DCO (Sync)" />
+      <Pin name="VoiceActive" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Active" />
+    </Audio>
+  </Plugin>
+</PluginList>

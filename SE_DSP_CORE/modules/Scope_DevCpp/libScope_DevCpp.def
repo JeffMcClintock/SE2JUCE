@@ -1,0 +1,5 @@
+; dlltool --base-file C:\DOCUME~1\Jef\LOCALS~1\Temp/cca00272.base --output-exp Scope_DevCpp.exp --dllname Scope_DevCpp.sem --output-def libScope_DevCpp.def --no-export-all-symbols --add-stdcall-alias --exclude-symbol=DllMainCRTStartup@12 --def ../se_sdk3/devc_module.def --output-lib libScope_DevCpp.a
+EXPORTS
+	DllMain@12 @ 1
+	DllMain = DllMain@12 @ 2
+	MP_GetFactory = MP_GetFactory@4 @ 3

@@ -1,0 +1,56 @@
+FIXME:
+ - I think we only need STDCALL garbage on function prototypes
+ - s/factory/pluginfactory/ and s/CreateInstance/CreatePlugin/ ?
+ - GMPI_DllErrorString()
+ - call GMPI_WalkPluginPath from example host
+ - use doxygen or something
+ - GMPI:: namespace for C++ stuff?
+ - make Windows .vcproj files in examples/ (how to build sdk and lib?)
+ - if QueryInterface returned void *, rather than arg to void **, code
+   gets cleaner.
+ 
+Notes:
+* We need to enumerate more error values and plug them in where
+  appropriate.
+
+* We need docs on the overal architecture, how the ABI works, etc.
+
+* Tracing needs help to actually be useful.
+
+Opinions Wanted:
+* Should the Makefile mess be totally self-contained under the example trees?
+
+To Do:
+* SDK versioning
+* MacOS X and other builds
+* Makefile
+  - abstraction for platforms
+  - simplification (too much duplicated)
+  - dependencies
+* MSVC projects for C/C++ example host/plugin
+* better call tracing
+  - depth tracking
+  - argument printing
+* unit tests
+
+Next:
+* expand IGMPI_Host interface
+* external metadata spec
+
+------------------
+* a list of GUIDs "compat_with" in metadata
+	(cover this version crap in the spec)
+  When instantiating a GUID:
+    Do you have patch data to restore?
+        Yes: Do you have the specific version installed?
+            Yes: Do you have a newer version installed?
+                Yes: Ask the user if they want the newest version or the
+                  exact version.
+                No: Instantiate the exact version of the GUID.
+            No: Warn the user, then instantiate the latest version of the
+            GUID.
+        No: Instantiate the latest version of the GUID.
+
+Alternatively: Just warn the user that they have multiple versions of the
+same GUID and that all instances will use the newest instance.  Simple.
+------------------

@@ -1,0 +1,22 @@
+This is a quick overview of reference counting in GMPI.
+
+The quick rule of thumb is that you should have one call to Release() for
+every call to AddRef().  Mostly, developers should not have to even think
+about reference counting.  One exception to this is for host developers.
+When you pass an IGMPI_Host derived object to a plugin, you must call
+AddRef().  The plugin will own that reference and will Release it when
+appropriate.
+
+Within the SDK, however, it's important that refcounting be done right.
+Whenever you get an object from a call to the QueryInterface() method of
+any interface, you own that object.  Whenever you get an object from a
+call to a factory CreateInstance() method, you own that object.  Whenever
+the host passes you an object, you own that object.  When you own an
+object, you must Release() it.
+
+The C++ *Intf wrapper classes encapsulate this rule in their destructors.
+If you merely create and destroy *Intf derived objects, you should be
+fine.  If you ever call AddRef(), you almost certainly need to call
+Release().
+
+When in doubt, ask yourself "who owns this reference?".

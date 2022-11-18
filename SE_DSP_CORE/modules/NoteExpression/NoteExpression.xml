@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<PluginList>
+	<Plugin id="SE Note Expression2" name="Per-Note Controllers" category="MIDI" polyphonicSource="true" polyphonic="true" cloned="true">
+		<Audio>
+			<Pin name="Volume" datatype="float" private="true" hostConnect="Voice/Volume" />
+			<Pin name="Pan" datatype="float" private="true" hostConnect="Voice/Pan" />
+			<Pin name="Brightness" datatype="float" private="true" hostConnect="Voice/Brightness" />
+			<Pin name="Pressure" datatype="float" private="true" hostConnect="Voice/Aftertouch" />
+
+			<Pin name="Volume" datatype="float" direction="out" />
+			<Pin name="Pan" datatype="float" direction="out" />
+			<Pin name="Brightness" datatype="float" direction="out" />
+			<Pin name="Pressure" datatype="float" direction="out" />
+		</Audio>
+	</Plugin>
+	<Plugin id="SE Note Expression" name="Note Expression" category="Old" polyphonicSource="true" cloned="true" graphicsApi="none">
+    <Audio>
+      <Pin id="0" name="Note Volume" datatype="float" direction="in" private="true" hostConnect="Voice/Volume" />
+      <Pin id="1" name="Note Pan" datatype="float" direction="in" private="true" hostConnect="Voice/Pan" />
+      <Pin id="2" name="Note Vibrato" datatype="float" direction="in" private="true" hostConnect="Voice/Vibrato" />
+      <Pin id="3" name="Note Expression" datatype="float" direction="in" private="true" hostConnect="Voice/Expression" />
+      <Pin id="4" name="Note Brightness" datatype="float" direction="in" private="true" hostConnect="Voice/Brightness" />
+      <Pin id="5" name="Custom 1" datatype="float" direction="in" private="true" hostConnect="Voice/UserControl0" />
+      <Pin id="6" name="Custom 2" datatype="float" direction="in" private="true" hostConnect="Voice/UserControl1" />
+      <Pin id="7" name="Custom 3" datatype="float" direction="in" private="true" hostConnect="Voice/UserControl2" />
+
+      <Pin id="8" name="Note Volume" datatype="float" direction="out" rate="audio" />
+      <Pin id="9" name="Note Pan" datatype="float" direction="out" rate="audio" />
+      <Pin id="10" name="Note Vibrato" datatype="float" direction="out" rate="audio" />
+      <Pin id="11" name="Note Expression" datatype="float" direction="out" rate="audio" />
+      <Pin id="12" name="Note Brightness" datatype="float" direction="out" rate="audio" />
+      <Pin id="13" name="Custom 1" datatype="float" direction="out" rate="audio" />
+      <Pin id="14" name="Custom 2" datatype="float" direction="out" rate="audio" />
+      <Pin id="15" name="Custom 3" datatype="float" direction="out" rate="audio" />
+    </Audio>
+  </Plugin>
+</PluginList>

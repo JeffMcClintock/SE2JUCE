@@ -1,0 +1,1 @@
+xcopy /S /Y  *.* "C:\Program Files\SynthEdit\modules\help\"

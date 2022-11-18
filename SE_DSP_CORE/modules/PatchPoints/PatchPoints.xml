@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Patch Point in" name="Patch Point&lt;-" category="Experimental" graphicsApi="GmpiGui">
+    
+    <!-- This parameter hold the connections -->
+    <Parameters>
+      <Parameter id="0" name="CableData" datatype="blob" />
+    </Parameters>
+    
+      <Audio>
+        <Pin name="Input" datatype="float" rate="audio" isMinimised="true" />
+        <Pin name="Output" datatype="float" direction="out" rate="audio" />
+        <Pin name="CableData" datatype="blob" parameterId="0" />
+      </Audio>
+    <GUI>
+      <Pin name="CableData" datatype="blob" parameterId="0" />
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Patch Point out" name="Patch Point-&gt;" category="Experimental" graphicsApi="GmpiGui">
+    <Audio>
+      <Pin name="Input" datatype="float" rate="audio" />
+      <Pin name="Output" datatype="float" direction="out" rate="audio" isMinimised="true" />
+    </Audio>
+    <GUI>
+    </GUI>
+  </Plugin>
+</PluginList>

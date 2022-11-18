@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+  <Plugin id="SynthEdit Keyboard2"  name="Keyboard (CV)" category="Controls" graphicsApi="composited" polyphonicSource="true" cloned="true" helpUrl="Keyboard2.htm">
+    <Audio>
+      <Pin id="0" name="PitchX" direction="in" datatype="float" hostConnect="Voice/Pitch" />
+      <Pin id="1" name="TriggerX" direction="in" datatype="float" hostConnect="Voice/Trigger" />
+      <Pin id="2" name="GateX" direction="in" datatype="float" hostConnect="Voice/Gate" private="true" />
+      <Pin id="3" name="VelocityKeyOnX" direction="in" datatype="float" hostConnect="Voice/VelocityKeyOn"  />
+      <Pin id="4" name="VelocityKeyOffX" direction="in" datatype="float" hostConnect="Voice/VelocityKeyOff"  />
+      <Pin id="5" name="AftertouchX" direction="in" datatype="float" hostConnect="Voice/Aftertouch" />
+      <Pin id="6" name="Unused" direction="in" datatype="int" private ="true"/>
+      <Pin id="7" name="VoiceReset" direction="in" datatype="float" hostConnect="Voice/Active" isPolyphonic="true" />
+      <Pin id="8" name="Bender" direction="in" datatype="float" hostConnect="Bender" />
+
+      <Pin id="9" name="Glide Type" direction="in" datatype="enum" metadata="Constant Time,Constant Rate"/>
+      <Pin id="10" name="Glide Rate" direction="in" datatype="float" rate="audio"/>
+      <Pin id="11" name="Bend Range" direction="in" datatype="float" rate="audio" default="0.2"/>
+      <Pin id="20" name="HoldPedal" direction="in" datatype="float" hostConnect="HoldPedal"  />
+
+      <Pin id="12" name="Pitch" direction="out" datatype="float" rate="audio"/>
+      <Pin id="13" name="Trigger" direction="out" datatype="float" rate="audio"/>
+      <Pin id="14" name="Gate" direction="out" datatype="float" rate="audio"/>
+      <Pin id="15" name="Velocity" direction="out" datatype="float" rate="audio"/>
+      <Pin id="16" name="Aftertouch" direction="out" datatype="float" rate="audio"/>
+      <Pin id="17" name="Raw Pitch" direction="out" datatype="float" />
+      <Pin id="18" name="Raw Velocity-On" direction="out" datatype="float" />
+      <Pin id="19" name="Raw Velocity-Off" direction="out" datatype="float" />
+       <!-- These two are special. SynthEdit identifies these by their name and sets polyphony from them. -->
+     <!--
+      <Pin id="21" name="Polyphony" direction="in" datatype="float" default="6" noAutomation="true" private="true"/>
+      <Pin id="22" name="Polyphony Reserve" direction="in" datatype="float" default="3" noAutomation="true" private="true"/>
+      -->
+    </Audio>
+    <GUI>
+<!--
+      <Pin id="0" name="Pitch" direction="in" datatype="float" hostConnect="Voice/Pitch" isPolyphonic="true" />
+-->
+      <Pin id="2" name="Gate" direction="in" datatype="float" hostConnect="Voice/Gate" isPolyphonic="true" private ="true"/>
+      <Pin id="3" name="Velocity" direction="in" datatype="float" hostConnect="Voice/VelocityKeyOn" isPolyphonic="true" private ="true"/>
+<!--
+      <Pin id="4" name="VoiceAllocationMode" direction="in" datatype="int" hostConnect="VoiceAllocationMode" private ="true"/>
+      <Pin id="5" name="Allocation Mode" direction="out" datatype="int" />
+      <Pin id="6" name="Item List" direction="out" datatype="string" />
+      <Pin id="7" name="Note Priority" direction="out" datatype="int" />
+      <Pin id="8" name="Item List" direction="out" datatype="string" />
+-->
+    </GUI>
+  </Plugin>
+</PluginList>

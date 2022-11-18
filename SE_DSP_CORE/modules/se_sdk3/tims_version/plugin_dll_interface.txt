@@ -1,0 +1,51 @@
+The GMPI plugin DLL interface is very simple.  There are only a few entry
+points, which are identified by their symbolic names.  All DLL interfaces are
+GMPI_STDCALL and use C linkage.
+
+
+* GMPI_GetFactory
+
+  GMPI_Result GMPI_GetFactory(IGMPI_Unknown **object);
+
+  This is the only required entry point.  Hosts will call this entry
+  function to get access to the internals of the DLL.  This function takes
+  1 argument - a pointer to a pointer to IGMPI_Unknown.  The host will
+  call the QueryInterface method of the Unknown object to retrieve an
+  IGMPI_Factory or similar interface.
+
+  Returns:
+    On success, this function returns GMPI_SUCCESS and stores a pointer to
+    an IGMPI_Unknown in the object argument.
+
+    On failure, this function returns some other GMPI_Result.
+
+
+* GMPI_PreDllHook
+
+  GMPI_Result GMPI_PreDllHook(void);
+
+  This is an optional entry point.  If this symbol exists, it will be
+  called after the DLL is loaded, but before any accesses to the DLL are
+  made.  This function takes no arguments.
+
+  Returns:
+    On success, this function returns GMPI_SUCCESS.
+
+    On failure, this function returns some other GMPI_Result.  If this
+    function fails, the DLL must be unloaded and no other entry points may
+    be called (excepting platform-specific entry points which may be called
+    as part of the unloading process).
+
+
+* GMPI_PostDllHook
+
+  void GMPI_PostDllHook(void);
+
+  This is an optional entry point.  If this symbol exists, it will be
+  called before the DLL is unloaded.  No other accesses to the DLL will be
+  made after this function (excepting platform-specific entry points which
+  may be called as part of the unloading process).  This function takes no
+  arguments and can not fail.
+
+  Returns:
+    None.

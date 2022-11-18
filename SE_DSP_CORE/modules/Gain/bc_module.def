@@ -1,0 +1,26 @@
+;LIBRARY			Module
+;EXPORTS			main
+
+; GCC
+;EXPORTS            main  in 
+;EXPORTS            main=main_plugin 
+
+;Borland Free Compiler..
+
+LIBRARY MODULE.DLL INITGLOBAL
+
+DESCRIPTION 'SE_MODULE'
+
+EXPORTS
+
+getModuleProperties
+makeModule
+
+EXETYPE WINDOWS
+
+CODE PRELOAD MOVEABLE DISCARDABLE
+
+DATA PRELOAD SINGLE
+
+HEAPSIZE 4096
+

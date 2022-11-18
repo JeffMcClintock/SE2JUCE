@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+	<Plugin id="EnvRetriggerModeAutoSet" name="Env Retrigger Mode Auto-Set" category="Special" helpUrl="EnvRetriggerModeAutoSet.htm">
+		<Audio>
+			<Pin id="0" name="VoiceReset" direction="in" datatype="float" hostConnect="Voice/Active" isPolyphonic="true"/>
+      <Pin id="1" name="Gate" direction="in" datatype="float" rate="audio"/>
+      <Pin id="2" name="ReTriggerMode" direction="out" datatype="enum"/>
+		</Audio>
+	</Plugin>
+</PluginList>
+
+

@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <!-- equivalent of PatchMemory - float !!maybe should be 'double' everywhere??? -->
+  <Plugin id="CD Value" name="Value" category="Graphics">
+    <Parameters>
+      <Parameter id="0" datatype="float" />
+    </Parameters>
+    <GUI>
+      <Pin name="Value In" datatype="float" />
+      <Pin name="Value Out" datatype="float" direction="out" />
+    </GUI>
+    <Audio>
+      <Pin id="0" name="PM In" datatype="float" parameterId="0" />
+      <Pin id="1" name="PM Out" direction="out" datatype="float" parameterId="0" private ="true"/>
+      <Pin id="2" name="In Enabled" datatype="bool" />
+      <Pin id="3" name="Value In" datatype="float" />
+      <Pin id="4" name="Value Out" direction="out" datatype="float" />
+    </Audio>
+  </Plugin>
+
+  <Plugin id="SE CadmiumRenderer" name="CadmiumRenderer" category="Debug">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="JSON" datatype="string"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Render" name="Render" category="Graphics">
+    <GUI graphicsApi="GmpiGui">
+      <Pin name="Brush" datatype="class:brush"/>
+      <Pin name="Geometry" datatype="class:geometry"/>
+    </GUI>
+  </Plugin>
+
+  <Plugin id="CD Square" name="Square" category="Graphics">
+    <GUI>
+      <Pin name="Size" datatype="float" />
+      <Pin name="Center" datatype="class:point" />
+      <Pin name="Geometry" datatype="class:geometry" direction="out" />
+    </GUI>
+  </Plugin>
+
+  <Plugin id="CD Circle" name="Circle" category="Graphics">
+    <GUI graphicsApi="Cadmium">
+      <Pin name="Radius" datatype="float" />
+      <Pin name="Geometry" datatype="class:geometry" direction="out" />
+    </GUI>
+  </Plugin>
+
+  <Plugin id="SE Solid Color Brush" name="Solid Color Brush" category="Graphics">
+    <GUI>
+      <Pin name="Color" datatype="string" default="aaffa500"/>
+      <Pin name="Brush" datatype="class:brush" direction="out" />
+    </GUI>
+  </Plugin>
+
+  <Plugin id="CD Pointer" name="Pointer" category="Graphics">
+    <GUI>
+      <Pin name="Point" datatype="class:point" direction="out" />
+    </GUI>
+  </Plugin>
+
+</PluginList>

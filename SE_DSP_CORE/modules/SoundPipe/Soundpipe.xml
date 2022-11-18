@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SP Reverb JC" name="Reverb JC" category="Effects">
+    <Audio>
+      <Pin name="In" datatype="float" rate="audio" linearInput="true" />
+      <Pin name="Out" datatype="float" rate="audio" direction="out" />
+    </Audio>
+  </Plugin>
+  
+  <Plugin id="SP Reverb SP" name="Reverb SP" category="Effects">
+    <Audio>
+      <Pin name="L In" datatype="float" rate="audio" linearInput="true" />
+      <Pin name="R In" datatype="float" rate="audio" linearInput="true" />
+      <Pin name="L Out" datatype="float" rate="audio" direction="out" />
+      <Pin name="R Out" datatype="float" rate="audio" direction="out" />
+      <Pin name="Feedback" datatype="float" default="0.97" />
+      <Pin name="Low Pass (Hz)" datatype="float" default="10000" />
+    </Audio>
+  </Plugin>
+  
+    <Plugin id="SP Reverb Zita" name="Reverb Zita" category="Effects">
+    <Audio>
+      <Pin name="L In" datatype="float" rate="audio" linearInput="true" />
+      <Pin name="R In" datatype="float" rate="audio" linearInput="true" />
+      <Pin name="L Out" datatype="float" rate="audio" direction="out" />
+      <Pin name="R Out" datatype="float" rate="audio" direction="out" />
+      <Pin name="Predelay (ms)" datatype="float" default="60" />
+      <Pin name="Crossover L-M (Hz)" datatype="float" default="200" />
+      <Pin name="Low Time (s)" datatype="float" default="3" />
+      <Pin name="Mid Time (s)" datatype="float" default="2" />
+      <Pin name="HF Damp (Hz)" datatype="float" default="6000" />
+      <Pin name="EQ Low Freq (Hz)" datatype="float" default="315" />
+      <Pin name="EQ Low (dB)" datatype="float" />
+      <Pin name="EQ Mid Freq (Hz)" datatype="float" default="1500" />
+      <Pin name="EQ Mid (dB)" datatype="float" />
+      <Pin name="Mix" datatype="float" default="0.5" />
+      <Pin name="Level (dB)" datatype="float" default="-20" />
+    </Audio>
+  </Plugin>
+</PluginList>

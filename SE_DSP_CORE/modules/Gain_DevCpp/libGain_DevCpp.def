@@ -1,0 +1,5 @@
+; dlltool --base-file C:\DOCUME~1\Jef\LOCALS~1\Temp/cca03168.base --output-exp Gain_DevCpp.exp --dllname Gain_DevCpp.sem --output-def libGain_DevCpp.def --no-export-all-symbols --add-stdcall-alias --exclude-symbol=DllMainCRTStartup@12 --def ../se_sdk3/devc_module.def --output-lib libGain_DevCpp.a
+EXPORTS
+	DllMain@12 @ 1
+	DllMain = DllMain@12 @ 2
+	MP_GetFactory = MP_GetFactory@4 @ 3

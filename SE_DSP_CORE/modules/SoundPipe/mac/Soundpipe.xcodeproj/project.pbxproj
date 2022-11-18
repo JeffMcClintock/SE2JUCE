@@ -1,0 +1,351 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0CBCDAA719C13C95009EEA29 /* Soundpipe.sem in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8D576316048677EA00EA77CD /* Soundpipe.sem */; };
+		8D576314048677EA00EA77CD /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA1909FFE8422F4C02AAC07 /* CoreFoundation.framework */; };
+		8D5B49A804867FD3000E48DA /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8D5B49A704867FD3000E48DA /* InfoPlist.strings */; };
+		D5A2F7E321B77D1100A93F36 /* ReverbSp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7E021B77D1100A93F36 /* ReverbSp.cpp */; };
+		D5A2F7E421B77D1100A93F36 /* ReverbZita.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7E121B77D1100A93F36 /* ReverbZita.cpp */; };
+		D5A2F7E521B77D1100A93F36 /* ReverbChowning.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7E221B77D1100A93F36 /* ReverbChowning.cpp */; };
+		D5A2F7E721B77E2500A93F36 /* Soundpipe.xml in Resources */ = {isa = PBXBuildFile; fileRef = D5A2F7E621B77E2500A93F36 /* Soundpipe.xml */; };
+		D5A2F7EA21B781C600A93F36 /* base.c in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7E921B781C600A93F36 /* base.c */; };
+		D5A2F7EC21B781E500A93F36 /* jcrev.c in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7EB21B781E500A93F36 /* jcrev.c */; };
+		D5A2F7EE21B7821000A93F36 /* revsc.c in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7ED21B7821000A93F36 /* revsc.c */; };
+		D5A2F7F021B7822600A93F36 /* zitarev.c in Sources */ = {isa = PBXBuildFile; fileRef = D5A2F7EF21B7822600A93F36 /* zitarev.c */; };
+		D5C87A4017D6B09100ED3316 /* PkgInfo in Resources */ = {isa = PBXBuildFile; fileRef = D5C87A3F17D6B09100ED3316 /* PkgInfo */; };
+		D5C87B2217D6C83E00ED3316 /* mp_sdk_audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D5C87B1D17D6C83E00ED3316 /* mp_sdk_audio.cpp */; };
+		D5C87B2417D6C83E00ED3316 /* mp_sdk_common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D5C87B2017D6C83E00ED3316 /* mp_sdk_common.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0CEB1F9C19B95CE40024780F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(PROJECT_DIR)/../../../../../cibuild/modules";
+			dstSubfolderSpec = 0;
+			files = (
+				0CBCDAA719C13C95009EEA29 /* Soundpipe.sem in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		0AA1909FFE8422F4C02AAC07 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		8D576316048677EA00EA77CD /* Soundpipe.sem */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Soundpipe.sem; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D576317048677EA00EA77CD /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6B20AEE1F563947001190CA /* gmpi_simd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gmpi_simd.h; path = ../../shared/gmpi_simd.h; sourceTree = "<group>"; };
+		D5A2F7E021B77D1100A93F36 /* ReverbSp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReverbSp.cpp; path = ../ReverbSp.cpp; sourceTree = "<group>"; };
+		D5A2F7E121B77D1100A93F36 /* ReverbZita.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReverbZita.cpp; path = ../ReverbZita.cpp; sourceTree = "<group>"; };
+		D5A2F7E221B77D1100A93F36 /* ReverbChowning.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReverbChowning.cpp; path = ../ReverbChowning.cpp; sourceTree = "<group>"; };
+		D5A2F7E621B77E2500A93F36 /* Soundpipe.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = Soundpipe.xml; path = ../Soundpipe.xml; sourceTree = "<group>"; };
+		D5A2F7E921B781C600A93F36 /* base.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = base.c; path = ../../../../SDKs/Soundpipe/modules/base.c; sourceTree = "<group>"; };
+		D5A2F7EB21B781E500A93F36 /* jcrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jcrev.c; path = ../../../../SDKs/Soundpipe/modules/jcrev.c; sourceTree = "<group>"; };
+		D5A2F7ED21B7821000A93F36 /* revsc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = revsc.c; path = ../../../../SDKs/Soundpipe/modules/revsc.c; sourceTree = "<group>"; };
+		D5A2F7EF21B7822600A93F36 /* zitarev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zitarev.c; path = ../../../../SDKs/Soundpipe/modules/zitarev.c; sourceTree = "<group>"; };
+		D5A2F7F121B7823900A93F36 /* revsc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = revsc.h; path = ../../../../SDKs/Soundpipe/h/revsc.h; sourceTree = "<group>"; };
+		D5A2F7F221B7824200A93F36 /* zitarev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = zitarev.h; path = ../../../../SDKs/Soundpipe/h/zitarev.h; sourceTree = "<group>"; };
+		D5A2F7F321B7825300A93F36 /* jcrev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = jcrev.h; path = ../../../../SDKs/Soundpipe/h/jcrev.h; sourceTree = "<group>"; };
+		D5A2F7F421B7825E00A93F36 /* base.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = base.h; path = ../../../../SDKs/Soundpipe/h/base.h; sourceTree = "<group>"; };
+		D5C87A3F17D6B09100ED3316 /* PkgInfo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PkgInfo; sourceTree = "<group>"; };
+		D5C87B1D17D6C83E00ED3316 /* mp_sdk_audio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mp_sdk_audio.cpp; path = ../../se_sdk3/mp_sdk_audio.cpp; sourceTree = SOURCE_ROOT; };
+		D5C87B1E17D6C83E00ED3316 /* mp_sdk_audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mp_sdk_audio.h; path = ../../se_sdk3/mp_sdk_audio.h; sourceTree = SOURCE_ROOT; };
+		D5C87B2017D6C83E00ED3316 /* mp_sdk_common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mp_sdk_common.cpp; path = ../../se_sdk3/mp_sdk_common.cpp; sourceTree = SOURCE_ROOT; };
+		D5C87B2117D6C83E00ED3316 /* mp_sdk_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mp_sdk_common.h; path = ../../se_sdk3/mp_sdk_common.h; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D576313048677EA00EA77CD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D576314048677EA00EA77CD /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		089C166AFE841209C02AAC07 /* Untitled */ = {
+			isa = PBXGroup;
+			children = (
+				D5A2F7E821B7818B00A93F36 /* Soundpipe */,
+				D5C87A4F17D6B11000ED3316 /* SDK */,
+				08FB77AFFE84173DC02AAC07 /* Source */,
+				089C167CFE841241C02AAC07 /* Resources */,
+				089C1671FE841209C02AAC07 /* External Frameworks and Libraries */,
+				19C28FB6FE9D52B211CA2CBB /* Products */,
+				D5C87A3F17D6B09100ED3316 /* PkgInfo */,
+			);
+			name = Untitled;
+			sourceTree = "<group>";
+		};
+		089C1671FE841209C02AAC07 /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				0AA1909FFE8422F4C02AAC07 /* CoreFoundation.framework */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		089C167CFE841241C02AAC07 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				D5A2F7E621B77E2500A93F36 /* Soundpipe.xml */,
+				8D576317048677EA00EA77CD /* Info.plist */,
+				8D5B49A704867FD3000E48DA /* InfoPlist.strings */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		08FB77AFFE84173DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				D5A2F7E221B77D1100A93F36 /* ReverbChowning.cpp */,
+				D5A2F7E021B77D1100A93F36 /* ReverbSp.cpp */,
+				D5A2F7E121B77D1100A93F36 /* ReverbZita.cpp */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		19C28FB6FE9D52B211CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D576316048677EA00EA77CD /* Soundpipe.sem */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D5A2F7E821B7818B00A93F36 /* Soundpipe */ = {
+			isa = PBXGroup;
+			children = (
+				D5A2F7F421B7825E00A93F36 /* base.h */,
+				D5A2F7F321B7825300A93F36 /* jcrev.h */,
+				D5A2F7F221B7824200A93F36 /* zitarev.h */,
+				D5A2F7F121B7823900A93F36 /* revsc.h */,
+				D5A2F7ED21B7821000A93F36 /* revsc.c */,
+				D5A2F7EB21B781E500A93F36 /* jcrev.c */,
+				D5A2F7E921B781C600A93F36 /* base.c */,
+				D5A2F7EF21B7822600A93F36 /* zitarev.c */,
+			);
+			name = Soundpipe;
+			sourceTree = "<group>";
+		};
+		D5C87A4F17D6B11000ED3316 /* SDK */ = {
+			isa = PBXGroup;
+			children = (
+				A6B20AEE1F563947001190CA /* gmpi_simd.h */,
+				D5C87B1D17D6C83E00ED3316 /* mp_sdk_audio.cpp */,
+				D5C87B1E17D6C83E00ED3316 /* mp_sdk_audio.h */,
+				D5C87B2017D6C83E00ED3316 /* mp_sdk_common.cpp */,
+				D5C87B2117D6C83E00ED3316 /* mp_sdk_common.h */,
+			);
+			name = SDK;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D57630D048677EA00EA77CD /* Soundpipe */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB911A08733D790010E9CD /* Build configuration list for PBXNativeTarget "Soundpipe" */;
+			buildPhases = (
+				8D57630F048677EA00EA77CD /* Resources */,
+				8D576311048677EA00EA77CD /* Sources */,
+				8D576313048677EA00EA77CD /* Frameworks */,
+				0CEB1F9C19B95CE40024780F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Soundpipe;
+			productInstallPath = "$(HOME)/Library/Bundles";
+			productName = Untitled;
+			productReference = 8D576316048677EA00EA77CD /* Soundpipe.sem */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		089C1669FE841209C02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0510;
+			};
+			buildConfigurationList = 1DEB911E08733D790010E9CD /* Build configuration list for PBXProject "Soundpipe" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 089C166AFE841209C02AAC07 /* Untitled */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8D57630D048677EA00EA77CD /* Soundpipe */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D57630F048677EA00EA77CD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D5A2F7E721B77E2500A93F36 /* Soundpipe.xml in Resources */,
+				8D5B49A804867FD3000E48DA /* InfoPlist.strings in Resources */,
+				D5C87A4017D6B09100ED3316 /* PkgInfo in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D576311048677EA00EA77CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D5C87B2217D6C83E00ED3316 /* mp_sdk_audio.cpp in Sources */,
+				D5C87B2417D6C83E00ED3316 /* mp_sdk_common.cpp in Sources */,
+				D5A2F7E521B77D1100A93F36 /* ReverbChowning.cpp in Sources */,
+				D5A2F7EE21B7821000A93F36 /* revsc.c in Sources */,
+				D5A2F7EC21B781E500A93F36 /* jcrev.c in Sources */,
+				D5A2F7E421B77D1100A93F36 /* ReverbZita.cpp in Sources */,
+				D5A2F7EA21B781C600A93F36 /* base.c in Sources */,
+				D5A2F7F021B7822600A93F36 /* zitarev.c in Sources */,
+				D5A2F7E321B77D1100A93F36 /* ReverbSp.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		8D5B49A704867FD3000E48DA /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C167EFE841241C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB911B08733D790010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_X86_VECTOR_INSTRUCTIONS = sse3;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../SDKs/Soundpipe",
+					"$(PROJECT_DIR)/../../../../SDKs/Soundpipe/lib/dr_wav",
+					"$(PROJECT_DIR)/../../../../SDKs/Soundpipe/lib/faust",
+				);
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = "arm64 arm64e x86_64";
+				WRAPPER_EXTENSION = sem;
+			};
+			name = Debug;
+		};
+		1DEB911C08733D790010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_X86_VECTOR_INSTRUCTIONS = sse3;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../SDKs/Soundpipe",
+					"$(PROJECT_DIR)/../../../../SDKs/Soundpipe/lib/dr_wav",
+					"$(PROJECT_DIR)/../../../../SDKs/Soundpipe/lib/faust",
+				);
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = "arm64 arm64e x86_64";
+				WRAPPER_EXTENSION = sem;
+			};
+			name = Release;
+		};
+		1DEB911F08733D790010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_X86_VECTOR_INSTRUCTIONS = avx2;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "";
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "NO_LIBSNDFILE=1";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+			};
+			name = Debug;
+		};
+		1DEB912008733D790010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_X86_VECTOR_INSTRUCTIONS = avx2;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PREPROCESSOR_DEFINITIONS = "";
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "NO_LIBSNDFILE=1";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB911A08733D790010E9CD /* Build configuration list for PBXNativeTarget "Soundpipe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB911B08733D790010E9CD /* Debug */,
+				1DEB911C08733D790010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB911E08733D790010E9CD /* Build configuration list for PBXProject "Soundpipe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB911F08733D790010E9CD /* Debug */,
+				1DEB912008733D790010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 089C1669FE841209C02AAC07 /* Project object */;
+}

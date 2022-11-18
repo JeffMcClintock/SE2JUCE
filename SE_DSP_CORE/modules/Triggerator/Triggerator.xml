@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+  <Plugin id="SE Triggerator" name="Triggerator" category="Sub-Controls" graphicsApi="none" helpUrl="synthedit.chm::/mdl_sdk3/Triggerator.htm">
+    <GUI>
+      <Pin id="0" name="Reset" direction="in" datatype="bool"/>
+      <Pin id="1" name="Trigger" direction="in" datatype="bool"/>
+      <Pin id="2" name="Animation Pos" direction="out" datatype="float"/>
+    </GUI>
+  </Plugin>
+</PluginList>

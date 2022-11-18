@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="EA MIDI Monitor" name="MIDI Monitor" category="Waves">
+    <GUI graphicsApi="GmpiGui" />
+    <Audio>
+      <Pin name="MIDI In" datatype="midi" />
+      <Pin name="Channel" datatype="enum" default="-1" ignorePatchChange="true" metadata="All=-1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
+    </Audio>
+  </Plugin>
+</PluginList>

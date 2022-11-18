@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<PluginList>
+  <Plugin id="SE Sample Oscillator2" name="Sample Oscillator2" category="Waveform" helpUrl="SampleOscillator2.htm">
+    <Audio>
+      <Pin id="0" name="Sample ID" direction="in" datatype="int"/>
+      <Pin id="1" name="Pitch" direction="in" datatype="float" rate="audio" default="0.5"/>
+      <Pin id="2" name="Trigger" direction="in" datatype="float" rate="audio" default="1.0"/>
+      <Pin id="3" name="Gate" direction="in" datatype="float" rate="audio" default="1.0"/>
+      <Pin id="4" name="Velocity" direction="in" datatype="float" rate="audio" default="0.8"/>
+      <Pin id="5" name="Quality" direction="in" datatype="enum" metadata="None=0,Low (Linear)=2,Mid (Cubic)= 4,High (sinc8)=8" default="8"/>
+
+      <Pin id="6" name="Left (mono)" direction="out" datatype="float" rate="audio"/>
+      <Pin id="7" name="Right" direction="out" datatype="float" rate="audio"/>
+    </Audio>
+  </Plugin>
+
+  <Plugin id="SE Sample Loader2" name="Sample Loader2" category="Waveform" helpUrl="SampleOscillator2.htm" >
+    <Audio>
+      <Pin id="0" name="Filename" direction="in" datatype="string" isFilename="true" metadata="sf2"/>
+      <Pin id="1" name="Bank" direction="in" datatype="int" default="0"/>
+      <Pin id="2" name="Patch" direction="in" datatype="int" default="0"/>
+      <Pin id="3" name="Sample ID" direction="out" datatype="int"/>
+    </Audio>
+  </Plugin>
+
+  <Plugin id="SE Sample Loader2Gui" name="Sample Loader2 GUI" category="Waveform" helpUrl="SampleOscillator2.htm" >
+    <GUI>
+      <Pin id="0" name="Filename" direction="in" datatype="string" isFilename="true" metadata="sf2"/>
+      <Pin id="1" name="Bank" direction="in" datatype="int" />
+      <Pin id="2" name="Bank Names" direction="out" datatype="string" />
+      <Pin id="3" name="Patch Names" direction="out" datatype="string" />
+      <Pin id="4" name="Patch" direction="in" datatype="int" />
+    </GUI>
+  </Plugin>
+  
+  <Plugin id="SE Sample Exclusive Hihat" name="Sample Exclusive Hihat" category="Waveform" helpUrl="SampleOscillator2.htm">
+    <Audio>
+      <Pin id="0" name="MIDI In" direction="in" datatype="midi"/>
+      <Pin id="1" name="MIDI Out" direction="out" datatype="midi"/>
+    </Audio>
+  </Plugin>
+
+</PluginList>
+

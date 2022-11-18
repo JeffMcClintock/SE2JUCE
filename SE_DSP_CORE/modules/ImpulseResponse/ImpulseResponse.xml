@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<PluginList>
+  <Plugin id="SE Impulse Response" name="Impulse Response" category="Old" helpUrl="SE Impulse Response.html" graphicsApi="composited">
+    <Parameters>
+      <Parameter id="0" datatype="blob" name="Results" metadata="" default="" private="true" ignorePatchChange="true" persistant="false" />
+      <Parameter id="1" datatype="float" name="sampleRate" metadata="" default="" private="true" ignorePatchChange="true" persistant="false" />
+    </Parameters>
+    <Audio>
+      <Pin name="Impulse In" datatype="float" rate="audio" />
+      <Pin name="Signal in" datatype="float" rate="audio" />
+      <Pin name="Mode" datatype="enum" metadata="Impulse Response,Frequency Response" />
+      <Pin name="Results" datatype="blob" direction="out" private="true" parameterId="0" />
+      <Pin name="sampleRate" datatype="float" direction="out" private="true" parameterId="1" />
+    </Audio>
+    <GUI>
+      <Pin name="Results" datatype="blob" private="true" parameterId="0" />
+      <Pin name="sampleRate" datatype="float" private="true" parameterId="1" />
+    </GUI>
+  </Plugin>
+</PluginList>
