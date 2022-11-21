@@ -1,15 +1,26 @@
 # Introduction 
-This repository supports exporting SynthEdit projects to C++ JUCE projects. 
+SE2JUCE supports exporting SynthEdit projects to C++ JUCE projects. 
 
-# Getting Started
-clone SynthEditJUCE repo
+# Prerequisites
+Install Visual Studio or your IDE of choice
+Install CMake
+
+# Getting Started with the PD303 example
+clone SE2JUCE repo
 clone JUCE, Add VST2 headers if you need them. Clone AAX SDK if you need it.
 
-Open SE
-open project from SE_Project folder
-open Projucer (might need to build)
-File/Gobal paths - set location of your copy of JUCE
-under File Explorer/Resources/skin add any file from SE_Project/Resources that is not an .xml
-Click 'settings' icon (like a gear at top left), set 'Project Name', 'Company Name', 'Company Website' Plugin Code and Manufacturer code
+clone SE2JUCE_Projects repo
 
-Click 'Exporter' icon (at top right of 'Selected Exporter) in JUCE to export
+Open SE
+open project from SE2JUCE_Plugins/PD303/SE_Project/PD303.se1
+"File/Export Juce"
+close SE
+
+Open Cmake
+Under "where is the source code" enter location of SE2JUCE_Plugins folder
+Under "where to build the binaries" enter something like C:\build_SE2JUCE_Plugins (or anywhere you prefer to put the temporary files created during the build).
+Click 'Configure", choose whatever IDE you prefer. Ignore the error message.
+enter the correct JUCE folder, and the correct SE2JUCE folder
+click 'generate'
+click 'open project' (your IDE should open)
+build and try out the plugin
