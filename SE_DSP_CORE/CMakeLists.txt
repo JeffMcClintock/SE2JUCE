@@ -71,6 +71,7 @@ modules_internal/RegistrationCheck.cpp
 
 set(srcs_dspfilters
 DSPFilters/Biquad.cpp
+DSPFilters/Butterworth.cpp
 DSPFilters/Cascade.cpp
 DSPFilters/Elliptic.cpp
 DSPFilters/Filter.cpp
@@ -411,11 +412,9 @@ modules/EnvelopeAdsr/envelope.cpp
 modules/EnvelopeAdsr/Adsr.cpp
 modules/ControlsXp/ListEntry.cpp
 modules/ControlsXp/Scope3.cpp
-modules/ControlsXp/VoltMeterGui.cpp
-modules/BoolInverter/BoolInverterGui.cpp
-modules/Converters/ConvertersGui.cpp
 modules/Converters/FloatToText.cpp
 modules/Converters/VoltsToMidiCc.cpp
+
 modules/PatchMemory/PatchMemoryBool.cpp
 modules/PatchMemory/PatchMemoryFloat.cpp
 modules/PatchMemory/PatchMemoryInt.cpp
@@ -428,6 +427,7 @@ modules/PatchMemory/PatchMemoryfloatGui.cpp
 modules/PatchMemory/PatchMemoryFloatOutGui.cpp
 modules/PatchMemory/PatchMemoryListGui.cpp
 modules/PatchMemory/PatchMemoryTextOutGui.cpp
+
 modules/FloatLimiter/FloatLimiterGui.cpp
 modules/SubControlsXp/Image2GuiXp.cpp
 modules/SubControlsXp/PanelGroupGui.cpp
@@ -522,7 +522,6 @@ modules/shared/FontCache.cpp
 modules/shared/ImageMetadata.h
 modules/shared/ImageMetadata.cpp
 
-modules/PolyphonyControl/PolyphonyControlGui.h
 modules/ControlsXp/ListEntryGui.h
 modules/ControlsXp/ListEntryGui.cpp
 modules/ControlsXp/FreqAnalyserGui.cpp
@@ -530,6 +529,8 @@ modules/ControlsXp/ClassicControlGuiBase.cpp
 modules/ControlsXp/Scope3Gui.cpp
 modules/ControlsXp/SliderGui.h
 modules/ControlsXp/SliderGui.cpp
+modules/ControlsXp/VoltMeterGui.cpp
+
 modules/SubControlsXp/PanelGroupGui.h
 modules/SubControlsXp/PopupMenuGui.h
 modules/SubControlsXp/ListEntry4Gui.cpp
@@ -537,6 +538,10 @@ modules/SubControlsXp/ListEntry4Gui.h
 modules/SubControlsXp/TextEntry4Gui.h
 modules/SubControlsXp/PlainImageGui.h
 modules/SubControlsXp/PlainImageGui.cpp
+
+modules/BoolInverter/BoolInverterGui.cpp
+modules/Converters/ConvertersGui.cpp
+modules/PolyphonyControl/PolyphonyControlGui.h
 
 )
 endif()

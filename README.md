@@ -29,14 +29,15 @@ Optional:
 
 clone SE2JUCE_Projects repo. This provides an example plugin you can copy. https://github.com/JeffMcClintock/SE2JUCE_Projects
 
+(to export you own plugin, copy the entire PD303 folder, rename it and edit the two cmakelists.txt files, changing the plugin name etc)
+
 Open SE
 
 open project from SE2JUCE_Plugins/PD303/SE_Project/PD303.se1
 
-"File/Export Juce"
+"File/Export Juce" This will copy the project and it's skin to the 'Resources' folder of the JUCE project.
 
 close SE
-
 
 Open Cmake
 

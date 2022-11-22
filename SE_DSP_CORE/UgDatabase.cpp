@@ -2252,27 +2252,34 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 #endif
 
 #if GMPI_IS_PLATFORM_JUCE==1
-    INIT_STATIC_FILE(BpmClock3);
-    INIT_STATIC_FILE(Converters);
-//	INIT_STATIC_FILE(VoltsToMidiCc);
+	INIT_STATIC_FILE(ADSR);
+	INIT_STATIC_FILE(BpmClock3);
+	INIT_STATIC_FILE(BPMTempo);
+	INIT_STATIC_FILE(ButterworthHP);
+	INIT_STATIC_FILE(Converters);
 	INIT_STATIC_FILE(FreqAnalyser2);
 	INIT_STATIC_FILE(IdeLogger);
     INIT_STATIC_FILE(ImpulseResponse);
     INIT_STATIC_FILE(Inverter);
+	INIT_STATIC_FILE(MIDItoGate);
 	INIT_STATIC_FILE(NoteExpression);
+	INIT_STATIC_FILE(OscillatorNaive);
 	INIT_STATIC_FILE(PatchMemoryBool);
 	INIT_STATIC_FILE(PatchMemoryBool);
 	INIT_STATIC_FILE(PatchMemoryFloat);
 	INIT_STATIC_FILE(PatchMemoryInt);
-//	INIT_STATIC_FILE(PatchMemoryList);
+	INIT_STATIC_FILE(PatchMemoryList3);
 	INIT_STATIC_FILE(PatchMemoryText);
 	INIT_STATIC_FILE(Slider);
 	INIT_STATIC_FILE(SoftDistortion);
 	INIT_STATIC_FILE(Switch);
 	INIT_STATIC_FILE(UnitConverter);
+	INIT_STATIC_FILE(VoltsToMIDICC);
 	INIT_STATIC_FILE(Waveshaper3Xp);
 	INIT_STATIC_FILE(Waveshapers);
-//	INIT_STATIC_FILE(UserSettingText_Controller); // not generated automatically at present
+	INIT_STATIC_FILE(UserSettingText); // not generated automatically at present
+	INIT_STATIC_FILE(UserSettingText_Gui);
+	INIT_STATIC_FILE(UserSettingText_Controller);
 
 //	INIT_STATIC_FILE(Dynamics);
 //	INIT_STATIC_FILE(VoltMeter);
