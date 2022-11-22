@@ -5,6 +5,10 @@
 #include "../se_sdk3/MpString.h"
 #include <thread>
 
+#if defined(__APPLE__)
+#include "CoreFoundation/CoreFoundation.h"
+#endif
+
 using namespace std;
 using namespace gmpi;
 using namespace gmpi_sdk;

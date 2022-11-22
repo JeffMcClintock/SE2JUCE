@@ -84,12 +84,12 @@ void ReleaseVSTGUIBundleRef ()
 		gBundleRef = 0;
 }
  */
-
+/*
 CFBundleRef BundleInfo::GetBundle()
 {
     return CreatePluginBundleRef();
 }
-
+*/
 #endif
 
 BundleInfo* BundleInfo::instance()

@@ -101,6 +101,10 @@ modules/se_sdk3_hosting/DirectXGfx.h
 modules/se_sdk3_hosting/DirectXGfx.cpp
 modules/se_sdk3_hosting/DrawingFrame_win32.h
 modules/se_sdk3_hosting/DrawingFrame_win32.cpp
+modules/se_sdk3_hosting/SynthEditCocoaView.h
+modules/se_sdk3_hosting/SynthEditCocoaView.mm
+modules/se_sdk3_hosting/CocoaGuiHost.h
+modules/se_sdk3_hosting/CocoaGuiHost.mm
 modules/se_sdk3_hosting/Controller.h
 modules/se_sdk3_hosting/Controller.cpp
 modules/se_sdk3_hosting/ContainerView.h

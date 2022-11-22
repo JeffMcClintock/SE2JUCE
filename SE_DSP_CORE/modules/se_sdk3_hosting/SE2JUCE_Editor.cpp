@@ -20,7 +20,6 @@ void onCloseNativeView(void* ptr);
 
 #endif
 
-#include "BundleInfo.h"
 #include "../se_sdk3_hosting/JsonDocPresenter.h"
 #include "../se_sdk3_hosting/ContainerView.h"
 

@@ -41,7 +41,7 @@ SE2JUCE_Processor::SE2JUCE_Processor()
 
             juceParameter =
                 new juce::AudioParameterChoice(
-                    std::to_string(p->getNativeIndex()),    // parameterID
+                    {std::to_string(p->getNativeIndex()), 1},       // parameterID/versionhint
                     WStringToUtf8(p->name_).c_str(),                // parameter name
                     choices,
                     defaultItemIndex
@@ -51,7 +51,7 @@ SE2JUCE_Processor::SE2JUCE_Processor()
         {
             juceParameter =
                 new juce::AudioParameterFloat(
-                    std::to_string(p->getNativeIndex()),    // parameterID
+                    {std::to_string(p->getNativeIndex()), 1},       // parameterID/versionhint
                     WStringToUtf8(p->name_).c_str(),                // parameter name
                     static_cast<float>(p->normalisedToReal(0.0)),   // minimum value
                     static_cast<float>(p->normalisedToReal(1.0)),   // maximum value

@@ -1,10 +1,10 @@
 #include "VstPreset.h"
 #include "conversion.h"
-#include "../tinyxml2/tinyxml2.h"
+#include "../tinyXml2/tinyxml2.h"
 
 #include "public.sdk/source/vst/vstpresetfile.h"
 #include "public.sdk/source/common/memorystream.h"
-#include "pluginterfaces\vst\ivstcomponent.h"
+#include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
 
@@ -157,7 +157,10 @@ namespace VstPresetUtil
 #if defined(_WIN32)
 		size_t bytes_required = 1 + WideCharToMultiByte(CP_ACP, 0, p_cstring.c_str(), -1, 0, 0, NULL, NULL);
 #else
-		size_t bytes_required = 1 + p_cstring.size();
+		// size_t bytes_required = 1 + p_cstring.size();
+        mbstate_t state{};
+        const wchar_t* src = p_cstring.c_str();
+        const size_t bytes_required = /* 1 + */ wcsrtombs(nullptr, &src, 0, &state);
 #endif
 
 		std::string res;
@@ -166,7 +169,7 @@ namespace VstPresetUtil
 #if defined(_WIN32)
 		WideCharToMultiByte(CP_ACP, 0, p_cstring.c_str(), -1, (LPSTR) res.data(), (int)bytes_required, NULL, NULL);
 #else
-		wcstombs(temp, p_cstring.c_str(), bytes_required);
+		wcstombs(res.data(), p_cstring.c_str(), bytes_required);
 #endif
 
 		return res;

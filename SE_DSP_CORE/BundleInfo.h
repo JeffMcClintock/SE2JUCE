@@ -19,7 +19,7 @@ BundleInfo::instance()->getResource("whatever");
 #include "ElatencyContraintType.h"
 
 #if !defined( _WIN32 )
-#include <AudioUnit/AudioUnit.h>
+//#include <AudioUnit/AudioUnit.h>
 #endif
 
 class BundleInfo
@@ -62,7 +62,7 @@ public:
     static BundleInfo* instance();
     
 #if !defined( _WIN32 )
-	CFBundleRef GetBundle();
+//	CFBundleRef GetBundle();
     void setVendorName(const char* name)
     {
         info_.vendorName = name;

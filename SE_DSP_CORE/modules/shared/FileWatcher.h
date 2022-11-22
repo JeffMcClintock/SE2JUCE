@@ -10,11 +10,7 @@ typedef HANDLE nativeHandle;
 typedef int nativeHandle;
 #endif
 
-#if defined(__APPLE__)
-#include "CoreFoundation/CoreFoundation.h"
-//#include "CoreServices/CoreServices.h"
-#endif
-/* 
+/*
 #include "../shared/FileWatcher.h"
 */
 
@@ -27,7 +23,6 @@ namespace file_watcher
 		nativeHandle stopEvent = {};
 #endif
 #if defined(__APPLE__)
-        CFRunLoopRef loop = NULL;
         std::function<void()> callback;
 #endif
 	public:
