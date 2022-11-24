@@ -58,7 +58,6 @@ public:
 	{
 		return 0.f;
 	}
-//	virtual void automateVoice(timestamp_t timestamp, float normalised, int voice = 0) = 0;
 	virtual void setValueNormalised(float p_normalised) = 0;
 
 	void setUpFromDsp( struct parameter_description* parameterDescription, class InterfaceObject* pinDescription );
@@ -68,7 +67,6 @@ public:
 		return isPolyphonic_;
 	}
 	bool isTiming();
-	void OnPatchChanged( int previousProgram, int newProgram );
 	// gate is special as gate-on must first allocate new voice.
 	bool isPolyphonicGate()
 	{
@@ -148,14 +146,16 @@ public:
 		return voiceContainerHandle_;
 	}
 	virtual void InitializePatchMemory( const wchar_t* defaultString ) = 0;
-	void createPatchMemory( int patchCount, int voiceCount );
+	void createPatchMemory( /*int patchCount,*/ int voiceCount );
 	void setSdk2BackwardCompatibility(bool v)
 	{
 		Sdk2BackwardCompatibilityFlag_ = v;
 	}
 	void vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, bool isMidiMappedAutomation);
-	int EffectivePatch();
-	int PatchCount();
+int EffectivePatch() const
+{
+	return 0;
+}
 
 	// QueClient support.
 	virtual int queryQueMessageLength( int availableBytes );

@@ -25,7 +25,7 @@ PatchStorageVariableSize::PatchStorageVariableSize( int patchCount ) : patchCoun
 		patchMemory_[i].first = 0;
 		patchMemory_[i].second = 0;
 	}
-};
+}
 
 PatchStorageVariableSize::~PatchStorageVariableSize()
 {
@@ -35,8 +35,7 @@ PatchStorageVariableSize::~PatchStorageVariableSize()
 	}
 
 	delete [] patchMemory_;
-};
-
+}
 
 void PatchStorageVariableSize::setPatchCount(int newPatchCount)
 {
@@ -104,32 +103,20 @@ void PatchStorageVariableSize::SetValue(my_input_stream& p_stream, int patch )
 
 RawView PatchStorageVariableSize::GetValueRaw(int patch)
 {
+	assert(patch > -1 && patch < patchCount_);
 	return RawView(patchMemory_[patch].second, patchMemory_[patch].first);
 }
-
-
-//int PatchStorageVariableSize::GetValueSize(int patch)
-//{
-//	assert( patch < patchCount_ );
-//	return patchMemory_[patch].first;
-//};
-//
-//void* PatchStorageVariableSize::GetValue(int patch)
-//{
-//	assert( patch < patchCount_ );
-//	return patchMemory_[patch].second;
-//};
 
 PatchStorageFixedSize::PatchStorageFixedSize( int patchCount, int size ) : size_(size)
 {
 	PatchStorageBase::setPatchCount( patchCount );
 	patchMemory_ = new char[size * patchCount];
-};
+}
 
 PatchStorageFixedSize::~PatchStorageFixedSize()
 {
 	delete [] patchMemory_;
-};
+}
 
 void PatchStorageFixedSize::setPatchCount(int newPatchCount)
 {

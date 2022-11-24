@@ -128,7 +128,7 @@ std::string RawToUtf8B(int datatype, const void* data, size_t size);
 
 // Raw to Wide-string.
 template <typename T>
-std::wstring RawToString(const void* data, int size = sizeof(T))
+std::wstring RawToString(const void* data, [[maybe_unused]] int size = sizeof(T))
 {
 	assert( sizeof(T) == size);
 	T val = * ( (T*) data );

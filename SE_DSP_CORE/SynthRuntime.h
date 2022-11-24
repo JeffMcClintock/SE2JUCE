@@ -40,7 +40,7 @@ public:
 		shell_ = vst3Processor;
 	}
     
-	void process( int sampleFrames, const float** inputs, float** outputs, int inChannelCount, int outChannelCount )
+	void process( int sampleFrames, const float* const* inputs, float** outputs, int inChannelCount, int outChannelCount )
 	{
 		generator->DoProcess( sampleFrames, inputs, outputs, inChannelCount, outChannelCount );
 	}
@@ -75,7 +75,7 @@ public:
 	virtual std::wstring getDefaultPath(const std::wstring& p_file_extension ) override;
 	virtual void GetRegistrationInfo(std::wstring& p_user_email, std::wstring& p_serial) override;
 	virtual void DoAsyncRestart() override;
-	bool NeedsTempo( ){ return usingTempo_; };
+	bool NeedsTempo( ){ return usingTempo_; }
 	// For VST process side automation.
 	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value )
 	{
@@ -99,8 +99,7 @@ public:
     {
 		if (generator) // Can be null during AU validation.
 		{
-			const bool saveRestartState = false;
-			generator->setPresetState_UI_THREAD(chunk, processorActive, saveRestartState);
+			generator->setPresetState_UI_THREAD(chunk, processorActive);
 		}
     }
     

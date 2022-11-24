@@ -107,7 +107,7 @@ void ug_vst_in::sub_process(int start_pos, int sampleframes)
 #endif
 }
 
-void ug_vst_in::setInputs( const float** p_inputs, int numChannels, int numSidechains )
+void ug_vst_in::setInputs( const float* const* p_inputs, int numChannels, int numSidechains )
 {
     numSidechains_ = numSidechains;
 

@@ -1,9 +1,7 @@
 #pragma once
-#include "mp_sdk_common.h"
-#include "mp_sdk_gui.h"
-#include "modules/shared/xplatform.h"
-#include "IPluginGui.h"
 #include <vector>
+#include "mp_sdk_gui.h"
+#include "IPluginGui.h"
 
 /*
 #include "GuiPatchAutomator3.h"

@@ -142,12 +142,10 @@ public:
 	// iterate all modules, including ones that are asleep.
 	class inclusive_iterator
 	{
-		ModuleContainer* container_ = nullptr;
 	public:
 		std::vector< EventProcessor* >::iterator it_;
 
-		inclusive_iterator(ModuleContainer* container) :
-			container_(container)
+		inclusive_iterator()
 		{
 		}
 		EventProcessor* operator*() const
@@ -194,14 +192,14 @@ public:
 	// iterate all modules, including ones that are asleep.
 	auto inclusiveBegin()
 	{
-		inclusive_iterator i(this);
+		inclusive_iterator i;
 		i.it_ = modules.begin();
 		return i;
 	}
 
 	auto inclusiveEnd()
 	{
-		inclusive_iterator i(this);
+		inclusive_iterator i;
 		i.it_ = modules.end();
 		return i;
 	}
@@ -331,8 +329,12 @@ public:
 
 	void setMpeMode(int32_t mpeOn);
 
-    void DoProcess(int sampleframes, const float** inputs, float** outputs, int numInputs, int numOutputs, int inputIncrement = 1, int outputIncrement = 1, int numSidechains = 0 );
-#if !defined( SE_EDIT_SUPPORT )
+    void DoProcess(int sampleframes, const float* const* inputs, float** outputs, int numInputs, int numOutputs, int inputIncrement = 1, int outputIncrement = 1, int numSidechains = 0 );
+
+#if defined( SE_EDIT_SUPPORT )
+	void getPresetsState(std::vector< std::pair<int32_t, std::string> >& presets, bool saveRestartState);
+	void setPresetsState(const std::vector< std::pair<int32_t, std::string> >& presets);
+#else
 	void SetupVstIO();
 	void MidiIn( int delta, unsigned int shortMidiMsg )
 	{
@@ -345,14 +347,14 @@ public:
     {
         Patchmanager_->getPresetState(chunk, saveRestartState);
     }
-    void setPresetState(const std::string& chunk, bool saveRestartState)
+    void setPresetState(const std::string& chunk)
     {
-        Patchmanager_->setPresetState(chunk, saveRestartState);
+        Patchmanager_->setPresetState(chunk);
     }
 	std::atomic<bool> interrupt_getchunk_ = {};
 	std::atomic<bool> interrupt_setchunk_ = {};
 	std::atomic<bool> dsp_getchunk_completed_ = {};
-    void setPresetState_UI_THREAD( const std::string& chunk, bool processorActive, bool saveRestartStat);
+    void setPresetState_UI_THREAD( const std::string& chunk, bool processorActive);
     void getPresetState_UI_THREAD( std::string& chunk, bool processorActive, bool saveRestartState );
     void setPresetStateDspHelper();
     void getPresetStateDspHelper();

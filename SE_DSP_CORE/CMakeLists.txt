@@ -7,13 +7,10 @@ project(SynthEditLib)
 
 add_definitions(-DSE_TARGET_PLUGIN)
 
-set(GMPI_SDK ${CMAKE_CURRENT_SOURCE_DIR}/../GMPI_SDK/Core)
-
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${GMPI_SDK}
     )
-
 
 set(sdk_srcs
 ${se_sdk_folder}/mp_sdk_common.h

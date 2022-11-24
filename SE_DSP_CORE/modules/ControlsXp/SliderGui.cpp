@@ -328,6 +328,10 @@ int32_t SliderGui::onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 
 int32_t SliderGui::onMouseWheel(int32_t flags, int32_t delta, GmpiDrawing_API::MP1_POINT point)
 {
+	// ignore horizontal scrolling
+	if (0 != (flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT))
+		return gmpi::MP_UNHANDLED;
+
 	const float scale = (flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) ? 1.0f / 12000.0f : 1.0f / 1200.0f;
 	const float newval = bitmap.GetNormalised() + delta * scale;
 	bitmap.SetNormalised(std::clamp(newval, 0.0f, 1.0f));

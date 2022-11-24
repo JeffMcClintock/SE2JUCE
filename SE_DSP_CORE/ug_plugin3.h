@@ -133,7 +133,7 @@ public:
 		plugin_ = p_plugin;
 	}
 
-	virtual gmpi::IMpUnknown* GetGmpiPlugin()
+	gmpi::IMpUnknown* GetGmpiPlugin() override
 	{
 		// has to handle unrelated types from gmpi1 and gmpi2
 		return reinterpret_cast<gmpi::IMpUnknown*>( plugin_.get() );
@@ -163,14 +163,14 @@ public:
 		localBufferOffset_ = bufferOffset;
 	}
 
-	bool BypassPin(UPlug* fromPin, UPlug* toPin)// override
+	bool BypassPin(UPlug* fromPin, UPlug* toPin) override
 	{
 		ug_plugin3Base::BypassPin(fromPin, toPin);
 		plugin_->setBuffer(toPin->UniqueId(), fromPin->GetSamplePtr() + localBufferOffset_);
 		return true;
 	}
 
-	void DoProcess(int buffer_offset, int sampleframes)
+	void DoProcess(int buffer_offset, int sampleframes) override
 	{
 		timestamp_t current_sample_clock = SampleClock();
 		timestamp_t end_time = current_sample_clock + sampleframes;
@@ -260,7 +260,7 @@ public:
 		}
 	}
 
-	void OnUiNotify2(int p_msg_id, my_input_stream& p_stream)
+	void OnUiNotify2(int p_msg_id, my_input_stream& p_stream) override
 	{
 		ug_base::OnUiNotify2(p_msg_id, p_stream);
 
@@ -297,7 +297,7 @@ public:
 	}
 
 	static ug_base * CreateObject(){ return new ug_plugin3<IGmpiPluginType, IGmpiEventType>(); }
-	ug_base * Create(){ return CreateObject(); }
+	ug_base * Create() override{ return CreateObject(); }
 
 	gmpi_sdk::mp_shared_ptr<IGmpiPluginType> plugin_;
 };

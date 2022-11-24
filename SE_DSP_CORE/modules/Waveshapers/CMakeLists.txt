@@ -11,10 +11,11 @@ build_gmpi_plugin(
         Waveshapers.cpp
         Waveshaper2.h
         Waveshaper2.cpp
-        WaveshapersGui.h
-        WaveshapersGui.cpp
         ../shared/unicode_conversion.h
         ../shared/expression_evaluate.h
         ../shared/expression_evaluate.cpp
       
 )
+# 32-bit only
+#        WaveshapersGui.h
+#        WaveshapersGui.cpp

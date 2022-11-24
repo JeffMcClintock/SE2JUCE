@@ -19,7 +19,7 @@ public:
 	~DspPatchManager();
 
 	void setupContainerHandles(ug_container* subContainer) override;
-	void setProgramDspThread( int program ) override;
+	//void setProgramDspThread( int program ) override;
 	void vst_Automation(ug_container* voiceControlContainer, timestamp_t p_clock, int p_controller_id, float p_normalised_value, bool sendToMidiCv = true, bool sendToNonMidiCv = true) override;
 	void SendInitialUpdates() override;
 	void setMidiChannel( int c ) override;
@@ -55,22 +55,16 @@ public:
     virtual	class dsp_patch_parameter_base* GetHostControl( int hostControl ) override;
 #if defined(SE_TARGET_PLUGIN)
 	virtual	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue ) override; // VST3.
-    virtual void setPresetState( const std::string& chunk, bool saveRestartState) override;
 #endif
 
-#if defined(SE_TARGET_PLUGIN)
-	virtual void getPresetState(std::string& chunk, bool saveRestartState)  override;
-#endif
+    void setPresetState( const std::string& chunk) override;
+	void getPresetState(std::string& chunk, bool saveRestartState)  override;
+
 	void InitializeAllParameters() override;
-	void setProgram( int program ) override;
-	int getProgram() override
-	{
-		return program_;
-	}
 
 protected:
 	void AddParam( dsp_patch_parameter_base* p_param );
-	void UpdateProgram( int program );
+//	void UpdateProgram( int program );
 	void DoNoteOn(timestamp_t timestamp, class ug_container* voiceControlContainer, int voiceId, float velocity);
 	void DoNoteOff(timestamp_t timestamp, class ug_container* voiceControlContainer, int voiceId, float velocity);
 
@@ -82,7 +76,6 @@ private:
 	dsp_patch_parameter_base* vst_learn_parameter; // midi_learn.
 	dsp_automation_map_type vst_automation_map;
 	ug_container* m_container;
-	int program_;
 	int midiChannel_;
 	// this just increments each time a voice is reset.
 	int nextVoiceReset_;

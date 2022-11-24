@@ -1474,11 +1474,11 @@ namespace gmpi_sdk
 	public:
 		mp_shared_ptr(){}
 
-		explicit mp_shared_ptr(wrappedObjT* newobj) : obj(0)
+		explicit mp_shared_ptr(wrappedObjT* newobj)
 		{
 			Assign(newobj);
 		}
-		mp_shared_ptr(const mp_shared_ptr<wrappedObjT>& value) : obj(0)
+		mp_shared_ptr(const mp_shared_ptr<wrappedObjT>& value)
 		{
 			Assign(value.obj);
 		}

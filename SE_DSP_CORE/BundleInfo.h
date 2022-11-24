@@ -19,7 +19,8 @@ BundleInfo::instance()->getResource("whatever");
 #include "ElatencyContraintType.h"
 
 #if !defined( _WIN32 )
-//#include <AudioUnit/AudioUnit.h>
+#include <CoreFoundation/CFBundle.h>
+CFBundleRef CreatePluginBundleRef();
 #endif
 
 class BundleInfo

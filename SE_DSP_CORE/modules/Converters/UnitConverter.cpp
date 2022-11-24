@@ -398,7 +398,6 @@ void UnitConverterVolts::subProcessVcaToDb(int sampleFrames)
 	float* signalOut = getBuffer(pinSignalOut);
 
 	const float timeconstants = 3.0f;
-	const float c1 = 1.0f / (1.0f - expf(-timeconstants));      //  scale factor truncated curve
 	constexpr float thrtyfiveovernine = 35.0f / 9.0f;
 
 	for (int s = sampleFrames; s > 0; --s)

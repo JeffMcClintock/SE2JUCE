@@ -411,21 +411,13 @@ void SeAudioMaster::BuildDspGraph(TiXmlDocument* doc, std::vector<int32_t>& mute
 	{
 		// First element must be the Main Container.
 		pElem = pElem->FirstChildElement();
-		const char* pKey=pElem->Value();
-		assert( strcmp(pKey, "Module" ) == 0 );
-		const char* moduleTypeS = pElem->Attribute("Type");
-		assert( strcmp(moduleTypeS, "Container" ) == 0 );
+		assert( strcmp(pElem->Value(), "Module" ) == 0 );
+		assert( strcmp(pElem->Attribute("Type"), "Container" ) == 0 );
 		auto moduleType = ModuleFactory()->GetById( L"Container" );
 		assert( main_container == 0 );
 		main_container = dynamic_cast<ug_container*>( moduleType->BuildSynthOb() );
 
 		main_container->Setup(this, pElem);
-		/*
-		main_container->SetAudioMaster(this);
-		int handle;
-		pElem->QueryIntAttribute("Id", &handle);
-		RegisterDspMsgHandle(main_container, handle);
-		*/
 
 #if defined( _DEBUG )
 		main_container->debug_name = L"Main";
@@ -499,7 +491,7 @@ int32_t SeAudioMaster::RegisterIoModule(class ISpecialIoModule* m)
 	return getShell()->RegisterIoModule(m);
 }
 
-void SeAudioMaster::DoProcess(int sampleframes, const float** inputs, float** outputs, int numInputs, int numOutputs, int inputIncrement, int outputIncrement, int numSidechains)
+void SeAudioMaster::DoProcess(int sampleframes, const float* const* inputs, float** outputs, int numInputs, int numOutputs, int inputIncrement, int outputIncrement, int numSidechains)
 {
 #if defined( SE_EDIT_SUPPORT )
 	if (audioOutModule)
@@ -2402,7 +2394,7 @@ void SeAudioMaster::setLatencyCompensation(int ElatencyCompensation)
         }
     }
     
-    void SeAudioMaster::setPresetState_UI_THREAD( const std::string& chunk, bool processorActive, bool saveRestartState)
+    void SeAudioMaster::setPresetState_UI_THREAD( const std::string& chunk, bool processorActive)
     {
         if( processorActive )
         {
@@ -2414,7 +2406,7 @@ void SeAudioMaster::setLatencyCompensation(int ElatencyCompensation)
         }
         else
         {
-            Patchmanager_->setPresetState( chunk, saveRestartState);
+            Patchmanager_->setPresetState(chunk);
         }
     }
     
@@ -2422,7 +2414,7 @@ void SeAudioMaster::setLatencyCompensation(int ElatencyCompensation)
     {
         audioMasterLock_.Enter();
 		const bool saveRestartState = false;
-		Patchmanager_->setPresetState( presetChunk_, saveRestartState);
+		Patchmanager_->setPresetState( presetChunk_);
         presetChunk_.clear();
         audioMasterLock_.Leave();
     }
@@ -2575,3 +2567,31 @@ void SeAudioMaster::AssignPinBuffers()
 		dest += simdFriendlyBufferSize;
 	}
 }
+
+#if defined( SE_EDIT_SUPPORT )
+void SeAudioMaster::getPresetsState(std::vector< std::pair<int32_t, std::string> >& presets, bool saveRestartState)
+{
+	for (auto pa : patchAutomators_)
+	{
+		auto cont = pa->patch_control_container;
+		auto patchmanager = cont->get_patch_manager(); // very messy.
+
+		presets.push_back({ cont->Handle() , {} });
+
+		patchmanager->getPresetState(presets.back().second, saveRestartState);
+	}
+}
+
+void SeAudioMaster::setPresetsState(const std::vector< std::pair<int32_t, std::string> >& presets)
+{
+	for (const auto& preset : presets)
+	{
+		auto cont = dynamic_cast<ug_container*>(HandleToObject(preset.first));
+		if (!cont)
+			continue;
+
+		auto patchmanager = cont->get_patch_manager();
+		patchmanager->setPresetState(preset.second);
+	}
+}
+#endif

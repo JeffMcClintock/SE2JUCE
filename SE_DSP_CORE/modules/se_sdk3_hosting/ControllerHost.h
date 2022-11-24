@@ -35,11 +35,11 @@ public:
 };
 
 // Acts as host for an instance of a SDK controller object.
-class ControllerHost : public gmpi::IMpControllerHost
+class ControllerHost final : public gmpi::IMpControllerHost
 {
 public:
 	// Plugin asks host for parameter value. Host will call back indirectly via setParameter.
-	virtual void updateParameter(int32_t parameterHandle, int32_t paramFieldType, int32_t voice) override
+	void updateParameter(int32_t parameterHandle, int32_t paramFieldType, int32_t voice) override
 	{
 		// apply filter/ lookup 
 		assert(voice == 0); // patchManager now updates ALL voices
@@ -47,7 +47,7 @@ public:
 	}
 
 	// plugin -> Patch-Manager.
-	virtual int32_t MP_STDCALL setParameter(int32_t parameterHandle, int32_t paramFieldType, int32_t voice, const void* data, int32_t size) override
+	int32_t MP_STDCALL setParameter(int32_t parameterHandle, int32_t paramFieldType, int32_t voice, const void* data, int32_t size) override
 	{
 		patchManager->setParameterValue(RawView(data, size), parameterHandle, (gmpi::FieldType) paramFieldType, voice);
 		return gmpi::MP_OK;
@@ -59,36 +59,36 @@ public:
 		return controller_->setParameter(parameterHandle, paramFieldType, voice, data, size );
 	}
 
-	virtual int32_t MP_STDCALL getHandle(int32_t& returnHandle) override
+	int32_t MP_STDCALL getHandle(int32_t& returnHandle) override
 	{
 		returnHandle = handle;
 		return gmpi::MP_OK;
 	}
-//	virtual int32_t MP_STDCALL getParameter(int32_t paramId, int32_t paramFieldType, int32_t voice, gmpi::IString* value) override
+//	int32_t MP_STDCALL getParameter(int32_t paramId, int32_t paramFieldType, int32_t voice, gmpi::IString* value) override
 
-	virtual int32_t getParameterHandle(int32_t moduleHandle, int32_t moduleParameterId) override
+	int32_t getParameterHandle(int32_t moduleHandle, int32_t moduleParameterId) override
 	{
 		return patchManager->getParameterHandle(moduleHandle, moduleParameterId);
 	}
-	virtual int32_t getParameterModuleAndParamId(int32_t parameterHandle, int32_t* returnModuleHandle, int32_t* returnModuleParameterId) override
+	int32_t getParameterModuleAndParamId(int32_t parameterHandle, int32_t* returnModuleHandle, int32_t* returnModuleParameterId) override
 	{
 		return patchManager->getParameterModuleAndParamId(parameterHandle, returnModuleHandle, returnModuleParameterId);
 	}
 
-	virtual int32_t MP_STDCALL createControllerIterator(gmpi::IMpControllerIterator** returnIterator) override
+	int32_t MP_STDCALL createControllerIterator(gmpi::IMpControllerIterator** returnIterator) override
 	{
 		*returnIterator = new ControllerIterator();
 		return gmpi::MP_OK;
 	}
 
-	virtual int32_t MP_STDCALL setLatency(int32_t latency) override
+	int32_t MP_STDCALL setLatency(int32_t latency) override
 	{
 		// TODO !!!!!
 		return gmpi::MP_OK;
 	}
 
 	// DEPRECATED.
-	virtual int32_t MP_STDCALL pinTransmit(int32_t pinId, int32_t voice, int64_t size, const void* data) override
+	int32_t MP_STDCALL pinTransmit(int32_t pinId, int32_t voice, int64_t size, const void* data) override
 	{
 		assert(false); // not implemented(can't determin which parameter). Module should call setParameter()
 		return gmpi::MP_FAIL;

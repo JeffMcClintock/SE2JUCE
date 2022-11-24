@@ -19,7 +19,7 @@ public:
 	void sub_process(int start_pos, int sampleframes);
 	int Open() override;
 	int Close() override;
-    void setInputs( const float** p_inputs, int numChannels, int numSidechains = 0 );
+    void setInputs( const float* const* p_inputs, int numChannels, int numSidechains = 0 );
     void setIncrement( int i )
     {
         bufferIncrement_ = i;

@@ -135,7 +135,7 @@ public:
 				_RPT1(_CRT_WARN, "ug_midi_in: MIDI data out-of-order/ too close. Moved forward %dms\n", SampleToMs(nextOffset - offset, (int)getSampleRate()));
 			}
 #endif
-			offset = max(offset, nextOffset);
+			offset = std::max(offset, nextOffset);
 
 			if (offset >= sampleFrames)
 			{

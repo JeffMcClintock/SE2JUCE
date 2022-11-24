@@ -79,7 +79,7 @@ namespace GmpiGuiHosting
 
 		virtual void CallbackFromCocoa(NSObject* sender) override
 		{
-            int i = [((NSMenuItem*) sender) tag] - 1;
+            int i = static_cast<int>([((NSMenuItem*) sender) tag]) - 1;
 			if (i >= 0 && i < menuIds.size())
 			{
 				selectedId = menuIds[i];
@@ -430,7 +430,7 @@ namespace GmpiGuiHosting
                 }
             }
             
-            if( [dialog runModal] == NSFileHandlingPanelOKButton)
+            if( [dialog runModal] == NSModalResponseOK)
             {
                 //get the selected file URLs
                 //NSURL* selection = dialog.URLs[0];
@@ -503,7 +503,7 @@ namespace GmpiGuiHosting
 			[alert addButtonWithTitle : @"Cancel"];
 			[alert setMessageText : dialogtext];
 //			[alert setInformativeText : @"Deleted records cannot be restored."];
-			[alert setAlertStyle : NSWarningAlertStyle];
+            [alert setAlertStyle : NSAlertStyleWarning];
 
 			auto result = [alert runModal] == NSAlertFirstButtonReturn ? gmpi::MP_OK : gmpi::MP_CANCEL;
 			returnCompletionHandler->OnComplete(result);

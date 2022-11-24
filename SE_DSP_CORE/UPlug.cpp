@@ -538,32 +538,25 @@ void UPlug::SetDefault2(const char* utf8val)
 			return;
 		}
 
-		if (true) //DataType == DT_FSAMPLE)
+		assert(connections.size() == 1 && (Direction == DR_IN));
+		auto from = connections.front();
+
+		// Might be Latency-adjuster between module and default-setter.
+		// If so, search backward for default-setter.
+		while (!from->UG->GetFlag(UGF_DEFAULT_SETTER))
 		{
-			assert(connections.size() == 1 && (Direction == DR_IN));
-			auto from = connections.front();
-
-			// Might be Latency-adjuster between module and default-setter.
-			// If so, search backward for default-setter.
-			while (!from->UG->GetFlag(UGF_DEFAULT_SETTER))
-			{
-				from = from->UG->plugs[0]->connections.front();
-				assert(from);
-			}
-
-			assert(from->UG->SortOrder2 < UG->SortOrder2); // default-setter must be upstream.
-
-			auto fromUg = from->UG;
-			auto fromIdx = from->getPlugIndex();
-			while (fromUg)
-			{
-				fromUg->plugs[fromIdx]->SetDefault2(utf8val);
-				fromUg = fromUg->m_next_clone;
-			}
+			from = from->UG->plugs[0]->connections.front();
+			assert(from);
 		}
-		else
+
+		assert(from->UG->SortOrder2 < UG->SortOrder2); // default-setter must be upstream.
+
+		auto fromUg = from->UG;
+		auto fromIdx = from->getPlugIndex();
+		while (fromUg)
 		{
-			SetDefaultDirect(utf8val);
+			fromUg->plugs[fromIdx]->SetDefault2(utf8val);
+			fromUg = fromUg->m_next_clone;
 		}
 	}
 }
@@ -611,86 +604,78 @@ void UPlug::SetDefault(const char* utf8val)
 			return;
 		}
 
-		// NEW!!!
-		if (true) //DataType == DT_FSAMPLE)
+		if (!connections.empty()) // already connected to io-mod. Forward to it.
 		{
-			if (!connections.empty()) // already connected to io-mod. Forward to it.
+			if (Proxy) // special case for Poly-to_Mono, when input not connected.
 			{
-				if (Proxy) // special case for Poly-to_Mono, when input not connected.
-				{
-					assert(UG->getModuleType()->UniqueId() == L"SE Poly to Mono");
+				assert(UG->getModuleType()->UniqueId() == L"SE Poly to Mono");
 
-					Proxy->SetDefault(utf8val);
-					return;
-				}
-
-				assert(connections.size() == 1 && (Direction == DR_IN /*|| Direction == DR _PARAMETER*/));
-				UPlug* from = connections.front();
-				assert(from->UG->SortOrder2 < UG->SortOrder2); // io_mod must be upstream
-
-				from->SetDefault(utf8val);
+				Proxy->SetDefault(utf8val);
+				return;
 			}
-			else // then need to add one
+
+			assert(connections.size() == 1 && (Direction == DR_IN /*|| Direction == DR _PARAMETER*/));
+			UPlug* from = connections.front();
+			assert(from->UG->SortOrder2 < UG->SortOrder2); // io_mod must be upstream
+
+			from->SetDefault(utf8val);
+		}
+		else // then need to add one
+		{
+			assert(connections.empty() && (Direction == DR_IN));
+			assert((UG->flags & UGF_OPEN) == 0); // DEFAULT VALUE SHOULD ALREADY EXIST IF SYNTH RUNNING
+			// add new parameter to container's io/mod
+			// connect this to the specified input
+			// ( to ensure uparameters are in same container as ug)
+			ug_base* pset;
+
+			int newPlugsFlags = 0;
+			if ((flags & PF_PATCH_STORE) != 0)
 			{
-				assert(connections.empty() && (Direction == DR_IN));
-				assert((UG->flags & UGF_OPEN) == 0); // DEFAULT VALUE SHOULD ALREADY EXIST IF SYNTH RUNNING
-				// add new parameter to container's io/mod
-				// connect this to the specified input
-				// ( to ensure uparameters are in same container as ug)
-				ug_base* pset;
+				pset = UG->parent_container->GetParameterSetter();
+				newPlugsFlags = PF_PATCH_STORE;
+			}
+			else
+			{
+				// note: HasNonDefaultConnection() relys on this
+				pset = UG->parent_container->GetDefaultSetter();
+			}
 
-				int newPlugsFlags = 0;
-				if ((flags & PF_PATCH_STORE) != 0)
-				{
-					pset = UG->parent_container->GetParameterSetter();
-					newPlugsFlags = PF_PATCH_STORE;
-				}
-				else
-				{
-					// note: HasNonDefaultConnection() relys on this
-					pset = UG->parent_container->GetDefaultSetter();
-				}
-
-				UPlug* p = new UPlug(pset, DR_OUT, DataType);
+			UPlug* p = new UPlug(pset, DR_OUT, DataType);
 //				p->CreateBuffer();
-				p->SetFlag(newPlugsFlags);
-				pset->AddPlug(p);
-				pset->connect(p, this);// Connect plug to new parameter.
+			p->SetFlag(newPlugsFlags);
+			pset->AddPlug(p);
+			pset->connect(p, this);// Connect plug to new parameter.
 
-				// Don't set flag on ParameterSetter, causes pin's blank initial value to be sent, overriding event sent earlier by
-				// dsp_patch_parameter_base::OnValueChanged
-				if ((flags & PF_PATCH_STORE) == 0)
+			// Don't set flag on ParameterSetter, causes pin's blank initial value to be sent, overriding event sent earlier by
+			// dsp_patch_parameter_base::OnValueChanged
+			if ((flags & PF_PATCH_STORE) == 0)
+			{
+				if (p->DataType == DT_FSAMPLE)
 				{
-					if (p->DataType == DT_FSAMPLE)
-					{
-						UG->AudioMaster2()->RegisterConstantPin(p, utf8val);
-					}
-					else
-					{
-						p->CreateBuffer();
-						p->SetBufferValue(utf8val);
-					}
-
-					p->SetFlag(PF_VALUE_CHANGED);
+					UG->AudioMaster2()->RegisterConstantPin(p, utf8val);
 				}
 				else
 				{
 					p->CreateBuffer();
+					p->SetBufferValue(utf8val);
 				}
 
-				// Container inputs will later be re-routed directly to destination.
-				// however user might still set default on the container input (while engine running).
-				// we need to use Proxy pointer to point to correct IOMod plug.
-				if (TiedTo)
-				{
-					assert(TiedTo->Proxy == 0);
-					TiedTo->Proxy = p;
-				}
+				p->SetFlag(PF_VALUE_CHANGED);
 			}
-		}
-		else
-		{
-			SetDefaultDirect(utf8val);
+			else
+			{
+				p->CreateBuffer();
+			}
+
+			// Container inputs will later be re-routed directly to destination.
+			// however user might still set default on the container input (while engine running).
+			// we need to use Proxy pointer to point to correct IOMod plug.
+			if (TiedTo)
+			{
+				assert(TiedTo->Proxy == 0);
+				TiedTo->Proxy = p;
+			}
 		}
 	}
 }

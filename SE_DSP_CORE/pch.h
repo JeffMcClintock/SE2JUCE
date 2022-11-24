@@ -1,6 +1,9 @@
 #pragma once
 
 #if defined(_WIN32) // avoid on Apple AND Linux.
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
 // Including SDKDDKVer.h defines the highest available Windows platform.
 

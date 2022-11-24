@@ -368,6 +368,17 @@ int32_t SubView::onPointerUp(int32_t flags, MP1_POINT point)
 	}
 }
 
+int32_t SubView::onMouseWheel(int32_t flags, int32_t delta, GmpiDrawing_API::MP1_POINT point)
+{
+	if (!isShown())
+		return gmpi::MP_UNHANDLED;
+
+	point.x -= offset_.width;
+	point.y -= offset_.height;
+
+	return ViewBase::onMouseWheel(flags, delta, point);
+}
+
 void SubView::OnChildMoved()
 {
 	// TODO : enhancement - also calc my cliprect on sum of child cliprects.

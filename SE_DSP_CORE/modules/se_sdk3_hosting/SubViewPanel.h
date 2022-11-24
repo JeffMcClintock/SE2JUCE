@@ -40,7 +40,7 @@ public:
 
 	virtual void Refresh(Json::Value* context, std::map<int, SynthEdit2::ModuleView*>& guiObjectMap_) override {} // perhaps this should not derive from ViewBase, it does not have its own presenter, don't make sense.
 
-	virtual std::string getSkinName() override
+	std::string getSkinName() override
 	{
 		// [Viewbase[<- parent -[ SubContainerView<- guihost -[ContainerPanel]
 		auto view = dynamic_cast<SynthEdit2::ViewChild*> (getGuiHost())->parent;
@@ -50,21 +50,22 @@ public:
 	void onValueChanged();
 	bool isShown() override;
 
-	virtual int32_t setCapture(SynthEdit2::IViewChild* module) override;
+	int32_t setCapture(SynthEdit2::IViewChild* module) override;
 
 	// SeGuiVstGuiBase interface.
-	virtual int32_t MP_STDCALL initialize() override;
-	virtual int32_t MP_STDCALL measure(GmpiDrawing_API::MP1_SIZE availableSize, GmpiDrawing_API::MP1_SIZE* returnDesiredSize) override;
-	virtual int32_t MP_STDCALL arrange(GmpiDrawing_API::MP1_RECT finalRect) override;
-	virtual int32_t MP_STDCALL OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext) override;
-	virtual int32_t MP_STDCALL onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point) override;
-	virtual int32_t MP_STDCALL onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point) override;
-	virtual int32_t MP_STDCALL onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point) override;
-	virtual int32_t MP_STDCALL hitTest(GmpiDrawing_API::MP1_POINT point) override;
+	int32_t MP_STDCALL initialize() override;
+	int32_t MP_STDCALL measure(GmpiDrawing_API::MP1_SIZE availableSize, GmpiDrawing_API::MP1_SIZE* returnDesiredSize) override;
+	int32_t MP_STDCALL arrange(GmpiDrawing_API::MP1_RECT finalRect) override;
+	int32_t MP_STDCALL OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext) override;
+	int32_t MP_STDCALL onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point) override;
+	int32_t MP_STDCALL onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point) override;
+	int32_t MP_STDCALL onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point) override;
+	int32_t onMouseWheel(int32_t flags, int32_t delta, GmpiDrawing_API::MP1_POINT point) override;
+	int32_t MP_STDCALL hitTest(GmpiDrawing_API::MP1_POINT point) override;
 	int32_t MP_STDCALL getToolTip(GmpiDrawing_API::MP1_POINT point, gmpi::IString* returnString) override;
 //	int32_t MP_STDCALL getToolTip(float x, float y, gmpi::IMpUnknown* returnToolTipString) override;
 
-	virtual void ChildInvalidateRect(const GmpiDrawing_API::MP1_RECT& invalidRect) override
+	void ChildInvalidateRect(const GmpiDrawing_API::MP1_RECT& invalidRect) override
 	{
 		GmpiDrawing::Rect adjusted(invalidRect);
 		adjusted.Offset(offset_);
@@ -82,7 +83,7 @@ public:
 		return getGuiHost()->createPlatformTextEdit(&adjusted, returnTextEdit);
 	}
 
-	virtual int32_t ChildCreatePlatformMenu(const GmpiDrawing_API::MP1_RECT* rect, gmpi_gui::IMpPlatformMenu** returnMenu) override
+	int32_t ChildCreatePlatformMenu(const GmpiDrawing_API::MP1_RECT* rect, gmpi_gui::IMpPlatformMenu** returnMenu) override
 	{
 		GmpiDrawing::Rect adjusted(*rect);
 		adjusted.Offset(offset_);

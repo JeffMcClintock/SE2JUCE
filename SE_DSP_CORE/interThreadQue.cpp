@@ -33,10 +33,9 @@ void interThreadQue::Reset()
 void interThreadQue::pushString( int p_length, const unsigned char* p_data )
 {
 	//	_RPT1(_CRT_WARN, "interThreadQue::pushString l=%d", p_length );
-	const int freeSpace = fifo_.freeSpace(); // volatile remember. Have to take snapshot and use that.
 
 	// overflow queue no longer works, must have broken at some point. No point trying to use it.
-	assert(p_length <= freeSpace);
+	assert(p_length <= fifo_.freeSpace());
 
 	//_RPT0(_CRT_WARN, " to FIFO\n" );
 	fifo_.pushString( p_length, p_data );

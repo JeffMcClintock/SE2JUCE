@@ -11,7 +11,6 @@
 class PatchStorageBase
 {
 public:
-
 	virtual ~PatchStorageBase() {}
 	// returns true if value has changed.
 	virtual bool SetValue(const void* data, size_t size, int patch = 0) = 0;

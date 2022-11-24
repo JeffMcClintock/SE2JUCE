@@ -83,18 +83,18 @@ void DspPatchManagerProxy::setParameterNormalized( timestamp_t p_clock, int vstP
 {
 	assert(false);
 }
-
-void DspPatchManagerProxy::setPresetState( const std::string& chunk, bool saveRestartState)
-{
-	assert(false);
-}
 #endif
 
-#if defined(SE_TARGET_PLUGIN)
-void DspPatchManagerProxy::getPresetState( std::string& chunk, bool saveRestartState)
+void DspPatchManagerProxy::setPresetState( const std::string& /*chunk*/)
 {
 	assert(false);
 }
+
+void DspPatchManagerProxy::getPresetState( std::string& /*chunk*/, bool /*saveRestartState*/)
+{
+	assert(false);
+}
+#if defined(SE_TARGET_PLUGIN)
 #endif
 
 dsp_patch_parameter_base* DspPatchManagerProxy::ConnectHostControl(HostControls hostConnect, UPlug* plug)
@@ -123,19 +123,19 @@ class dsp_patch_parameter_base* DspPatchManagerProxy::createPatchParameter( int 
 	return 0;
 }
 
-void DspPatchManagerProxy::setProgram( int /*program*/ )
-{
-	assert(false);
-}
-int DspPatchManagerProxy::getProgram()
-{
-	assert(false);
-	return 0;
-}
-void DspPatchManagerProxy::setProgramDspThread( int /*program*/ )
-{
-	assert(false);
-}
+//void DspPatchManagerProxy::setProgram( int /*program*/ )
+//{
+//	assert(false);
+//}
+//int DspPatchManagerProxy::getProgram()
+//{
+//	assert(false);
+//	return 0;
+//}
+//void DspPatchManagerProxy::setProgramDspThread( int /*program*/ )
+//{
+//	assert(false);
+//}
 void DspPatchManagerProxy::setMidiChannel( int )
 {
 	assert(false);

@@ -1564,7 +1564,7 @@ return gmpi::MP_FAIL;
                     const auto customDashesCount = strokeStyle->GetDashesCount();
                     std::vector<float> dashesf;
                     dashesf.resize(customDashesCount);
-                    strokeStyle->GetDashes(dashesf.data(), dashesf.size());
+                    strokeStyle->GetDashes(dashesf.data(), static_cast<int>(dashesf.size()));
                     
                     changed |= customDashesCount != currentCustomDashStyle.size();
                     currentCustomDashStyle.resize(customDashesCount);

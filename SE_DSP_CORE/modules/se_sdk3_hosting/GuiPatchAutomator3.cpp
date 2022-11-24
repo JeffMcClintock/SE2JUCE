@@ -1,12 +1,8 @@
 //#include "pch.h"
-#include "mp_sdk_gui.h"
-#include "module_register.h"
 #include "GuiPatchAutomator3.h"
-#include "ModuleView.h"
-#include "IPluginGui.h"
 #include "../SE_DSP_CORE/IGuiHost2.h"
 
-using namespace SynthEdit2;
+//using namespace SynthEdit2;
 using namespace gmpi;
 using namespace std;
 

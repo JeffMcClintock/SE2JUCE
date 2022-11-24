@@ -57,6 +57,23 @@ int Image2GuiXp::getMouseResponse()
 		return 0;
 }
 
+int32_t Image2GuiXp::onMouseWheel(int32_t flags, int32_t delta, GmpiDrawing_API::MP1_POINT point)
+{
+	// ignore horizontal scrolling
+	if (0 != (flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT))
+		return gmpi::MP_UNHANDLED;
+
+	if (!skinBitmap::bitmapHitTestLocal(point))
+		return MP_UNHANDLED;
+
+	const float scale = (flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) ? 1.0f / 12000.0f : 1.0f / 1200.0f;
+	const float newval = getAnimationPos() + delta * scale;
+	setAnimationPos(std::clamp(newval, 0.0f, 1.0f));
+	calcDrawAt();
+
+	return gmpi::MP_OK;
+}
+
 int32_t Image2GuiXp::onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 {
 	//	_RPT2(_CRT_WARN, "onPointerDown (%f,%f)\n", point.x, point.y);

@@ -54,7 +54,6 @@ void VoiceControlState::OnKeyTuningChangedA(timestamp_t absolutetimestamp, int M
 DspPatchManager::DspPatchManager(ug_container* p_container) :
 	vst_learn_parameter(0)
 	, m_container(p_container)
-	, program_(0)
 	, incoming_rpn(NULL_RPN)
 	, incoming_nrpn(NULL_RPN)
 	, MidiCvControlsVoices_(false)
@@ -783,7 +782,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 			}
 
 			break;
-
+#if 0
 		case PROGRAM_CHANGE:
 		{
 			//		_RPT3(_CRT_WARN,"ug_patch_automator::OnMidiData(%x, %d, %d)\n",(int)stat,(int)byte1,(int)byte2);
@@ -794,7 +793,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 			}
 		}
 		break;
-
+#endif
 		case CONTROL_CHANGE:
 		{
 			int midi_controller_id = byte1;
@@ -1405,7 +1404,7 @@ void DspPatchManager::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 {
 	switch( p_msg_id )
 	{
-
+#if 0
 	case code_to_long('s','e','t','p'): // "setp" - patch change from GUI.
 	{
 		int32_t p;
@@ -1414,7 +1413,7 @@ void DspPatchManager::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 		UpdateProgram( p );
 	}
 	break;
-
+#endif
 	case code_to_long('s','e','t','c'): // "setc" - MIDI Chan change from GUI.
 	{
 		p_stream >> midiChannel_;
@@ -1469,7 +1468,6 @@ dsp_patch_parameter_base* DspPatchManager::GetParameter(ug_container* voiceContr
 	return nullptr;
 }
 
-#if defined(SE_TARGET_PLUGIN)
 void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 {
 	TiXmlDocument doc;
@@ -1537,10 +1535,8 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 
 //	_RPT1(_CRT_WARN, "DspPatchManager::getPresetState:\n%s\n\n", printer.CStr());
 }
-#endif
 
-#if defined(SE_TARGET_PLUGIN)
-void DspPatchManager::setPresetState( const std::string& chunk, bool saveRestartStateUnused)
+void DspPatchManager::setPresetState( const std::string& chunk)
 {
 	TiXmlDocument doc;
 	doc.Parse( chunk.c_str() );
@@ -1645,13 +1641,13 @@ void DspPatchManager::setPresetState( const std::string& chunk, bool saveRestart
 
 	// TODO: for each parameter not set, return it to it's default value. (would require DSP to store default value, or mayby just use init value.)
 }
-#endif
 
 void DspPatchManager::setMidiChannel( int c )
 {
 	midiChannel_ = c;
 }
 
+#if 0
 // MIDI program change.
 void DspPatchManager::setProgramDspThread( int program )
 {
@@ -1659,15 +1655,18 @@ void DspPatchManager::setProgramDspThread( int program )
 	// inform GUI
 	my_msg_que_output_stream strm( m_container->AudioMaster()->getShell()->MessageQueToGui(), Container()->Handle(), "pat2");
 
-	strm << (int) sizeof(program_);
-	strm << program_;
+	strm << (int) sizeof(program);
+	strm << program;
 	strm.Send();
 }
+#endif
 
 void DspPatchManager::SendInitialUpdates()
 {
+const int program_ = 0;
+
 	// Send MIDI program change.
-	Container()->automation_output_device->sendProgramChange( program_ );
+	 Container()->automation_output_device->sendProgramChange( program_ );
 	// inform legacy SDK2 modules.
 	Container()->SendProgChange( Container(), program_ );
 	const int voiceId = 0; // assume poly param all Ignore PC.
@@ -1681,11 +1680,7 @@ void DspPatchManager::SendInitialUpdates()
 	}
 }
 
-void DspPatchManager::setProgram( int program )
-{
-	program_ = program;
-}
-
+#if 0
 void DspPatchManager::UpdateProgram( int program )
 {
 	// avoid spurious change when update already came from DSP via MIDI PC.
@@ -1707,6 +1702,7 @@ void DspPatchManager::UpdateProgram( int program )
 		parameter->OnPatchChanged( previousProgram, program );
 	}
 }
+#endif
 
 void DspPatchManager::setupContainerHandles(ug_container* subContainer)
 {

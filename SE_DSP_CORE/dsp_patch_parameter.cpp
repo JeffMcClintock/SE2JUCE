@@ -188,9 +188,11 @@ void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 			p_stream >> voice;
 		}
 
-		SerialiseValue( p_stream, voice, patch );
+		// Processor has only one patch, regardless of what patch the UI is using.
+		constexpr int processorPatch = 0;
+		SerialiseValue( p_stream, voice, processorPatch);
 
-		if( EffectivePatch() == patch )
+		if( EffectivePatch() == processorPatch)
 		{
 			OnValueChangedFromGUI( due_to_program_change, voice );
 		}
@@ -571,7 +573,7 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 	setAutomationSysex( Utf8ToWstring( xml->Attribute("MIDI_SYSEX") ) );
 
 	assert( voiceCount == 128 || voiceCount == 1 );
-	createPatchMemory( patchCount, voiceCount );
+	createPatchMemory( /*patchCount,*/ voiceCount );
 
 	auto patch_xml = xml->FirstChildElement();
 	assert(patch_xml == nullptr || strcmp(patch_xml->Value(), "patch-list") == 0);
@@ -584,7 +586,8 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 			[this, isEditor](int voiceId, int preset, const char* xmlvalue)
 			{
 				// plugins have only one preset on the DSP at a time. Editor has many.
-				if ((isEditor && preset < 128) || preset == 0)
+//				if ((isEditor && preset < 128) || preset == 0)
+				if (preset == 0)
 				{
 					SetValueFromXml(xmlvalue, voiceId, preset);
 				}
@@ -856,9 +859,9 @@ void dsp_patch_parameter_base::setUpFromDsp( parameter_description* parameterDes
 	//m_controller_sysex;
 	isPolyphonic_ = pinDescription->isPolyphonic(0); //true;
 	isPolyphonicGate_ = pinDescription->isPolyphonicGate(0);
-	int patchCount = 128;
+	int patchCount = 1; //1 28;
 
-	if( (parameterDescription->flags & IO_IGNORE_PATCH_CHANGE) != 0 ) //->connectedControlsIgnorePatchChange(0) )
+	if( (parameterDescription->flags & IO_IGNORE_PATCH_CHANGE) != 0 )
 		patchCount = 1;
 
 	int voiceCount = 1;
@@ -867,7 +870,7 @@ void dsp_patch_parameter_base::setUpFromDsp( parameter_description* parameterDes
 		voiceCount = 128; // use constant POLYPHONIC_ARRAY_SIZE!!!?
 
 	assert( voiceCount == 1 || patchCount == 1 ); // Not usual to need both polyphonic AND 128 patches!!!
-	createPatchMemory( patchCount, voiceCount );
+	createPatchMemory( /*patchCount,*/ voiceCount );
 	const int ccVirtualVoiceId = ControllerType::VirtualVoiceId << 24;
 
 	if( m_controller_id == ccVirtualVoiceId )
@@ -890,8 +893,10 @@ void dsp_patch_parameter_base::setUpFromDsp( parameter_description* parameterDes
 	//set PinId( m _plug->UniqueId() );
 }
 
-void dsp_patch_parameter_base::createPatchMemory(int patchCount, int voiceCount)
+void dsp_patch_parameter_base::createPatchMemory(int voiceCount)
 {
+const int patchCount = 1;
+
 	assert(voiceCount > 0);
 	patchMemory.resize(voiceCount);
 	lastMidiValue_.assign(128, INT_MAX);
@@ -916,6 +921,7 @@ void dsp_patch_parameter_base::createPatchMemory(int patchCount, int voiceCount)
 	}
 }
 
+#if 0
 int dsp_patch_parameter_base::EffectivePatch()
 {
 	if( patchMemory[0]->getPatchCount() == 1 ) // ignore PC?
@@ -952,3 +958,4 @@ void dsp_patch_parameter_base::OnPatchChanged( int previousProgram, int newProgr
 		OnValueChangedFromGUI( true, voiceId );
 	}
 }
+#endif

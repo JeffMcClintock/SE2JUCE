@@ -13,6 +13,7 @@
 #include "SubViewPanel.h"
 #include "DragLine.h"
 #include "modules/shared/xplatform_modifier_keys.h"
+#include "IPluginGui.h"
 #ifdef _WIN32
 #include "modules/se_sdk3_hosting/DrawingFrame_win32.h"
 #endif

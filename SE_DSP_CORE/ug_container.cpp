@@ -1154,7 +1154,7 @@ void ug_container::BuildPatchManager( TiXmlElement* xml )
 
 	IDspPatchManager* dspPatchManager = new DspPatchManager( this );
 	setPatchManager( dspPatchManager );
-	dspPatchManager->setProgram( initialProgram );
+//	dspPatchManager->setProgram( initialProgram );
 	dspPatchManager->setMidiChannel( midiChannel );
 
 	TiXmlElement* parameters_xml = xml->FirstChildElement("Parameters");
@@ -1340,11 +1340,12 @@ void ug_container::OnUiNotify2( int p_msg_id, my_input_stream& p_stream )
 {
 	ug_base::OnUiNotify2( p_msg_id, p_stream );
 
+#if 0
 	if( p_msg_id == id_to_long("setp") /*|| p_msg_id == id_to_long("mono") */) // Patch Change
 	{
 		m_patch_manager->OnUiMsg( p_msg_id, p_stream);
 	}
-
+#endif
 	if( p_msg_id == id_to_long("setc") ) // MIDI Channel Change
 	{
 		int channel;

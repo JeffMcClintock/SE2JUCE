@@ -87,8 +87,7 @@ void SynthRuntime::prepareToPlay(
 		// Apply preset before Open(), else gets delayed by 1 block causing havok with BPM Clock (receives BPM=0 for 1st block).
 		if (!presetChunk.empty())
 		{
-			const bool saveExtraState = true;
-			generator->setPresetState_UI_THREAD(presetChunk, false, saveExtraState);
+			generator->setPresetState_UI_THREAD(presetChunk, false);
 			assert(reinitializeFlag == false); // loading prior preset should not have changed any persistant host-controls.
 		}
 

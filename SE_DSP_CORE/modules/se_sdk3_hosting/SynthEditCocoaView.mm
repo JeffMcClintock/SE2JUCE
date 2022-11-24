@@ -8,7 +8,7 @@
 #include "./JsonDocPresenter.h"
 #include "BundleInfo.h"
 
-#if !GMPI_IS_PLATFORM_JUCE && !defined(SE_TARGET_VST3)
+#if defined(SE_TARGET_AU)
 #include "../../../se_au/SEInstrumentBase.h"
 #endif
 
@@ -41,7 +41,7 @@ public:
         
         containerView->setDocument(presenter, pviewType);
         
-#if !GMPI_IS_PLATFORM_JUCE && !defined(SE_TARGET_VST3)
+#if defined(SE_TARGET_AU)
         dynamic_cast<SEInstrumentBase*>(controller)->callbackOnUnloadPlugin = [this]
         {
             containerView = nullptr; // free all objects early to avoid dangling pointers to AudioUnit.
@@ -53,7 +53,7 @@ public:
     ~DrawingFrameCocoa()
     {
         int x = 9;
-#if !GMPI_IS_PLATFORM_JUCE && !defined(SE_TARGET_VST3)
+#if defined(SE_TARGET_AU)
         auto audioUnit = dynamic_cast<SEInstrumentBase*>(controller);
         if(audioUnit)
         {
@@ -240,10 +240,10 @@ public:
     GmpiDrawing::Point mousePos;
 }
 
-#if GMPI_IS_PLATFORM_JUCE || defined(SE_TARGET_VST3)
-- (id) initWithController: (class IGuiHost2*) _editController preferredSize: (NSSize) size;
-#else
+#if defined(SE_TARGET_AU)
 - (id) initWithEditController: (class ausdk::AUBase*) editController audioUnit: (AudioUnit) au preferredSize: (NSSize) size;
+#else
+- (id) initWithController: (class IGuiHost2*) _editController preferredSize: (NSSize) size;
 #endif
 
 - (void)drawRect:(NSRect)dirtyRect;
@@ -256,7 +256,7 @@ public:
 // SMTG_AU_PLUGIN_NAMESPACE (SMTGAUPluginCocoaView)
 //--------------------------------------------------------------------------------------------------------------
 
-#if !GMPI_IS_PLATFORM_JUCE && !defined(SE_TARGET_VST3)
+#if defined(SE_TARGET_AU)
 
 //--------------------------------------------------------------------------------------------------------------
 @implementation SYNTHEDIT_PLUGIN_COCOA_VIEW_CLASSNAME
@@ -296,7 +296,7 @@ public:
 @implementation SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME
 
 //--------------------------------------------------------------------------------------------------------------
-#if GMPI_IS_PLATFORM_JUCE || defined(SE_TARGET_VST3)
+#if !defined(SE_TARGET_AU)
 - (id) initWithController: (class IGuiHost2*) _editController preferredSize: (NSSize) size_unused
 {
     Json::Value document_json;
@@ -529,17 +529,17 @@ public:
 void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
 {
     // <Shift> key?
-    if(([theEvent modifierFlags ] & (NSShiftKeyMask | NSAlphaShiftKeyMask)) != 0)
+    if(([theEvent modifierFlags ] & (NSEventModifierFlagShift | NSEventModifierFlagCapsLock)) != 0)
     {
         flags |= gmpi_gui_api::GG_POINTER_KEY_SHIFT;
     }
     
-    if(([theEvent modifierFlags ] & NSCommandKeyMask) != 0)
+    if(([theEvent modifierFlags ] & NSEventModifierFlagCommand) != 0)
     {
         flags |= gmpi_gui_api::GG_POINTER_KEY_CONTROL;
     }
     
-    if(([theEvent modifierFlags ] & NSAlternateKeyMask) != 0) // <Option> key.
+    if(([theEvent modifierFlags ] & NSEventModifierFlagOption) != 0) // <Option> key.
     {
         flags |= gmpi_gui_api::GG_POINTER_KEY_ALT;
     }
