@@ -20,6 +20,8 @@ extern const char* se2juce_getIndexedResource(int index, int& returnBytes)
 }
 #endif
 
+// TODO move this to plugin-specfic file, so it can be customized per-plugin
+
 // see also SE_DECLARE_INIT_STATIC_FILE
 #define INIT_STATIC_FILE(filename) void se_static_library_init_##filename(); se_static_library_init_##filename();
 
@@ -32,5 +34,5 @@ extern void initialise_synthedit_extra_modules(bool passFalse)
 		return;
 #endif
 
-	INIT_STATIC_FILE(Slider_Gui);
+	INIT_STATIC_FILE(ADSR4);
 }

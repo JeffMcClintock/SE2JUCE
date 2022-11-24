@@ -5,9 +5,18 @@
 #include "RawConversions.h"
 
 //==============================================================================
-SE2JUCE_Processor::SE2JUCE_Processor()
+SE2JUCE_Processor::SE2JUCE_Processor() :
+    // init the midi converter
+    midiConverter(
+        // provide a lambda to accept converted MIDI 2.0 messages
+        [this](const gmpi::midi::message_view& msg, int offset)
+        {
+            processor.MidiIn(offset, msg.begin(), static_cast<int>(msg.size()));
+        }
+    ),
+
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
+     AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
@@ -249,7 +258,7 @@ void SE2JUCE_Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
 
     for (const auto msg : midiMessages)
     {
-        processor.MidiIn(msg.samplePosition, msg.data, msg.numBytes);
+        midiConverter.processMidi({ msg.data, msg.numBytes }, msg.samplePosition);
     }
 
     processor.process(

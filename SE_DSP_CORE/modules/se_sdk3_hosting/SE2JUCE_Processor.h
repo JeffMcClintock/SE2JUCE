@@ -12,6 +12,7 @@
 #include "SE2JUCE_Processor.h"
 #include "SE2JUCE_Controller.h"
 #include "SynthRuntime.h"
+#include "mp_midi.h"
 
 //==============================================================================
 /**
@@ -24,6 +25,7 @@ class SE2JUCE_Processor : public juce::AudioProcessor, public juce::AudioProcess
     SeJuceController controller;
     juce::AudioPlayHead::CurrentPositionInfo timeInfo;  // JUCE format
     my_VstTimeInfo timeInfoSe;                          // SE format
+    gmpi::midi_2_0::MidiConverter2 midiConverter;
 
 public:
     //==============================================================================
