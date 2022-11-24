@@ -2271,6 +2271,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(PatchMemoryList3);
 	INIT_STATIC_FILE(PatchMemoryText);
 	INIT_STATIC_FILE(Slider);
+	INIT_STATIC_FILE(SVFilter4)
 	INIT_STATIC_FILE(SoftDistortion);
 	INIT_STATIC_FILE(Switch);
 	INIT_STATIC_FILE(UnitConverter);
@@ -2362,17 +2363,31 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(DAWSampleRate);
 	INIT_STATIC_FILE(StepSequencer2);
 	INIT_STATIC_FILE(MIDI2Converter)
-	INIT_STATIC_FILE(MPEToMIDI2)
+		INIT_STATIC_FILE(MPEToMIDI2)
 
-	// when the UI is defined in JUCE, not SynthEdit, we don't include GUI modules
+		// when the UI is defined in JUCE, not SynthEdit, we don't include GUI modules
 #ifndef SE_USE_JUCE_UI
+	INIT_STATIC_FILE(PatchMemoryFloat_Gui)
+	INIT_STATIC_FILE(PatchMemoryFloatOut_Gui)
+	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui)
+	INIT_STATIC_FILE(PatchMemoryTextOut_Gui)
+	INIT_STATIC_FILE(PatchMemoryList3_Gui);
+	INIT_STATIC_FILE(PatchPoints);
 	INIT_STATIC_FILE(Slider_Gui)
+	INIT_STATIC_FILE(Image3_Gui)
+	INIT_STATIC_FILE(GUIBoolInverter_Gui)
+	INIT_STATIC_FILE(PanelGroup_Gui)
+	INIT_STATIC_FILE(PatchInfo_Gui)
+	INIT_STATIC_FILE(PolyphonyControl_Gui)
+	INIT_STATIC_FILE(PopupMenuXP_Gui)
+	INIT_STATIC_FILE(TextEntry4_Gui)
+	INIT_STATIC_FILE(Increment3_Gui)
 	INIT_STATIC_FILE(ListEntry_Gui);
 	INIT_STATIC_FILE(PatchPointsGui)
 	INIT_STATIC_FILE(PlainImage_Gui)
 	INIT_STATIC_FILE(RegistrationCheck) // has DSP also,but too bad.
 #endif
-
+		
 	// You can include extra plugin-specific modules by placing this define in projucer 'Extra Preprocessor Definitions'
 	// e.g. SE_EXTRA_STATIC_FILE_CPP="../PROJECT_NAME/Resources/module_static_link.cpp"
 #ifdef SE_EXTRA_STATIC_FILE_CPP

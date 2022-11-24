@@ -415,6 +415,14 @@ modules/ControlsXp/Scope3.cpp
 modules/Converters/FloatToText.cpp
 modules/Converters/VoltsToMidiCc.cpp
 
+modules/PatchMemory/PatchInfoGui.h
+modules/PatchMemory/PatchMemoryBoolOutGui.h
+modules/PatchMemory/PatchMemoryFloatGui.h
+modules/PatchMemory/PatchMemoryFloatOutGui.h
+modules/PatchMemory/PatchMemoryList.h
+modules/PatchMemory/PatchMemoryListGui.h
+modules/PatchMemory/PatchMemoryTextOutGui.h
+
 modules/PatchMemory/PatchMemoryBool.cpp
 modules/PatchMemory/PatchMemoryFloat.cpp
 modules/PatchMemory/PatchMemoryInt.cpp
@@ -475,13 +483,7 @@ modules/Converters/Converters.h
 modules/Converters/ConvertersGui.h
 modules/Converters/FloatToText.h
 modules/Converters/VoltsToMidiCc.h
-modules/PatchMemory/PatchInfoGui.h
-modules/PatchMemory/PatchMemoryBoolOutGui.h
-modules/PatchMemory/PatchMemoryFloatGui.h
-modules/PatchMemory/PatchMemoryFloatOutGui.h
-modules/PatchMemory/PatchMemoryList.h
-modules/PatchMemory/PatchMemoryListGui.h
-modules/PatchMemory/PatchMemoryTextOutGui.h
+
 modules/sharedLegacyWidgets/BitmapWidget.h
 modules/FloatLimiter/FloatLimiterGui.h
 modules/SubControlsXp/Image2GuiXp.h

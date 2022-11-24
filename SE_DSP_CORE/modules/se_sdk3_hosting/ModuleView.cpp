@@ -396,55 +396,58 @@ namespace SynthEdit2
 
 	void ModuleView::Build()
 	{
-		auto mi = moduleInfo;
-		{
-			gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> object;
-			object.Attach(mi->Build(MP_SUB_TYPE_GUI2, true));
-			if (object != nullptr)
-			{
-				auto r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2, pluginParameters.asIMpUnknownPtr());
-				r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2B, pluginParameters2B.asIMpUnknownPtr());
-				r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI, pluginGraphics.asIMpUnknownPtr());
-				r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI2, pluginGraphics2.asIMpUnknownPtr());
-				r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3, pluginGraphics3.asIMpUnknownPtr());
+		auto& mi = moduleInfo;
 
-				pluginParameters->setHost(static_cast<gmpi::IMpUserInterfaceHost2*>(this));
+		gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> object;
+		object.Attach(mi->Build(MP_SUB_TYPE_GUI2, true));
+
+		if (!object)
+		{
+			if (mi->getWindowType() == MP_WINDOW_TYPE_NONE) // can't support legacy graphics, but can support invisible legacy sub-controls.
+			{
+				object.Attach(mi->Build(MP_SUB_TYPE_GUI, true));
+			}
+		}
+
+		if (!object)
+		{
+#if defined( _DEBUG)
+			_RPTN(0, "FAILED TO LOAD: %S\n", mi->UniqueId().c_str() );
+			//auto it = find(debug_missing_modules.begin(), debug_missing_modules.end(), typeS);
+			//if (it == debug_missing_modules.end())
+			//	debug_missing_modules.push_back(typeS);
+#endif
+
+			return;
+		}
+
+		auto r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2, pluginParameters.asIMpUnknownPtr());
+		r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2B, pluginParameters2B.asIMpUnknownPtr());
+		r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN, pluginParametersLegacy.asIMpUnknownPtr());
+		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI, pluginGraphics.asIMpUnknownPtr());
+		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI2, pluginGraphics2.asIMpUnknownPtr());
+		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3, pluginGraphics3.asIMpUnknownPtr());
+
+		if (!pluginParameters.isNull())
+		{
+			pluginParameters->setHost(static_cast<gmpi::IMpUserInterfaceHost2*>(this));
+		}
+		else
+		{
+			gmpi_sdk::mp_shared_ptr<gmpi::IMpLegacyInitialization> legacyInitMethod;
+			r = object->queryInterface(gmpi::MP_IID_LEGACY_INITIALIZATION, legacyInitMethod.asIMpUnknownPtr());
+			if (!legacyInitMethod.isNull())
+			{
+				legacyInitMethod->setHost(static_cast<IMpUserInterfaceHost*>(this));
 			}
 			else
 			{
-				if (mi->getWindowType() == MP_WINDOW_TYPE_NONE) // can't support legacy graphics, but can support invisible legacy sub-controls.
+				// last gasp
+				// CAN'T/SHOULDN"T DYNAMIC CAST INTO DLL!!!! (but we have to support old 3rd-party modules)
+				auto oldSchool = dynamic_cast<IoldSchoolInitialisation*>(object.get());
+				if (oldSchool)
 				{
-					object.Attach(mi->Build(MP_SUB_TYPE_GUI, true));
-					if (object != nullptr)
-					{
-						auto r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN, pluginParametersLegacy.asIMpUnknownPtr());
-						r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2, pluginParameters.asIMpUnknownPtr());
-						r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2B, pluginParameters2B.asIMpUnknownPtr());
-
-						if(!pluginParameters.isNull())
-						{
-							pluginParameters->setHost(static_cast<gmpi::IMpUserInterfaceHost2*>(this));
-						}
-						else
-						{
-							gmpi_sdk::mp_shared_ptr<gmpi::IMpLegacyInitialization> legacyInitMethod;
-							r = object->queryInterface(gmpi::MP_IID_LEGACY_INITIALIZATION, legacyInitMethod.asIMpUnknownPtr());
-							if(!legacyInitMethod.isNull())
-							{
-								legacyInitMethod->setHost(static_cast<IMpUserInterfaceHost*>(this));
-							}
-							else
-							{
-								// last gasp
-								// CAN'T/SHOULDN"T DYNAMIC CAST INTO DLL!!!! (but we have to support old 3rd-party modules)
-								auto oldSchool = dynamic_cast<IoldSchoolInitialisation*>(object.get());
-								if (oldSchool)
-								{
-									oldSchool->setHost(static_cast<IMpUserInterfaceHost*>(this));
-								}
-							}
-						}
-					}
+					oldSchool->setHost(static_cast<IMpUserInterfaceHost*>(this));
 				}
 			}
 		}
