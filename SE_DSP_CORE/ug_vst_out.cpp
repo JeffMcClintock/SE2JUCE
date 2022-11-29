@@ -66,7 +66,7 @@ uint64_t ug_vst_out::updateSilenceFlags(int output, int count)
 	return ret;
 }
 
-void ug_vst_out::setIoBuffers(float** p_outputs, int numChannels, int stride)
+void ug_vst_out::setIoBuffers(float* const* p_outputs, int numChannels, int stride)
 {
 	bufferIncrement_ = stride;
 

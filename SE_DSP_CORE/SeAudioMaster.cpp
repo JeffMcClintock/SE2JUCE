@@ -491,7 +491,7 @@ int32_t SeAudioMaster::RegisterIoModule(class ISpecialIoModule* m)
 	return getShell()->RegisterIoModule(m);
 }
 
-void SeAudioMaster::DoProcess(int sampleframes, const float* const* inputs, float** outputs, int numInputs, int numOutputs, int inputIncrement, int outputIncrement, int numSidechains)
+void SeAudioMaster::DoProcess(int sampleframes, const float* const* inputs, float* const* outputs, int numInputs, int numOutputs, int inputIncrement, int outputIncrement, int numSidechains)
 {
 #if defined( SE_EDIT_SUPPORT )
 	if (audioOutModule)

@@ -329,7 +329,7 @@ public:
 
 	void setMpeMode(int32_t mpeOn);
 
-    void DoProcess(int sampleframes, const float* const* inputs, float** outputs, int numInputs, int numOutputs, int inputIncrement = 1, int outputIncrement = 1, int numSidechains = 0 );
+    void DoProcess(int sampleframes, const float* const* inputs, float* const* outputs, int numInputs, int numOutputs, int inputIncrement = 1, int outputIncrement = 1, int numSidechains = 0 );
 
 #if defined( SE_EDIT_SUPPORT )
 	void getPresetsState(std::vector< std::pair<int32_t, std::string> >& presets, bool saveRestartState);

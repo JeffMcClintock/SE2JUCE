@@ -25,7 +25,7 @@ public:
 class ISpecialIoModuleAudio : public ISpecialIoModule
 {
 public:
-	virtual void setIoBuffers(float** p_outputs, int numChannels, int stride = 1) = 0;
+	virtual void setIoBuffers(float* const* p_outputs, int numChannels, int stride = 1) = 0;
 };
 
 // Core Functionality provided by all environments.

@@ -40,7 +40,7 @@ public:
 		shell_ = vst3Processor;
 	}
     
-	void process( int sampleFrames, const float* const* inputs, float** outputs, int inChannelCount, int outChannelCount )
+	void process( int sampleFrames, const float* const* inputs, float* const* outputs, int inChannelCount, int outChannelCount )
 	{
 		generator->DoProcess( sampleFrames, inputs, outputs, inChannelCount, outChannelCount );
 	}

@@ -77,7 +77,7 @@ public:
 
 	int Open() override;
 	void onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p_state) override;
-	void setIoBuffers(float** p_outputs, int numChannels, int stride = 1) override;
+	void setIoBuffers(float* const* p_outputs, int numChannels, int stride = 1) override;
 	void HandleEvent(SynthEditEvent* e) override;
 	void StartFadeOut(bool isDucked = true);
     void ChooseProcess();
