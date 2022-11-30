@@ -8,7 +8,7 @@ class Impulse : public MpBase
 public:
 	Impulse( IMpUnknown* host );
 	void subProcess( int bufferOffset, int sampleFrames );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	AudioInPin pinTrigger;

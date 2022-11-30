@@ -33,7 +33,7 @@ namespace VstPresetUtil
 		/** The host passes a number of interfaces as context to initialize the Plug-in class.
 			@note Extensive memory allocations etc. should be performed in this method rather than in the class' constructor!
 			If the method does NOT return kResultOk, the object is released immediately. In this case terminate is not called! */
-		virtual Steinberg::tresult PLUGIN_API initialize(FUnknown* context)
+		Steinberg::tresult PLUGIN_API initialize(FUnknown* context) override
 		{
 			assert(false);
 			return 0;
@@ -41,35 +41,35 @@ namespace VstPresetUtil
 
 		/** This function is called before the Plug-in is unloaded and can be used for
 			cleanups. You have to release all references to any host application interfaces. */
-		virtual Steinberg::tresult PLUGIN_API terminate()
+		Steinberg::tresult PLUGIN_API terminate() override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called before initializing the component to get information about the controller class. */
-		virtual Steinberg::tresult PLUGIN_API getControllerClassId(Steinberg::TUID classId)
+		Steinberg::tresult PLUGIN_API getControllerClassId(Steinberg::TUID classId) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called before 'initialize' to set the component usage (optional). See \ref IoModes */
-		virtual Steinberg::tresult PLUGIN_API setIoMode(Steinberg::Vst::IoMode mode)
+		Steinberg::tresult PLUGIN_API setIoMode(Steinberg::Vst::IoMode mode) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called after the Plug-in is initialized. See \ref MediaTypes, BusDirections */
-		virtual Steinberg::int32 PLUGIN_API getBusCount(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir)
+		Steinberg::int32 PLUGIN_API getBusCount(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called after the Plug-in is initialized. See \ref MediaTypes, BusDirections */
-		virtual Steinberg::tresult PLUGIN_API getBusInfo(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir, Steinberg::int32 index, Steinberg::Vst::BusInfo& bus /*out*/)
+		Steinberg::tresult PLUGIN_API getBusInfo(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir, Steinberg::int32 index, Steinberg::Vst::BusInfo& bus /*out*/) override
 		{
 			assert(false);
 			return 0;
@@ -77,7 +77,7 @@ namespace VstPresetUtil
 
 		/** Retrieves routing information (to be implemented when more than one regular input or output bus exists).
 			The inInfo always refers to an input bus while the returned outInfo must refer to an output bus! */
-		virtual Steinberg::tresult PLUGIN_API getRoutingInfo(Steinberg::Vst::RoutingInfo& inInfo, Steinberg::Vst::RoutingInfo& outInfo /*out*/)
+		Steinberg::tresult PLUGIN_API getRoutingInfo(Steinberg::Vst::RoutingInfo& inInfo, Steinberg::Vst::RoutingInfo& outInfo /*out*/) override
 		{
 			assert(false);
 			return 0;
@@ -85,32 +85,31 @@ namespace VstPresetUtil
 
 		/** Called upon (de-)activating a bus in the host application. The Plug-in should only processed an activated bus,
 			the host could provide less see \ref AudioBusBuffers in the process call (see \ref IAudioProcessor::process) if last buses are not activated */
-		virtual Steinberg::tresult PLUGIN_API activateBus(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir, Steinberg::int32 index, Steinberg::TBool state)
+		Steinberg::tresult PLUGIN_API activateBus(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir, Steinberg::int32 index, Steinberg::TBool state) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Activates / deactivates the component. */
-		virtual Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state)
+		Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Sets complete state of component. */
-		virtual Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state)
+		Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Retrieves complete state of component. */
-		virtual Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state)
+		Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state) override
 		{
 			return patchManager_->getState(state, preset_);
 		}
-
 	};
 
 	IMPLEMENT_REFCOUNT(Vst3PresetProxy);

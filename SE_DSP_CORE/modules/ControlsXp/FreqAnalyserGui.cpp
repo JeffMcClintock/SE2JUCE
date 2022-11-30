@@ -65,7 +65,7 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 
 	int newSpectrumCount = -1 + pinSpectrum.rawSize() / sizeof(float);
 
-	float* capturedata = (float*)pinSpectrum.rawData();
+	auto capturedata = (const float*) pinSpectrum.rawData();
 
 	if (newSpectrumCount > 0)
 	{
@@ -294,7 +294,7 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 	g.DrawBitmap(cachedBackground_, Point(0, 0), r);
 #endif
 
-	if (spectrumCount < 1)
+	if (spectrumCount < 1 || newSpectrumCount < 1)
 		return MP_OK;
 
 	auto factory = g.GetFactory();

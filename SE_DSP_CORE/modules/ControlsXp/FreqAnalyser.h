@@ -17,7 +17,7 @@ public:
 	// methods
 	void subProcess(int sampleFrames);
 	void waitAwhile(int sampleFrames);
-	void onSetPins();
+	void onSetPins() override;
 
 	virtual int getTimeOut()
 	{

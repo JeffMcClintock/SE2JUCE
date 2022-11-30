@@ -1145,32 +1145,31 @@ void ug_container::Setup(class ISeAudioMaster* am, class TiXmlElement* xml)
 }
 
 // This must be done BEFORE any other module is built, so they can hook up their parameter pins to something.
-void ug_container::BuildPatchManager( TiXmlElement* xml )
+void ug_container::BuildPatchManager(TiXmlElement* patchMgrXml, const std::string* presetXml)
 {
-	int32_t initialProgram = 0;
-	int32_t midiChannel = -1;
-	xml->QueryIntAttribute("Program", &initialProgram);
-	xml->QueryIntAttribute("MidiChannel", &midiChannel);
-
 	IDspPatchManager* dspPatchManager = new DspPatchManager( this );
 	setPatchManager( dspPatchManager );
-//	dspPatchManager->setProgram( initialProgram );
+
+	int32_t midiChannel = -1;
+	patchMgrXml->QueryIntAttribute("MidiChannel", &midiChannel);
 	dspPatchManager->setMidiChannel( midiChannel );
 
-	TiXmlElement* parameters_xml = xml->FirstChildElement("Parameters");
-
-	if( parameters_xml )
+	auto parameters_xml = patchMgrXml->FirstChildElement("Parameters");
+	if (parameters_xml)
 	{
-		for( TiXmlElement* parameter_xml = parameters_xml->FirstChildElement(); parameter_xml; parameter_xml=parameter_xml->NextSiblingElement())
+		for (auto parameter_xml = parameters_xml->FirstChildElement(); parameter_xml; parameter_xml = parameter_xml->NextSiblingElement())
 		{
 			int32_t dataType = -1;
 			parameter_xml->QueryIntAttribute("DataType", &dataType);
-			dsp_patch_parameter_base* parameter = dspPatchManager->createPatchParameter( dataType );
-			parameter->Initialize( parameter_xml );
+			auto parameter = dspPatchManager->createPatchParameter(dataType);
+			parameter->Initialize(parameter_xml);
 		}
 	}
-
-//	dspPatchManager->setupContainerHandles(this);
+	if (presetXml)
+	{
+		constexpr bool overrideIgnoreProgramChange = true;
+		dspPatchManager->setPresetState(*presetXml, overrideIgnoreProgramChange);
+	}
 }
 
 // Must be done AFTER all other modules built, so it can detect if USER included a Patch-Automator,

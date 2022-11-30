@@ -196,7 +196,7 @@ void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 		{
 			OnValueChangedFromGUI( due_to_program_change, voice );
 		}
-		//			_RPT3(_CRT_WARN, "DSP %10s v=%d val=%f\n", debugName.c_str(), voice, RawToValue<float> this-> );
+//		_RPTN(_CRT_WARN, "DSP ppc %10s v=%d val=\n", debugName.c_str(), voice/*, RawToValue<float> this->*/ );
 	}
 	break;
 
@@ -579,11 +579,11 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 	assert(patch_xml == nullptr || strcmp(patch_xml->Value(), "patch-list") == 0);
 	if (patch_xml)
 	{
-		const bool isEditor = BundleInfo::instance()->isEditor;
+//		const bool isEditor = BundleInfo::instance()->isEditor;
 
 		ParseXmlPreset(
 			xml,
-			[this, isEditor](int voiceId, int preset, const char* xmlvalue)
+			[this/*, isEditor*/](int voiceId, int preset, const char* xmlvalue)
 			{
 				// plugins have only one preset on the DSP at a time. Editor has many.
 //				if ((isEditor && preset < 128) || preset == 0)

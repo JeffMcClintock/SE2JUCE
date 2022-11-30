@@ -8,7 +8,7 @@ class BpmClock4 : public MpBase2
 public:
 	BpmClock4();
 	void subProcess2(int sampleFrames);
-	virtual void onSetPins();
+	void onSetPins() override;
 	double CalcAccumulatorError(double HostSongPosition, double accumulator, float overmultiplier, float hostBarStart) const;
 
 	const int PPQN = 384;

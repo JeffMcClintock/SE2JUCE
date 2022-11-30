@@ -16,7 +16,7 @@ public:
 
 	// methods
 	void subProcess( int bufferOffset, int sampleFrames );
-	void onSetPins();
+	void onSetPins() override;
 private:
 	// pins_
 	SmartAudioPin pinGateOut;

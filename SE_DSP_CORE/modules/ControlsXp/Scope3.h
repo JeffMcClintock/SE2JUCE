@@ -23,7 +23,7 @@ public:
 	void waitForTrigger2(int bufferOffset, int sampleFrames);
 	void subProcessCruise(int bufferOffset, int sampleFrames);
 	void forceTrigger();
-	void onSetPins();
+	void onSetPins() override;
 
 
 	virtual AudioInPin* getTriggerPin()

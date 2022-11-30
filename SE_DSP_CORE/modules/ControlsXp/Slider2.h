@@ -14,7 +14,7 @@ public:
 		return MpBase2::open();
 	}
 	void subProcess(int sampleFrames);
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	FloatInPin pinValueIn;

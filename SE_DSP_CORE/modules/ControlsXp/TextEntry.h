@@ -7,7 +7,7 @@ class TextEntry : public MpBase2
 {
 public:
 	TextEntry( );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	StringOutPin pinTextOut;

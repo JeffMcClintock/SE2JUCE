@@ -17,7 +17,7 @@ public:
 
 	// methods
 	void subProcess(int bufferOffset, int sampleFrames);
-	void onSetPins();
+	void onSetPins() override;
 
 protected:
 	// pins_

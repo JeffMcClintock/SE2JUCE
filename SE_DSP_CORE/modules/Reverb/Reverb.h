@@ -10,7 +10,7 @@ class Reverb : public MpBase
 {
 public:
 	Reverb( IMpUnknown* host );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 	virtual int32_t MP_STDCALL open();
 	void subProcess( int bufferOffset, int sampleFrames );

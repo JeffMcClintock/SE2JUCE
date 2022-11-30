@@ -8,7 +8,7 @@ class FloatFormula : public MpBase
 {
 public:
 	FloatFormula( IMpUnknown* host );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	FloatInPin pinA;

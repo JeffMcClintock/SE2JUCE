@@ -269,7 +269,14 @@ public:
 #endif
 	);
 
-	void BuildModules(ug_container* container, ug_container* patch_control_container, class TiXmlElement* xml, ug_base* cpu_parent, std::vector<int32_t>& mutedContainers);
+	void BuildModules(
+		ug_container* container,
+		ug_container* patch_control_container,
+		class TiXmlElement* xml,
+		ug_base* cpu_parent,
+		std::vector< std::pair<int32_t, std::string> >& pendingPresets,
+		std::vector<int32_t>& mutedContainers
+	);
 	static int calcOversampleFactor(int oversampleFactor, int sampleRate, bool hdMode = true);
 
 	void RegisterModuleDebugger(class UgDebugInfo* module) override
@@ -331,10 +338,9 @@ public:
 
     void DoProcess(int sampleframes, const float* const* inputs, float* const* outputs, int numInputs, int numOutputs, int inputIncrement = 1, int outputIncrement = 1, int numSidechains = 0 );
 
-#if defined( SE_EDIT_SUPPORT )
 	void getPresetsState(std::vector< std::pair<int32_t, std::string> >& presets, bool saveRestartState);
 	void setPresetsState(const std::vector< std::pair<int32_t, std::string> >& presets);
-#else
+#if !defined( SE_EDIT_SUPPORT )
 	void SetupVstIO();
 	void MidiIn( int delta, unsigned int shortMidiMsg )
 	{
@@ -368,8 +374,16 @@ public:
 	void setInputSilent(int input, bool isSilent);
 	uint64_t updateSilenceFlags(int output, int count);
 
-	void BuildDspGraph( const char* structureXml, std::vector<int32_t>& mutedContainers);
-	void BuildDspGraph(class TiXmlDocument* doc, std::vector<int32_t>& mutedContainers);
+	void BuildDspGraph(
+		const char* structureXml,
+		std::vector< std::pair<int32_t, std::string> >& pendingPresets,
+		std::vector<int32_t>& mutedContainers
+	);
+	void BuildDspGraph(
+		class TiXmlDocument* doc,
+		std::vector< std::pair<int32_t, std::string> >& pendingPresets,
+		std::vector<int32_t>& mutedContainers
+	);
 	virtual ~SeAudioMaster();
 	void DoProcessVST(int sampleframes);
 

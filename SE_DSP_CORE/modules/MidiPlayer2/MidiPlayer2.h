@@ -21,7 +21,7 @@ public:
 
 	void processWithGate( int start_pos, int sampleframes );
 	void subProcess( int bufferOffset, int sampleFrames );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 	void NextMidiEvent(int bufferOffset);
 	int loadMidiFile();

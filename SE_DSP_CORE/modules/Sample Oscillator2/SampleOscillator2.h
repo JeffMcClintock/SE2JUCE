@@ -127,7 +127,7 @@ public:
 	SoundfontOscillator2( IMpUnknown* host );
 	~SoundfontOscillator2();
 	virtual int32_t MP_STDCALL open();
-	virtual void onSetPins();
+	void onSetPins() override;
 	virtual void onGraphStart();
 
 	IntInPin pinSampleId;

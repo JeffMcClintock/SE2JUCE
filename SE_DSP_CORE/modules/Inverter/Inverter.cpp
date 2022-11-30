@@ -102,7 +102,7 @@ public:
 #endif
 #endif
     
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	AudioInPin pinSignalIn;

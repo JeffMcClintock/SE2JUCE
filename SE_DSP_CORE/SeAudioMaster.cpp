@@ -344,7 +344,11 @@ SeAudioMaster::~SeAudioMaster()
 #endif
 }
 
-void SeAudioMaster::BuildDspGraph(const char* structureXml, std::vector<int32_t>& mutedContainers)
+void SeAudioMaster::BuildDspGraph(
+	const char* structureXml,
+	std::vector< std::pair<int32_t, std::string> >& pendingPresets,
+	std::vector<int32_t>& mutedContainers
+)
 {
 	TiXmlDocument doc;
 	doc.Parse(structureXml);
@@ -377,11 +381,15 @@ void SeAudioMaster::BuildDspGraph(const char* structureXml, std::vector<int32_t>
 	}
 	else
 	{
-		BuildDspGraph(&doc, mutedContainers);
+		BuildDspGraph(&doc, pendingPresets, mutedContainers);
 	}
 }
 
-void SeAudioMaster::BuildDspGraph(TiXmlDocument* doc, std::vector<int32_t>& mutedContainers)
+void SeAudioMaster::BuildDspGraph(
+	TiXmlDocument* doc,
+	std::vector< std::pair<int32_t, std::string> >& pendingPresets,
+	std::vector<int32_t>& mutedContainers
+)
 {
 	TiXmlHandle hDoc(doc);
 	TiXmlElement* pElem;
@@ -427,7 +435,14 @@ void SeAudioMaster::BuildDspGraph(TiXmlDocument* doc, std::vector<int32_t>& mute
 		// PROBLEM, when created here, it's patch_control_container is NULL (becuase patch manager not created yet)
 		// if REALLY needed, then need to manually set patch_control_container after BuildModules() below.
 		//main_container->GetParamete rSetter();
-		BuildModules( main_container, main_container, pElem, main_container, mutedContainers);
+		BuildModules(
+			main_container,
+			main_container,
+			pElem,
+			main_container,
+			pendingPresets,
+			mutedContainers
+		);
 
 #if defined( _DEBUG )
 		if( !debug_missing_modules.empty() )
@@ -671,17 +686,33 @@ int AudioMasterBase::calcOversampleFactor( int oversampleFactor, int sampleRate,
 	//                            _RPTW3(_CRT_WARN, L"HD=%d HOST-SR=%f SE-SR=%f\n", m_waves_hd_mode, m_samplerate, m_samplerate * (std::max)(1,oversampleFactor) );
 }
 
-void AudioMasterBase::BuildModules( ug_container* container, ug_container* patch_control_container, TiXmlElement* xml, ug_base* cpu_parent, std::vector<int32_t>& mutedContainers)
+void AudioMasterBase::BuildModules(
+	ug_container* container,
+	ug_container* patch_control_container,
+	TiXmlElement* xml,
+	ug_base* cpu_parent,
+	std::vector< std::pair<int32_t, std::string> >& pendingPresets,
+	std::vector<int32_t>& mutedContainers
+)
 {
 	// Look for Patch PatchManager.
-	TiXmlElement* patchManager_xml = xml->FirstChildElement("PatchManager");
-
+	auto patchManager_xml = xml->FirstChildElement("PatchManager");
 	if( patchManager_xml )
 	{
+		const std::string* presetXml{};
+
+		// check for any preset that was saved suring an async restart.
+		for (const auto& preset : pendingPresets)
+		{
+			if (preset.first != container->Handle())
+				continue;
+
+			presetXml = &preset.second;
+		}
+
 		// ensure child modules know this container holds their patchdata.
 		container->patch_control_container = patch_control_container = container;
-		container->BuildPatchManager( patchManager_xml );
-
+		container->BuildPatchManager( patchManager_xml, presetXml);
 		container->get_patch_manager()->setupContainerHandles(container);
 	}
 
@@ -773,7 +804,7 @@ void AudioMasterBase::BuildModules( ug_container* container, ug_container* patch
 					if(	expandInline )
 					{
 						generator->SetFlag(UGF_NEVER_EXECUTES);
-						BuildModules( container, patch_control_container, pElem, generator, mutedContainers);
+						BuildModules( container, patch_control_container, pElem, generator, pendingPresets, mutedContainers);
 					}
 					else // Build self-contained container.
 					{
@@ -820,12 +851,12 @@ pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
 						// re-route from container to oversampler in/out modules.
 						if( oversampleFactor != 0 )
 						{
-							oversampler->BuildModules( c, patch_control_container, pElem, oversampler, mutedContainers);
+							oversampler->BuildModules( c, patch_control_container, pElem, oversampler, pendingPresets, mutedContainers);
 							oversampler->Setup2(true);
 						}
 						else
 						{
-							BuildModules(c, patch_control_container, pElem, c, mutedContainers);
+							BuildModules(c, patch_control_container, pElem, c, pendingPresets, mutedContainers);
 							c->PostBuildStuff(true);
 						}
 					}
@@ -1066,6 +1097,7 @@ void SeAudioMaster::TriggerRestart()
 		return;
 
 	state = audioMasterState::AsyncRestart;
+//	_RPT0(0, "audioMasterState::AsyncRestart\n");
 
 	interupt_start_fade_out = true;
 	TriggerInterrupt();
@@ -1078,6 +1110,7 @@ void SeAudioMaster::TriggerShutdown()
 
 	// may come from UI thread.
 	state = audioMasterState::Stopping;
+//	_RPT0(0, "audioMasterState::Stopping\n");
 
 	interupt_start_fade_out = true;
 	TriggerInterrupt();
@@ -1972,6 +2005,7 @@ int SeAudioMaster::Open( )
 	DenormalFixer flushDenormals;
 
 	state = audioMasterState::Starting;
+//	_RPT0(0, "audioMasterState::Starting\n");
 
 	assert( m_sample_clock == 0 );
 
@@ -2009,6 +2043,7 @@ int SeAudioMaster::Open( )
 	assert(state == audioMasterState::Starting);
 
 	state = audioMasterState::Running;
+//	_RPT0(0, "audioMasterState::Running\n");
 
 #if defined( SE_EDIT_SUPPORT )
 #endif
@@ -2349,84 +2384,83 @@ int SeAudioMaster::getLatencySamples()
 void SeAudioMaster::setLatencyCompensation(int ElatencyCompensation)
 {
 }
-
 #endif
 
 #if defined(SE_TARGET_PLUGIN)
-    void SeAudioMaster::getPresetState_UI_THREAD( std::string& chunk, bool processorActive, bool saveRestartState)
+void SeAudioMaster::getPresetState_UI_THREAD( std::string& chunk, bool processorActive, bool saveRestartState)
+{
+    if( processorActive )
     {
-        if( processorActive )
+        dsp_getchunk_completed_ = false;
+        interrupt_getchunk_ = true;
+        TriggerInterrupt();
+            
+        int timeout = 50;
+        while( !dsp_getchunk_completed_ && timeout-- > 0 )
         {
-            dsp_getchunk_completed_ = false;
-            interrupt_getchunk_ = true;
-            TriggerInterrupt();
-            
-            int timeout = 50;
-            while( !dsp_getchunk_completed_ && timeout-- > 0 )
-            {
 #ifdef _WIN32
-                Sleep(10);
+            Sleep(10);
 #else
-                usleep( 10 * 1000 );
+            usleep( 10 * 1000 );
 #endif
-            }
+        }
             
-            if( timeout < 0 )
-            {
-                interrupt_getchunk_ = false;
+        if( timeout < 0 )
+        {
+            interrupt_getchunk_ = false;
                 
-                // FAIL. Assume DSP is suspended due to inactivity?
-				const bool saveRestartState = false;
-				m_shell->OnSaveStateDspStalled();
-				Patchmanager_->getPresetState( chunk, saveRestartState);
-            }
-            else
-            {
-                audioMasterLock_.Enter();
-                chunk = presetChunk_;             
-                presetChunk_.clear();
-                audioMasterLock_.Leave();
-            }
+            // FAIL. Assume DSP is suspended due to inactivity?
+			const bool saveRestartState = false;
+			m_shell->OnSaveStateDspStalled();
+			Patchmanager_->getPresetState( chunk, saveRestartState);
         }
         else
-        {
-            Patchmanager_->getPresetState( chunk, saveRestartState);
-        }
-    }
-    
-    void SeAudioMaster::setPresetState_UI_THREAD( const std::string& chunk, bool processorActive)
-    {
-        if( processorActive )
         {
             audioMasterLock_.Enter();
-            presetChunk_ = chunk;
+            chunk = presetChunk_;             
+            presetChunk_.clear();
             audioMasterLock_.Leave();
-            interrupt_setchunk_ = true;
-            TriggerInterrupt();
-        }
-        else
-        {
-            Patchmanager_->setPresetState(chunk);
         }
     }
+    else
+    {
+        Patchmanager_->getPresetState( chunk, saveRestartState);
+    }
+}
     
-    void SeAudioMaster::setPresetStateDspHelper()
+void SeAudioMaster::setPresetState_UI_THREAD( const std::string& chunk, bool processorActive)
+{
+    if( processorActive )
     {
         audioMasterLock_.Enter();
-		const bool saveRestartState = false;
-		Patchmanager_->setPresetState( presetChunk_);
-        presetChunk_.clear();
+        presetChunk_ = chunk;
         audioMasterLock_.Leave();
+        interrupt_setchunk_ = true;
+        TriggerInterrupt();
     }
-    
-    void SeAudioMaster::getPresetStateDspHelper()
+    else
     {
-        audioMasterLock_.Enter();
-		const bool saveRestartState = false;
-		Patchmanager_->getPresetState( presetChunk_, saveRestartState);
-        audioMasterLock_.Leave();
-        dsp_getchunk_completed_ = true;
+        Patchmanager_->setPresetState(chunk);
     }
+}
+    
+void SeAudioMaster::setPresetStateDspHelper()
+{
+    audioMasterLock_.Enter();
+	const bool saveRestartState = false;
+	Patchmanager_->setPresetState( presetChunk_);
+    presetChunk_.clear();
+    audioMasterLock_.Leave();
+}
+    
+void SeAudioMaster::getPresetStateDspHelper()
+{
+    audioMasterLock_.Enter();
+	const bool saveRestartState = false;
+	Patchmanager_->getPresetState( presetChunk_, saveRestartState);
+    audioMasterLock_.Leave();
+    dsp_getchunk_completed_ = true;
+}
 #endif
    
 #if !defined(SE_EDIT_SUPPORT)
@@ -2568,7 +2602,6 @@ void SeAudioMaster::AssignPinBuffers()
 	}
 }
 
-#if defined( SE_EDIT_SUPPORT )
 void SeAudioMaster::getPresetsState(std::vector< std::pair<int32_t, std::string> >& presets, bool saveRestartState)
 {
 	for (auto pa : patchAutomators_)
@@ -2594,4 +2627,3 @@ void SeAudioMaster::setPresetsState(const std::vector< std::pair<int32_t, std::s
 		patchmanager->setPresetState(preset.second);
 	}
 }
-#endif

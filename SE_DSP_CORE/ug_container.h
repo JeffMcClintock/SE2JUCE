@@ -36,7 +36,7 @@ public:
 	void ConnectPatchCables();
 	ug_base* AddUG(ug_base* u);
 	virtual void Setup(class ISeAudioMaster* am, class TiXmlElement* xml) override;
-	void BuildPatchManager( class TiXmlElement* xml );
+	void BuildPatchManager(class TiXmlElement* patchMgrXml, const std::string* presetXml);
 	void BuildAutomationModules();
 	void EnsurePpSetterDownstream();
 	void SetUnusedPlugs2();

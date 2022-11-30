@@ -85,7 +85,7 @@ void DspPatchManagerProxy::setParameterNormalized( timestamp_t p_clock, int vstP
 }
 #endif
 
-void DspPatchManagerProxy::setPresetState( const std::string& /*chunk*/)
+void DspPatchManagerProxy::setPresetState( const std::string& /*chunk*/, bool)
 {
 	assert(false);
 }

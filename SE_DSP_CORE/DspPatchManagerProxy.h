@@ -20,7 +20,7 @@ public:
 	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue ) override; // VST3.
 #endif
 	void getPresetState( std::string& chunk, bool saveRestartState) override;
-    void setPresetState( const std::string& chunk) override;
+    void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;
 	class dsp_patch_parameter_base* GetHostControl(int hostControl) override;
 	class dsp_patch_parameter_base* createPatchParameter( int typeIdentifier ) override; // from GUI.
 

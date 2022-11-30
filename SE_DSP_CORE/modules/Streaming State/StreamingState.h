@@ -9,7 +9,7 @@ class StreamingState : public MpBase
 public:
 	StreamingState( IMpUnknown* host );
 	void subProcess( int bufferOffset, int sampleFrames );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	AudioInPin pinSignalIn;

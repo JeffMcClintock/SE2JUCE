@@ -8,7 +8,7 @@ class SampleLoader2 : public MpBase
 public:
 	SampleLoader2( IMpUnknown* host );
 	~SampleLoader2();
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	StringInPin pinFilename;

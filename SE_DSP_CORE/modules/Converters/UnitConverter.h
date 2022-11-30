@@ -7,7 +7,7 @@ class UnitConverter : public MpBase
 {
 public:
 	UnitConverter( IMpUnknown* host );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	FloatInPin pinA;
@@ -43,7 +43,7 @@ public:
 	void subProcessVcaToDb(int sampleFrames);
 	void subProcessExpToDb(int sampleFrames);
 
-	virtual void onSetPins();
+	void onSetPins() override;
 
 #ifdef UNITCONVERTER_VOLTS_USE_LOOKUP
 	inline static float TableLookupCubic(const float* table, float v)

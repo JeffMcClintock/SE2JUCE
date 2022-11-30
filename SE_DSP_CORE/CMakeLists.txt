@@ -5,8 +5,6 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for
 
 project(SynthEditLib)
 
-add_definitions(-DSE_TARGET_PLUGIN)
-
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${GMPI_SDK}
@@ -67,25 +65,25 @@ modules_internal/RegistrationCheck.cpp
 )
 
 set(srcs_dspfilters
-DSPFilters/Biquad.cpp
-DSPFilters/Butterworth.cpp
-DSPFilters/Cascade.cpp
-DSPFilters/Elliptic.cpp
-DSPFilters/Filter.cpp
-DSPFilters/Param.cpp
-DSPFilters/PoleFilter.cpp
-DSPFilters/Biquad.h
-DSPFilters/Cascade.h
-DSPFilters/Common.h
-DSPFilters/Design.h
-DSPFilters/Elliptic.h
-DSPFilters/Filter.h
-DSPFilters/Layout.h
-DSPFilters/MathSupplement.h
-DSPFilters/Params.h
-DSPFilters/PoleFilter.h
-DSPFilters/State.h
-DSPFilters/Types.h
+DspFilters/Biquad.cpp
+DspFilters/Butterworth.cpp
+DspFilters/Cascade.cpp
+DspFilters/Elliptic.cpp
+DspFilters/Filter.cpp
+DspFilters/Param.cpp
+DspFilters/PoleFilter.cpp
+DspFilters/Biquad.h
+DspFilters/Cascade.h
+DspFilters/Common.h
+DspFilters/Design.h
+DspFilters/Elliptic.h
+DspFilters/Filter.h
+DspFilters/Layout.h
+DspFilters/MathSupplement.h
+DspFilters/Params.h
+DspFilters/PoleFilter.h
+DspFilters/State.h
+DspFilters/Types.h
 )
 
 
@@ -559,7 +557,7 @@ source_group(se_sdk FILES ${sdk_srcs})
 source_group(json FILES ${srcs_json})
 source_group(modules_internal FILES ${srcs_modules_internal})
 source_group(xml FILES ${srcs_xml})
-source_group(DSPFilters FILES ${srcs_dspfilters})
+source_group(DspFilters FILES ${srcs_dspfilters})
 
 if(APPLE)
 FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation )
@@ -580,5 +578,5 @@ IF(WIN32)
 target_link_libraries(${PROJECT_NAME} d3d11.lib d2d1 dwrite windowscodecs)
 endif()
 
-target_compile_definitions (${PROJECT_NAME} PRIVATE -D_UNICODE -DUNICODE)
+target_compile_definitions (${PROJECT_NAME} PRIVATE -D_UNICODE -DUNICODE -DSE_TARGET_PLUGIN)
 

@@ -1536,7 +1536,7 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 //	_RPT1(_CRT_WARN, "DspPatchManager::getPresetState:\n%s\n\n", printer.CStr());
 }
 
-void DspPatchManager::setPresetState( const std::string& chunk)
+void DspPatchManager::setPresetState(const std::string& chunk, bool overrideIgnoreProgramChange)
 {
 	TiXmlDocument doc;
 	doc.Parse( chunk.c_str() );
@@ -1627,7 +1627,7 @@ void DspPatchManager::setPresetState( const std::string& chunk)
 		if (parameter->isPolyphonic()) // crashes scopes.
 			continue;
 
-		if (mEmulateIgnoreProgramChange && parameter->ignorePatchChange())
+		if (!overrideIgnoreProgramChange && mEmulateIgnoreProgramChange && parameter->ignorePatchChange())
 			continue;
 
 		{

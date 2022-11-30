@@ -7,7 +7,7 @@ class ListEntry : public MpBase2
 {
 public:
 	ListEntry();
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	IntInPin pinValueIn;

@@ -10,7 +10,7 @@ class PatchMemoryText: public MpBase
 	public:
 	PatchMemoryText(IMpUnknown* host);
 
-	void onSetPins();
+	void onSetPins() override;
 private:
 	StringInPin pinValueIn;
 	StringOutPin pinValueOut;

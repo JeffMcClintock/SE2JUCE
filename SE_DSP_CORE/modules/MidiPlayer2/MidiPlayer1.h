@@ -7,7 +7,7 @@ class MidiPlayer1 : public MidiPlayer2
 {
 public:
 	MidiPlayer1( IMpUnknown* host );
-	virtual void onSetPins();
+	void onSetPins() override;
 	virtual bool loopEntireFile()
 	{
 		return pinLoopMode == 1;

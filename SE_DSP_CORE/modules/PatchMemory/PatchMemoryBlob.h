@@ -10,7 +10,7 @@ class PatchMemoryBlob: public MpBase
 	public:
 	PatchMemoryBlob(IMpUnknown* host);
 
-	void onSetPins();
+	void onSetPins() override;
 private:
 	BlobInPin pinValueIn;
 	BlobOutPin pinValueOut;

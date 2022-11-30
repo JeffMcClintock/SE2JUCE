@@ -17,7 +17,7 @@ public:
 	void subProcess(int bufferOffset, int sampleFrames);
 	void subProcessMuting(int bufferOffset, int sampleFrames);
 	void subProcessSilence(int bufferOffset, int sampleFrames);
-	void onSetPins();  // one or more pins_ updated.  Check pin update flags to determin which ones.
+	void onSetPins() override;  // one or more pins_ updated.  Check pin update flags to determin which ones.
 
 private:
 	AudioInPin pinInput1;

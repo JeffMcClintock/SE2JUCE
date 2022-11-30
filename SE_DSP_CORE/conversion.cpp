@@ -438,7 +438,7 @@ std::wstring GetExtension(std::wstring p_filename)
 std::string GetExtension(std::string p_filename)
 {
 	// p_filename.MakeLower();
-	transform(p_filename.begin(), p_filename.end(), p_filename.begin(), towlower);
+	transform(p_filename.begin(), p_filename.end(), p_filename.begin(), tolower);
 	int p = (int)p_filename.size() - 1; // Not using unsigned size_t else fails <0 test below. Could be re-written to fix this.
 
 	while (p > 0)
@@ -1097,7 +1097,7 @@ bool CreateFolderRecursive(std::wstring folderPath)
 
 void Scramble(std::string& s)
 {
-	char key = 236;
+	char key = -20; // same as 236;
 	for (auto& c : s)
 	{
 		c = c ^ key;

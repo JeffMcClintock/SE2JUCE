@@ -12,7 +12,7 @@ public:
 	MidiToCv2( );
 	virtual int32_t MP_STDCALL open();
 	void subProcess(int sampleFrames);
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	void CleanVelocityAndAftertouch();

@@ -9,7 +9,7 @@ public:
 	VoiceWatcherBlocker( IMpUnknown* host );
 
 	void subProcess( int bufferOffset, int sampleFrames );
-	virtual void onSetPins(); // one or more pins updated.  Check pin update flags to determin which
+	void onSetPins() override; // one or more pins updated.  Check pin update flags to determin which
 
 private:
 	AudioInPin pinSignalIn;

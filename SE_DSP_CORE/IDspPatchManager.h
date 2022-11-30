@@ -39,7 +39,7 @@ public:
 #if defined(SE_TARGET_PLUGIN)
 	virtual	void setParameterNormalized(timestamp_t p_clock, int vstParameterIndex, float newValue ) = 0;
 #endif
-	virtual void setPresetState( const std::string& chunk) = 0;
+	virtual void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) = 0;
 	virtual void getPresetState( std::string& chunk, bool saveRestartState) = 0;
 
     virtual	class dsp_patch_parameter_base* GetHostControl( int hostControl ) = 0; // !!! Appears to be never used, check and remove !!!

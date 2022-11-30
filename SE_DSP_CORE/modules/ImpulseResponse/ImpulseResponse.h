@@ -17,7 +17,7 @@ public:
 	ImpulseResponse( IMpUnknown* host );
 	void subProcess( int bufferOffset, int sampleFrames );
 	void subProcessIdle( int bufferOffset, int sampleFrames );
-	virtual void onSetPins();
+	void onSetPins() override;
 
 private:
 	AudioInPin pinImpulsein;

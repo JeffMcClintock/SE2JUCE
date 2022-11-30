@@ -725,7 +725,7 @@ void ug_oversampler_out::subProcessFirFilter(int start_pos, int sampleframes)
 					}
 //					assert(0.f == op[i]); // synths only.
 				}
-				_RPTN(0, " out %d samples at offset %d -> %d\n", downsampledSampleframes, oversamplerBlockPos, oversamplerBlockPos + downsampledSampleframes);
+//				_RPTN(0, " out %d samples at offset %d -> %d\n", downsampledSampleframes, oversamplerBlockPos, oversamplerBlockPos + downsampledSampleframes);
 			}
 #endif
 

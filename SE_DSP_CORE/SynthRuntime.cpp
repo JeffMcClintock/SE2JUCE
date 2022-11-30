@@ -55,7 +55,8 @@ void SynthRuntime::prepareToPlay(
 		std::lock_guard<std::mutex> x(generatorLock);
 
 //		_RPT3(_CRT_WARN, "AudioMaster rebuilt %x, SR=%d thread = %x\n", this, sampleRate, (int)GetCurrentThreadId());
-		std::string presetChunk;
+//		std::string presetChunk;
+		std::vector< std::pair<int32_t, std::string> > pendingPresets;
 		if(generator)
 		{
 			//            _RPT0(CRT_WARN,"\n=========REINIT DSP=============\n");
@@ -66,8 +67,10 @@ void SynthRuntime::prepareToPlay(
 			// Action any waiting parameter updates on GUI->DSP queue.
 			ServiceDspRingBuffers();
 
+			//const bool saveExtraState = true;
+			//generator->getPresetState(presetChunk, saveExtraState);
 			const bool saveExtraState = true;
-			generator->getPresetState(presetChunk, saveExtraState);
+			generator->getPresetsState(pendingPresets, saveExtraState);
 
 			generator->Close();
 
@@ -82,15 +85,16 @@ void SynthRuntime::prepareToPlay(
 		generator->setBlockSize(generator->CalcBlockSize(maxBlockSize));
 
 		std::vector<int32_t> mutedContainers; // unused at preset. (Waves thing).
-		generator->BuildDspGraph(dspXml.c_str(), mutedContainers);
+		generator->BuildDspGraph(dspXml.c_str(), pendingPresets, mutedContainers);
 
+#if 0
 		// Apply preset before Open(), else gets delayed by 1 block causing havok with BPM Clock (receives BPM=0 for 1st block).
 		if (!presetChunk.empty())
 		{
 			generator->setPresetState_UI_THREAD(presetChunk, false);
 			assert(reinitializeFlag == false); // loading prior preset should not have changed any persistant host-controls.
 		}
-
+#endif
 		generator->Open();
 
 		generator->synth_thread_running = true;

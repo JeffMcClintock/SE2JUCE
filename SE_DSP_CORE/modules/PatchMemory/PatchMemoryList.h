@@ -10,7 +10,7 @@ class PatchMemoryList: public MpBase
 public:
 	PatchMemoryList(IMpUnknown* host);
 
-	void onSetPins();
+	void onSetPins() override;
 
 private:
 	IntInPin pinValueIn;
