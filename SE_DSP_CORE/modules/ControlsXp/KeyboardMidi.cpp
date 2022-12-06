@@ -4,6 +4,8 @@
 
 using namespace gmpi;
 
+SE_DECLARE_INIT_STATIC_FILE(KeyboardMidi);
+
 class KeyboardMidi : public MpBase2
 {
 	IntInPin pinChannel;

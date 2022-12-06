@@ -55,7 +55,40 @@ click 'open project' (your IDE should open)
 
 build and try out the plugin
 
-# Help and information
+# Missing modules
+
+Once you start exporting your own plugins with SE2JUCE you will likely experince crashes due to the plugin not containing some module it requires.
+
+To identify which modules need to be added to the project, run the plugin or standalone app in a debugger. ('Set as Startup Project' the Standalone, set Solution Configuration to 'Debug', press 'Start Debugging F5')
+<img src="Docs/Images/SE2JUCE_MIssingModule3.PNG"/>
+
+When you run the standalone, it will crash (assert) at the point where it is trying to load the missing modules. (hit 'Retry' to break into the debugger)
+
+<img src="Docs/Images/SE2JUCE_MIssingModule1.PNG"/>
+
+You should see in the 'Output' Window a list of the missing modules.
+<img src="Docs/Images/SE2JUCE_MIssingModule2.PNG"/>
+
+In the example above, it's the 'SE Keyboard (MIDI)' that is missing from the build.
+
+# Adding an additional module
+
+To add an extra module to the build you will need access to it's source code. In the case of the keyboard, the code is in the *SE2JUCE\SE_DSP_CORE\modules\ControlsXp* folder, but not actually included in the build yet.
+
+Open the *SE2JUCE_Plugins\PD303\CMakeLists.txt* file, look for the part that mentions 'Adsr4.cpp'. Add a additional reference to the new module you want to include. If the module has both GUI and DSP parts, add both.
+<img src="Docs/Images/SE2JUCE_AddModule1.png"/>
+
+Now open the file *SE2JUCE_Plugins/PD303/Source/ExtraModules.cpp* and add lines like the following.
+<img src="Docs/Images/SE2JUCE_AddModule2.png"/>
+
+Finally add the *SE_DECLARE_INIT_STATIC_FILE* macro line to each module file (if not already done)
+<img src="Docs/Images/SE2JUCE_AddModule3.png"/>
+
+Build and run the Standalone app. The Keyboard module now works in the JUCE plugin.
+<img src="Docs/Images/SE2JUCE_AddModule4.png"/>
+
+
+# Further help and information
 
 SynthEdit - https://groups.io/g/synthedit
 

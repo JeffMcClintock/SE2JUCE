@@ -8,6 +8,8 @@ using namespace gmpi;
 using namespace GmpiMidi;
 using namespace GmpiDrawing;
 
+SE_DECLARE_INIT_STATIC_FILE(KeyboardMidiGui);
+
 class KeyboardMidiGui : public KeyboardBase
 {
 public:
