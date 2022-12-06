@@ -73,7 +73,7 @@ HMODULE local_GetDllHandle()
 MpGuiBase
 **********************************************************************************/
 
-MpGuiBase_base::MpGuiBase_base(IMpUnknown* unused) :
+MpGuiBase_base::MpGuiBase_base(IMpUnknown* /*unused*/) :
 patchMemoryHost_(0)
 {
 	/*
@@ -173,7 +173,7 @@ int32_t MpGuiBase_base::onCreateContextMenu()
 	return MP_OK;
 }
 
-int32_t MpGuiBase_base::onContextMenu( int32_t selection )
+int32_t MpGuiBase_base::onContextMenu( int32_t /*selection*/ )
 {
 	return MP_OK;
 }

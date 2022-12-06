@@ -15,7 +15,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(67,L"All Pass", IDS_MN_ALL_PASS,IDS_MG_FILTERS,ug_filter_allpass ,CF_STRUCTURE_VIEW,L"A two-pole all-pass filter.");
+REGISTER_MODULE_1(L"All Pass", IDS_MN_ALL_PASS,IDS_MG_FILTERS,ug_filter_allpass ,CF_STRUCTURE_VIEW,L"A two-pole all-pass filter.");
 }
 
 #define TABLE_SIZE 512

@@ -14,7 +14,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(126,L"Trigger to MIDI", IDS_MN_TRIGGER_TO_MIDI,IDS_MG_MIDI,ug_cv_midi ,CF_STRUCTURE_VIEW,L"Sends a MIDI note-on message whenever the 'Trigger' input goes over 0 Volts.");
+REGISTER_MODULE_1(L"Trigger to MIDI", IDS_MN_TRIGGER_TO_MIDI,IDS_MG_MIDI,ug_cv_midi ,CF_STRUCTURE_VIEW,L"Sends a MIDI note-on message whenever the 'Trigger' input goes over 0 Volts.");
 }
 
 #define PN_GATE 0

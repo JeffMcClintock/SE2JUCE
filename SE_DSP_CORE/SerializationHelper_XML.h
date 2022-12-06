@@ -191,10 +191,10 @@ struct XmlSaveHelper
 	{
 		auto xml = XmlParent->GetDocument()->NewElement(name);
 		XmlParent->LinkEndChild(xml);
-		xml->SetAttribute("l", value.left);
-		xml->SetAttribute("r", value.right);
-		xml->SetAttribute("t", value.top);
-		xml->SetAttribute("b", value.bottom);
+		xml->SetAttribute("l", (int) value.left);
+		xml->SetAttribute("r", (int) value.right);
+		xml->SetAttribute("t", (int) value.top);
+		xml->SetAttribute("b", (int) value.bottom);
 	}
 
 	template<>
@@ -202,8 +202,8 @@ struct XmlSaveHelper
 	{
 		auto xml = XmlParent->GetDocument()->NewElement(name);
 		XmlParent->LinkEndChild(xml);
-		xml->SetAttribute("x", value.x);
-		xml->SetAttribute("y", value.y);
+		xml->SetAttribute("x", (int) value.x);
+		xml->SetAttribute("y", (int) value.y);
 	}
 
 	template<>
@@ -211,8 +211,8 @@ struct XmlSaveHelper
 	{
 		auto xml = XmlParent->GetDocument()->NewElement(name);
 		XmlParent->LinkEndChild(xml);
-		xml->SetAttribute("cx", value.cx);
-		xml->SetAttribute("cy", value.cy);
+		xml->SetAttribute("cx", (int) value.cx);
+		xml->SetAttribute("cy", (int) value.cy);
 	}
 
 #endif // MFC

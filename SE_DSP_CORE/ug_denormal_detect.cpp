@@ -7,7 +7,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_denormal_detect)
 namespace
 
 {
-REGISTER_MODULE_1_BC(105,L"Denormal Detector", IDS_MN_DENORMAL_DETECTOR,IDS_MG_DIAGNOSTIC,ug_denormal_detect,CF_STRUCTURE_VIEW,L"A diagnostic module to indicate DeNormal numbers in the audio.  Connect to a LED for visual indication.  Denormal numbers are VERY small values that are inaudible, but waste CPU resources.");
+REGISTER_MODULE_1(L"Denormal Detector", IDS_MN_DENORMAL_DETECTOR,IDS_MG_DIAGNOSTIC,ug_denormal_detect,CF_STRUCTURE_VIEW,L"A diagnostic module to indicate DeNormal numbers in the audio.  Connect to a LED for visual indication.  Denormal numbers are VERY small values that are inaudible, but waste CPU resources.");
 }
 
 void ug_denormal_detect::sub_process(int start_pos, int sampleframes)

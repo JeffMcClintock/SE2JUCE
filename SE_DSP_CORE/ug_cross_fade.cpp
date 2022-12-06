@@ -11,7 +11,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(36,L"X-Mix", IDS_MN_X_MIX,IDS_MG_MODIFIERS,ug_cross_fade ,CF_STRUCTURE_VIEW,L"Mixes two signals into one.");
+REGISTER_MODULE_1(L"X-Mix", IDS_MN_X_MIX,IDS_MG_MODIFIERS,ug_cross_fade ,CF_STRUCTURE_VIEW,L"Mixes two signals into one.");
 }
 
 #define TABLE_SIZE 512	// equal power curve lookup table

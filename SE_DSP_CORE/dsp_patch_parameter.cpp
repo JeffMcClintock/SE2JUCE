@@ -546,8 +546,8 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 
 	xml->QueryIntAttribute("ContainerHandle", &voiceContainerHandle_);
 
-	ISeAudioMaster* am = m_patch_mgr->Container()->AudioMaster();
-	am->RegisterDspMsgHandle( this, Handle() );
+	//ISeAudioMaster* am = m_patch_mgr->Container()->AudioMaster();
+	//am->RegisterDspMsgHandle( this, Handle() );
 	v = 0;
 	xml->QueryIntAttribute("isPolyphonic", &v);
 	setPolyphonic( v != 0 );
@@ -618,22 +618,6 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 			InitializePatchMemory(L""); // zero patch memory to prevent random garbage in host controls.
 		}
 	}
-
-#if defined(SE_TARGET_PLUGIN)
-	if (persistAcrossResets())
-	{
-		assert(patchCount == 1); // In plugins.
-		const int voiceId = 0;
-		const int patch = 0;
-//		for (int patch = 0; patch < patchCount; ++patch)
-		{
-			auto raw = patchMemory[voiceId]->GetValueRaw(patch);
-			auto raw2 = m_patch_mgr->Container()->AudioMaster()->getShell()->getPersisentHostControl(voiceContainerHandle_, hostControlId_, raw);
-
-			patchMemory[voiceId]->SetValueRaw(raw2, patch);
-		}
-	}
-#endif
 }
 
 void dsp_patch_parameter_base::SerialiseValue(my_output_stream& strm, int voice, int patch )
@@ -750,29 +734,8 @@ void dsp_patch_parameter_base::OnValueChanged(int voiceId, timestamp_t time, boo
 
 	SendValue(time, voiceId);
 
-	int32_t hostControlContainerHandle = -1; // -1 = no particular container.
-//	bool reInitProcessor = false;
-//	int* intvalue = nullptr;
-
 	switch (hostControlId_)
 	{
-	case HC_OVERSAMPLING_RATE:
-	case HC_OVERSAMPLING_FILTER:
-		hostControlContainerHandle = voiceContainerHandle_;
-//		reInitProcessor = true;
-
-//		[[fallthrough]];
-
-	//case HC_POLYPHONY:
-	//case HC_POLYPHONY_VOICE_RESERVE:
-	//case HC_VOICE_ALLOCATION_MODE:
-//	{
-//		const int patch = EffectivePatch();
-//		assert(patchMemory[voiceId]->GetValueSize(patch) == sizeof(int));
-////		intvalue = (int*)patchMemory[voiceId]->GetValue(patch);
-//	}
-	break;
-
 	case HC_MPE_MODE:
 	{
 		// see also ug_container::PostBuildStuff()
@@ -786,50 +749,9 @@ void dsp_patch_parameter_base::OnValueChanged(int voiceId, timestamp_t time, boo
 		break;
 	};
 
-	switch (hostControlId_)
+	if (requiresAsyncRestart() && !initialUpdate)
 	{
-
-	//case HC_VOICE_ALLOCATION_MODE:
-	//{
-	//	// When switching to mono mode, do all-notes-off to avoid stuck notes.
-	//	if(voice_allocation::isMonoMode(*intvalue))
-	//	{
-	//		auto c = m_patch_mgr->Container();
-	//		//const timestamp_t ts = m_patch_mgr->Container()->AudioMaster()->NextGlobalStartClock();
-	//		//c->NoteOff(ts, -1); // All notes Off
-	//		hostControlContainerHandle = c->Handle();
-	//	}
-	//}
-	//break;
-	case HC_POLYPHONY:
-	case HC_POLYPHONY_VOICE_RESERVE:
-	case HC_VOICE_ALLOCATION_MODE:
-		hostControlContainerHandle = getVoiceContainerHandle();
-		break;
-
-	case HC_SILENCE_OPTIMISATION:
-	case HC_PATCH_CABLES:
-//		reInitProcessor	= true;
-		break;
-
-	default:
-		break;
-	}
-
-	if (persistAcrossResets())
-	{
-// !!! Alternative is to query these values direct from Patch-Manager during DSP construction. (ref HC_SILENCE_OPTIMISATION)
-//     Then don't need to store them in XML AND retrieve them via overridePersisentHostControlInt().
-		int patch = EffectivePatch();
-// not tru in editor		assert(patch == 0);
-
-		auto raw = patchMemory[voiceId]->GetValueRaw(patch);
-		const bool changed = m_patch_mgr->Container()->AudioMaster()->getShell()->setPersisentHostControl(hostControlContainerHandle, hostControlId_, raw);
-
-		if (changed && /*reInitProcessor &&*/ !initialUpdate)
-		{
-			m_patch_mgr->Container()->AudioMaster()->getShell()->DoAsyncRestart();
-		}
+		m_patch_mgr->Container()->AudioMaster()->getShell()->DoAsyncRestart();
 	}
 }
 

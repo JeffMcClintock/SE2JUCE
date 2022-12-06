@@ -9,7 +9,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_math_floor)
 
 namespace
 {
-REGISTER_MODULE_1_BC(111,L"Floor", IDS_MN_FLOOR,IDS_MG_MATH,ug_math_floor,CF_STRUCTURE_VIEW,L"Outputs the next lowest whole number");
+REGISTER_MODULE_1(L"Floor", IDS_MN_FLOOR,IDS_MG_MATH,ug_math_floor,CF_STRUCTURE_VIEW,L"Outputs the next lowest whole number");
 }
 
 void ug_math_floor::sub_process(int start_pos, int sampleframes)

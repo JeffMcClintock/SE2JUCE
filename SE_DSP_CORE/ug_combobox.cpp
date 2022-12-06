@@ -6,7 +6,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_combobox)
 
 namespace
 {
-REGISTER_MODULE_1_BC(7,L"List Entry", IDS_MN_LIST_ENTRY,IDS_MG_CONTROLS, ug_combobox ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"This control is for connecting to a 'List of Values' type plug, (green).  For example connect one of these to an Oscillator's 'Waveform' input.");
+REGISTER_MODULE_1(L"List Entry", IDS_MN_LIST_ENTRY,IDS_MG_CONTROLS, ug_combobox ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"This control is for connecting to a 'List of Values' type plug, (green).  For example connect one of these to an Oscillator's 'Waveform' input.");
 }
 
 #define PN_CHOICE 6

@@ -126,6 +126,7 @@ int ug_patch_automator::Open()
 
 	voiceState_.voiceControlContainer_ = patch_control_container;
 
+#if 0
 	{
 		// On reset, restore tuning table.
 		auto app = AudioMaster()->getShell();
@@ -135,6 +136,7 @@ int ug_patch_automator::Open()
 
 //		_RPT2(_CRT_WARN, "ug_patch_automator[%x] TUNE %x\n", voiceState_.voiceControlContainer_->Handle(), voiceState_.GetIntKeyTune(61)); // C#4
 	}
+#endif
 
 	// rather convoluted, but can't use patch-store pins i this module.
 	//setMidiChannel( patch_control_container->get_patch_manager()->getMidiChannel() );

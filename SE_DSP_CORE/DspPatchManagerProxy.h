@@ -21,7 +21,7 @@ public:
 #endif
 	void getPresetState( std::string& chunk, bool saveRestartState) override;
     void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;
-	class dsp_patch_parameter_base* GetHostControl(int hostControl) override;
+	class dsp_patch_parameter_base* GetHostControl(int32_t hostControl, int32_t attachedToContainerHandle = -1) override;
 	class dsp_patch_parameter_base* createPatchParameter( int typeIdentifier ) override; // from GUI.
 
 	virtual	dsp_patch_parameter_base* ConnectHostControl(HostControls hostConnect, UPlug* plug) override;
@@ -29,15 +29,12 @@ public:
 	dsp_patch_parameter_base* ConnectParameter(int parameterHandle, UPlug* plug) override;
 	struct FeedbackTrace* InitSetDownstream(ug_container * voiceControlContainer) override;
 
-	//void setProgram( int program ) override;
-	//int getProgram() override;
-	//void setProgramDspThread( int program ) override;
 	void setMidiChannel( int c ) override;
 	int getMidiChannel( ) override;
 	void setMidiCvVoiceControl() override;
 	void vst_setAutomationId(dsp_patch_parameter_base* p_param, int p_controller_id) override;
 	class ug_container* Container() override;
-	void setupContainerHandles(ug_container* /*subContainer*/) override{}
+	void setupContainerHandles(ug_container* /*subContainer*/) override;
 	dsp_patch_parameter_base* GetParameter(int moduleHandle, int paramIndex) override;
 
 private:

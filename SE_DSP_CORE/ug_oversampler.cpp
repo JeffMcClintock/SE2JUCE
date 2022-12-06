@@ -39,8 +39,8 @@ void ug_oversampler::Setup1(int factor, int filterType, bool copyStandardPlugs )
 	filterType_ = filterType;
 	oversampleFactor_ = factor;
 
-//	SetCUG(main_container->Get CUG());
-	main_container->patch_control_container = main_container;
+// WRONG	main_container->patch_control_container = main_container;
+
 	main_container->SetAudioMaster(this);
 
 	oversampler_out = new ug_oversampler_out();

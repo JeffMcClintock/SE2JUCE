@@ -156,14 +156,19 @@ class ug_container* DspPatchManagerProxy::Container()
 	return 0;
 }
 
+void DspPatchManagerProxy::setupContainerHandles(ug_container* subContainer)
+{
+	oversampler_->get_patch_manager()->setupContainerHandles(subContainer);
+}
+
 dsp_patch_parameter_base* DspPatchManagerProxy::GetParameter(int moduleHandle, int paramIndex)
 {
 	return oversampler_->get_patch_manager()->GetParameter(moduleHandle, paramIndex);
 }
 
-dsp_patch_parameter_base* DspPatchManagerProxy::GetHostControl(int hostControl)
+dsp_patch_parameter_base* DspPatchManagerProxy::GetHostControl(int32_t hostControl, int32_t attachedToContainerHandle)
 {
-	return oversampler_->get_patch_manager()->GetHostControl(hostControl);
+	return oversampler_->get_patch_manager()->GetHostControl(hostControl, attachedToContainerHandle);
 }
 
 #if 0

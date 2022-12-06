@@ -549,14 +549,12 @@ public:
 	timestamp_t host_block_start_clock;
 
 	std::atomic<bool> interrupt_flag = {};
-//	std::atomic<bool> done_flag = {};
 	std::atomic<bool> interupt_start_fade_out = {};
 	std::atomic<bool> interupt_module_latency_change = {};
 
 	bool synth_thread_running;
 	bool synth_thread_started;
 	static int profileBlockSize;
-	ug_soundcard_out* AudioOutUgs = {};
 	int cpu_block_rate = 1;
 	std::atomic<audioMasterState> state = audioMasterState::Stopped;
 
@@ -573,10 +571,10 @@ private:
 	std::map<int,dsp_msg_target*> m_handle_map; // maps handle to module address
 	int temporaryHandle_;
 #if !defined( SE_EDIT_SUPPORT )
+	// !!! TODO replace w audioOutModule, audioInModule !! (at bottom)
 	class ug_vst_in* vst_in = nullptr;
 	class ug_vst_out* vst_out = nullptr;
     bool isBypassed_;
-
 public:
     int waves_globalLatencySamples = 0; // for older waves plugs. Not actual latency calculation.
 

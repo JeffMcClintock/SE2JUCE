@@ -278,7 +278,7 @@ void ug_envelope_base::sub_process6(int start_pos, int sampleframes)
 }
 
 // Sus/end. level STOP, output sta-tic
-void ug_envelope_base::sub_process7(int start_pos, int sampleframes)
+void ug_envelope_base::sub_process7(int /*start_pos*/, int sampleframes)
 {
 	SetSampleClock( SampleClock() + sampleframes);
 }

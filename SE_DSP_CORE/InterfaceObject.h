@@ -127,7 +127,7 @@ public:
 	virtual IPlug* ConnectedTo(IPlug* /*self*/)
 	{
 		assert(false);
-		return false;
+		return {};
 	}
 	// SDK2 GUI plugs override to return actual live value, all else returns default, possibly from plug decorator default (not always this).
 	virtual std::wstring getValue(IPlug* self)

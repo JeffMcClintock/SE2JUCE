@@ -14,7 +14,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(31,L"Controllers", IDS_MN_CONTROLLERS,IDS_MG_MIDI,ug_midi_controllers ,CF_STRUCTURE_VIEW,L"Converts MIDI Controllers like Modulation Wheel etc to voltages.  Has four outputs, configurable to any MIDI controller number. See <a href=midi_control.htm>Patches & MIDI Control</a> for more.");
+REGISTER_MODULE_1(L"Controllers", IDS_MN_CONTROLLERS,IDS_MG_MIDI,ug_midi_controllers ,CF_STRUCTURE_VIEW,L"Converts MIDI Controllers like Modulation Wheel etc to voltages.  Has four outputs, configurable to any MIDI controller number. See <a href=midi_control.htm>Patches & MIDI Control</a> for more.");
 }
 
 ug_midi_controllers::ug_midi_controllers() :

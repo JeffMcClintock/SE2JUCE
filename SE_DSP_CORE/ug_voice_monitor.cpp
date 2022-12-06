@@ -30,7 +30,7 @@ FIX: this module should NEVER controls voice suspend/mute/wake, it can't know wh
 
 namespace
 {
-REGISTER_MODULE_1_BC(32, L"VoiceMonitor", 0, IDS_MG_DEBUG, ug_voice_monitor, CF_HIDDEN, L"");
+REGISTER_MODULE_1( L"VoiceMonitor", 0, IDS_MG_DEBUG, ug_voice_monitor, CF_HIDDEN, L"");
 }
 
 ug_voice_monitor::ug_voice_monitor() :

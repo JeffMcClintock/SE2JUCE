@@ -10,7 +10,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(95,L"VST Output", IDS_MN_VST_OUTPUT,IDS_MG_DEBUG,ug_vst_out ,CF_HIDDEN,"");
+REGISTER_MODULE_1(L"VST Output", IDS_MN_VST_OUTPUT,IDS_MG_DEBUG,ug_vst_out ,CF_HIDDEN,"");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters
@@ -148,7 +148,7 @@ void ug_vst_out::sub_process_check_mode(int start_pos, int sampleframes)
 	(this->*(process_function))( start_pos, sampleframes );
 }
 
-void ug_vst_out::StartFadeOut(bool isDucked )
+void ug_vst_out::startFade(bool isDucked )
 {
 	const float fadeTimeMs = 50.0f;
 	fadeIncrement_ = 1000.f / ( fadeTimeMs * getSampleRate());

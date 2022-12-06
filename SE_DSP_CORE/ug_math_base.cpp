@@ -9,9 +9,9 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(108,L"Subtract", IDS_MN_SUBTRACT,IDS_MG_MATH,ug_math_sub,CF_STRUCTURE_VIEW,L"Subtracts Input 2 from Input 1.");
-REGISTER_MODULE_1_BC(106,L"Multiply", IDS_MN_MULTIPLY,IDS_MG_MATH,ug_math_mult,CF_STRUCTURE_VIEW,L"Multiplys two Voltages.");
-REGISTER_MODULE_1_BC(107,L"Divide", IDS_MN_DIVIDE,IDS_MG_MATH,ug_math_div,CF_STRUCTURE_VIEW,L"Divides Input 1 by Input 2.");
+REGISTER_MODULE_1(L"Subtract", IDS_MN_SUBTRACT,IDS_MG_MATH,ug_math_sub,CF_STRUCTURE_VIEW,L"Subtracts Input 2 from Input 1.");
+REGISTER_MODULE_1(L"Multiply", IDS_MN_MULTIPLY,IDS_MG_MATH,ug_math_mult,CF_STRUCTURE_VIEW,L"Multiplys two Voltages.");
+REGISTER_MODULE_1(L"Divide", IDS_MN_DIVIDE,IDS_MG_MATH,ug_math_div,CF_STRUCTURE_VIEW,L"Divides Input 1 by Input 2.");
 }
 
 bool ug_math_base::PPGetActiveFlag()

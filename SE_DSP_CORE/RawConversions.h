@@ -99,30 +99,6 @@ MpBlob RawToValue<MpBlob>(const void* data, int size);
 template<>
 MpBlob RawToValue<MpBlob>(const void* data, size_t size);
 
-
-// helper to convert any parameter value to raw bytes (returns length too)
-template <typename T>
-void RawData2(const T& value, void* *p_data, int* size)
-{
-	// caller must free memory
-	*size = sizeof(T);
-#if defined( _MSC_VER )
-	void* temp = _malloc_dbg( *size, _NORMAL_BLOCK, THIS_FILE, __LINE__ );
-#else
-	void* temp = malloc( *size );
-#endif
-	memcpy( temp, &value, *size );
-	*p_data = temp;
-};
-
-// specialised for string
-template<>
-void RawData2<std::wstring>( const std::wstring& value, void* *p_data, int* size);
-
-// specialised for blob
-template<>
-void RawData2<MpBlob>( const MpBlob& value, void* *p_data, int* size);
-
 // Raw data to string given datatype.
 std::string RawToUtf8B(int datatype, const void* data, size_t size);
 

@@ -13,7 +13,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(37,L"Pan", IDS_MN_PAN,IDS_MG_MODIFIERS,ug_pan ,CF_STRUCTURE_VIEW,L"Panorama module. Provides Left/Right and Volume control of a signal.");
+REGISTER_MODULE_1(L"Pan", IDS_MN_PAN,IDS_MG_MODIFIERS,ug_pan ,CF_STRUCTURE_VIEW,L"Panorama module. Provides Left/Right and Volume control of a signal.");
 }
 
 

@@ -35,7 +35,7 @@ public:
 	virtual int dataType() = 0;
 	virtual void Initialize( class TiXmlElement* xml );
 	virtual bool SetValueFromXml(const std::string& valueString, int voice, int patch) = 0;
-	virtual std::string GetValueAsXml( int patch = 0, int voice = 0 ) = 0;
+	virtual std::string GetValueAsXml(int voice = 0 ) = 0;
 #if defined( _DEBUG )
 	virtual std::wstring GetValueString(int patch) = 0;
 #endif
@@ -173,7 +173,7 @@ int EffectivePatch() const
 
 	int WavesParameterIndex = -1; // plugins.
 
-	bool persistAcrossResets()
+	bool requiresAsyncRestart() const
 	{
 		switch (hostControlId_)
 		{
@@ -185,8 +185,28 @@ int EffectivePatch() const
 		case HC_SILENCE_OPTIMISATION:
 			return true;
 			break;
-                
-        default:
+
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool persistAcrossResets() const
+	{
+		switch (hostControlId_)
+		{
+		case HC_POLYPHONY:
+		case HC_POLYPHONY_VOICE_RESERVE:
+		case HC_OVERSAMPLING_RATE:
+		case HC_OVERSAMPLING_FILTER:
+		case HC_PATCH_CABLES:
+		case HC_SILENCE_OPTIMISATION:
+		case HC_VOICE_PITCH:
+			return true;
+			break;
+
+		default:
 			break;
 		}
 		return false;
@@ -196,7 +216,7 @@ int EffectivePatch() const
 	{
 		return stateful_ ||
 			// input parameters that may not be stateful, but do affect the DSP (e.g. Text-Setting modules) and need to be restored when changing sample-rate etc.
-			(saveRestartState && hostControlId_ == HC_NONE && !outputPins_.empty());
+			(saveRestartState && ((hostControlId_ == HC_NONE && !outputPins_.empty()) || persistAcrossResets()));
 	}
 
 	bool ignorePatchChange()

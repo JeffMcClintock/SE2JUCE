@@ -3,26 +3,6 @@
 #include "Base64.h"
 #include "./modules/se_sdk2/se_datatypes.h"
 
-// caller must free memory
-template<>
-void RawData2(const std::wstring& value, void* *p_data, int* size)
-{
-	std::wstring temp = ( value );
-	*size = (int)( sizeof(wchar_t) * temp.length() );
-	void* temp2 = malloc( *size );
-	memcpy( temp2, temp.c_str(), *size );
-	*p_data = temp2;
-};
-
-template<>
-void RawData2(const MpBlob& value, void* *p_data, int* size)
-{
-	*size = value.getSize();
-	void* temp2 = malloc( *size );
-	memcpy( temp2, value.getData(), *size );
-	*p_data = temp2;
-}
-
 template<>
 int RawSize(const std::wstring& value)
 {

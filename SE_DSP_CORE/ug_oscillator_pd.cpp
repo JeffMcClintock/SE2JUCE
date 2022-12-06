@@ -13,7 +13,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(87,L"Phase Dist Osc", IDS_PDOSCILLATOR,IDS_WAVEFORM,ug_oscillator_pd ,CF_STRUCTURE_VIEW,L"The Casio CZ Oscillator <a href=\"phase_dist.htm\">more</a>");
+REGISTER_MODULE_1(L"Phase Dist Osc", IDS_PDOSCILLATOR,IDS_WAVEFORM,ug_oscillator_pd ,CF_STRUCTURE_VIEW,L"The Casio CZ Oscillator <a href=\"phase_dist.htm\">more</a>");
 }
 
 // define size of waveform tables

@@ -93,7 +93,7 @@ void WavFile::write( const std::string & filename, unsigned int bps )
 	{
 		bool floatFormat = bps == 32; // false for 16-bit PCM
 		int bits_per_sample = bps;
-		int n_channels = 1;
+		uint16_t n_channels = 1;
 		int sample_count = 0;
 		int sample_rate = (int) rate_;
 		float* src = 0;
@@ -118,7 +118,7 @@ void WavFile::write( const std::string & filename, unsigned int bps )
 			bits_per_sample = bps;
 		}
 
-		wav_head.wBitsPerSample = bits_per_sample;
+		wav_head.wBitsPerSample = static_cast<uint16_t>(bits_per_sample);
 		wav_head.chnk3_size = 16;
 		wav_head.nChannels = n_channels;
 		wav_head.chnk4_size = (int32_t)(sample_count * wav_head.wBitsPerSample / 8 * wav_head.nChannels);
@@ -258,7 +258,7 @@ void WavFile::readWavData( const std::string & filename, int maxChannels, int ex
 
 	MYWAVEFORMATEX waveheader;
 	char* wave_data = 0;
-	unsigned int wave_data_bytes;
+	unsigned int wave_data_bytes{};
 
 	memset(&waveheader, 0, sizeof(waveheader));
 
@@ -487,7 +487,7 @@ std::unique_ptr<WavFileCursor> WavFileStreaming::open(const std::string& pfilena
 	if (chunkName[0] != 'R' || chunkName[1] != 'I' || chunkName[2] != 'F' || chunkName[3] != 'F') // RIFF.
 	{
 		throw("Input stream doesn't comply with the RIFF specification");
-		return nullptr;
+//		return nullptr;
 	}
 
 	myfile.read((char*)&chunkLength, 4);
@@ -497,7 +497,7 @@ std::unique_ptr<WavFileCursor> WavFileStreaming::open(const std::string& pfilena
 	if (chunkName[0] != 'W' || chunkName[1] != 'A' || chunkName[2] != 'V' || chunkName[3] != 'E')
 	{
 		throw("Input stream doesn't comply with the WAVE specification");
-		return nullptr;
+//		return nullptr;
 	}
 
 	while (!myfile.eof())
@@ -514,7 +514,7 @@ std::unique_ptr<WavFileCursor> WavFileStreaming::open(const std::string& pfilena
 			if (waveheader.wBitsPerSample == 0)
 			{
 				throw("The input stream uses an unhandled SignificantBitsPerSample parameter");
-				return nullptr;
+//				return nullptr;
 			}
 
 			// Float wave sample should be 32 bit, hovever cooledit 96 saves
@@ -578,7 +578,7 @@ std::unique_ptr<WavFileCursor> WavFileStreaming::open(const std::string& pfilena
 		if (waveheader.wBitsPerSample != 8 && waveheader.wBitsPerSample != 16 && waveheader.wBitsPerSample != 24 && waveheader.wBitsPerSample != 32)
 		{
 			throw("This WAVE file format is not supported.  Convert it to 16 bit uncompressed mono or stereo.");
-			return nullptr;
+//			return nullptr;
 		}
 
 		break;
@@ -587,13 +587,13 @@ std::unique_ptr<WavFileCursor> WavFileStreaming::open(const std::string& pfilena
 		if (waveheader.wBitsPerSample != 32 ) //&& waveheader.wBitsPerSample != 64)
 		{
 			throw("This WAVE file format is not supported.  Convert it to 16 bit uncompressed mono or stereo.");
-			return nullptr;
+//			return nullptr;
 		}
 		break;
 
 	default:
 		throw("This WAVE file format is not supported.  Convert it to PCM or Float");
-		return nullptr;
+//		return nullptr;
 	};
 
 	if (totalSampleFrames == 0 || wavedata_offset == std::streampos(-1))

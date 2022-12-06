@@ -12,7 +12,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_test_tone)
 
 namespace
 {
-REGISTER_MODULE_1_BC(80,L"1 KHz Tone", IDS_MN_1_KHZ_TONE,IDS_MG_DIAGNOSTIC,ug_test_tone ,CF_STRUCTURE_VIEW,L"Produces a pure 1 KHz tone");
+REGISTER_MODULE_1(L"1 KHz Tone", IDS_MN_1_KHZ_TONE,IDS_MG_DIAGNOSTIC,ug_test_tone ,CF_STRUCTURE_VIEW,L"Produces a pure 1 KHz tone");
 }
 
 //#define d2PI 6.28318530717958647692

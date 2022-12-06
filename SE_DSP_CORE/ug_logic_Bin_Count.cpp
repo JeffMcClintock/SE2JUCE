@@ -10,7 +10,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_logic_Bin_Count)
 
 namespace
 {
-REGISTER_MODULE_1_BC(82,L"Binary Counter", IDS_MN_BINARY_COUNTER,IDS_MG_LOGIC,ug_logic_Bin_Count ,CF_STRUCTURE_VIEW,L"Output steps though binary count when clocked");
+REGISTER_MODULE_1(L"Binary Counter", IDS_MN_BINARY_COUNTER,IDS_MG_LOGIC,ug_logic_Bin_Count ,CF_STRUCTURE_VIEW,L"Output steps though binary count when clocked");
 }
 
 

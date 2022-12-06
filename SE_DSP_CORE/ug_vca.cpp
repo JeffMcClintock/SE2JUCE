@@ -38,7 +38,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(13,L"VCA", IDS_MN_VCA,IDS_MG_MODIFIERS,ug_vca ,CF_STRUCTURE_VIEW,L"Controls the volume of a signal. 10V is full volume.  Connect an ADSR to apply a volume envelope to a sound. Has a choice of 3 response curves. See <a href=signals.htm>Signal Levels and Conversions</a> for more");
+REGISTER_MODULE_1(L"VCA", IDS_MN_VCA,IDS_MG_MODIFIERS,ug_vca ,CF_STRUCTURE_VIEW,L"Controls the volume of a signal. 10V is full volume.  Connect an ADSR to apply a volume envelope to a sound. Has a choice of 3 response curves. See <a href=signals.htm>Signal Levels and Conversions</a> for more");
 }
 
 

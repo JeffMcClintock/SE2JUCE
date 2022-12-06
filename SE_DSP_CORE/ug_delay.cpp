@@ -12,8 +12,8 @@ SE_DECLARE_INIT_STATIC_FILE(ug_delay);
 
 namespace
 {
-REGISTER_MODULE_1_BC(17,L"Delay", IDS_MN_DELAY,IDS_MG_DEBUG,ug_delay ,CF_STRUCTURE_VIEW,L"Creates an echo effect");
-REGISTER_MODULE_1_BC(117,L"Delay2", IDS_MN_DELAY2,IDS_MG_EFFECTS,ug_delay2,CF_STRUCTURE_VIEW,L"Creates an echo effect");
+REGISTER_MODULE_1(L"Delay", IDS_MN_DELAY,IDS_MG_DEBUG,ug_delay ,CF_STRUCTURE_VIEW,L"Creates an echo effect");
+REGISTER_MODULE_1(L"Delay2", IDS_MN_DELAY2,IDS_MG_EFFECTS,ug_delay2,CF_STRUCTURE_VIEW,L"Creates an echo effect");
 }
 
 #define PN_SIGNAL		0

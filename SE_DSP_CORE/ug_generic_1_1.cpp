@@ -44,7 +44,7 @@ int ug_generic_1_1::Open()
 namespace
 
 {
-    REGISTER_MODULE_1_BC(51,L"Rectifier", IDS_MN_RECTIFIER,IDS_MG_MODIFIERS,ug_rectifier ,CF_STRUCTURE_VIEW,L"'Flips' negative voltages to positive");
+    REGISTER_MODULE_1(L"Rectifier", IDS_MN_RECTIFIER,IDS_MG_MODIFIERS,ug_rectifier ,CF_STRUCTURE_VIEW,L"'Flips' negative voltages to positive");
 }
 
 void ug_rectifier::sub_process(int start_pos, int sampleframes)

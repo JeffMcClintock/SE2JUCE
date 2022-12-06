@@ -10,7 +10,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(89,L"Monostable", IDS_MN_MONOSTABLE,IDS_MG_LOGIC,ug_monostable ,CF_STRUCTURE_VIEW,L"When triggered, produces a fixed length pulse");
+REGISTER_MODULE_1(L"Monostable", IDS_MN_MONOSTABLE,IDS_MG_LOGIC,ug_monostable ,CF_STRUCTURE_VIEW,L"When triggered, produces a fixed length pulse");
 }
 
 #define PN_PULSE_LEN	1

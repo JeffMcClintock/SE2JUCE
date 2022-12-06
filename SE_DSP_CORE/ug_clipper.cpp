@@ -8,7 +8,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(19,L"Clipper", IDS_MN_CLIPPER,IDS_MG_EFFECTS,ug_clipper ,CF_STRUCTURE_VIEW,L"Restricts (clips) the signal to a range between two Voltages.  Use this to distort the sound, or to limit a control signal between two values.");
+REGISTER_MODULE_1(L"Clipper", IDS_MN_CLIPPER,IDS_MG_EFFECTS,ug_clipper ,CF_STRUCTURE_VIEW,L"Restricts (clips) the signal to a range between two Voltages.  Use this to distort the sound, or to limit a control signal between two values.");
 }
 
 #define PN_IN 0

@@ -12,7 +12,7 @@
 
 namespace
 {
-REGISTER_MODULE_1_BC(64,L"KeyBoard", IDS_MN_KEYBOARD,IDS_MG_OLD,ug_midi_keyboard ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"On-Screen MIDI keyboard.  Can be played with mouse, or from PC keyboard ( L'Q' is Middle-C, L'Z' two Octaves lower)  The 'T' symbol sets 'Toggle Mode' where each key stays held untill you click it a second time.");
+REGISTER_MODULE_1(L"KeyBoard", IDS_MN_KEYBOARD,IDS_MG_OLD,ug_midi_keyboard ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"On-Screen MIDI keyboard.  Can be played with mouse, or from PC keyboard ( L'Q' is Middle-C, L'Z' two Octaves lower)  The 'T' symbol sets 'Toggle Mode' where each key stays held untill you click it a second time.");
 }
 
 #define PLG_MIDI_OUT 1

@@ -7,7 +7,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_text_entry)
 
 namespace
 {
-REGISTER_MODULE_1_BC(6,L"Text Entry", IDS_MN_TEXT_ENTRY,IDS_MG_CONTROLS,ug_text_entry ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"This control is for connecting to a Text Values' type plug, (red).  For example connect one of these to a Wave Out's 'Filename' input.");
+REGISTER_MODULE_1(L"Text Entry", IDS_MN_TEXT_ENTRY,IDS_MG_CONTROLS,ug_text_entry ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"This control is for connecting to a Text Values' type plug, (red).  For example connect one of these to a Wave Out's 'Filename' input.");
 }
 
 #define PLG_TEXT_OUT 6

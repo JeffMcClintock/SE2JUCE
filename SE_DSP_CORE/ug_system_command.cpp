@@ -11,7 +11,7 @@
 // Note: Windows 10S does not permit CreateProcessW(). Moved this to "Old" modules.
 namespace
 {
-REGISTER_MODULE_1_BC(110,L"OS Command", IDS_MN_OS_COMMAND,IDS_MG_OLD,ug_system_command,CF_STRUCTURE_VIEW,L"Executes a DOS command when triggered. Warning: Triggering this at a high frequency could overload your Operating System.");
+REGISTER_MODULE_1(L"OS Command", IDS_MN_OS_COMMAND,IDS_MG_OLD,ug_system_command,CF_STRUCTURE_VIEW,L"Executes a DOS command when triggered. Warning: Triggering this at a high frequency could overload your Operating System.");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters

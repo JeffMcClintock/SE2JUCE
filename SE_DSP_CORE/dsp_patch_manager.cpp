@@ -288,13 +288,6 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 
 						voiceState->SetKeyTune(note.noteNumber, semitones);
 						voiceState->OnKeyTuningChangedA(timestamp_oversampled, note.noteNumber, 0);
-
-						// TODO!!!! seems a bit heavy? !! can we just flag it?
-						{
-							auto app = m_container->AudioMaster()->getShell();
-							auto tuningTable = voiceState->getTuningTable();
-							app->setPersisentHostControl(voiceState->voiceControlContainer_->Handle(), HC_VOICE_TUNING, RawView((const void*)tuningTable, sizeof(int) * 128));
-						}
 					}
 
 					DoNoteOn(timestamp, voiceState->voiceControlContainer_, note.noteNumber, note.velocity);
@@ -322,13 +315,6 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 						// voiceState->OnMidiTuneMessageA(timestamp_oversampled, midiMessage);
 						voiceState->SetKeyTune(polyController.noteNumber, semitones);
 						voiceState->OnKeyTuningChangedA(timestamp_oversampled, polyController.noteNumber, 0);
-
-						// TODO!!!! seems a bit heavy? !! can we just flag it?
-						{
-							auto app = m_container->AudioMaster()->getShell();
-							auto tuningTable = voiceState->getTuningTable();
-							app->setPersisentHostControl(voiceState->voiceControlContainer_->Handle(), HC_VOICE_TUNING, RawView((const void*)tuningTable, sizeof(int) * 128));
-						}
 					}
 					else
 					{
@@ -700,14 +686,6 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 							auto timestamp_oversampled = voiceState->voiceControlContainer_->CalculateOversampledTimestamp(Container(), timestamp);
 
 							voiceState->OnMidiTuneMessageA(timestamp_oversampled, midiMessage);
-
-							{
-								auto app = m_container->AudioMaster()->getShell();
-								auto tuningTable = voiceState->getTuningTable();
-								app->setPersisentHostControl(voiceState->voiceControlContainer_->Handle(), HC_VOICE_TUNING, RawView((const void*)tuningTable, sizeof(int) * 128));
-
-								//							_RPT2(_CRT_WARN, "DspPatchManager[%x] TUNE %x\n", voiceState->voiceControlContainer_->Handle(), voiceState->GetIntKeyTune(61)); // C#4
-							}
 						}
 					}
 
@@ -1170,9 +1148,13 @@ void DspPatchManager::InitializeAllParameters()
 {
 	parameterIndexes_.assign(m_parameters.size(), nullptr); // a rough guess, there might be more.
 
+	auto audiomaster = Container()->AudioMaster();
+
 	// Cache parameter host index.
 	for( auto parameter : m_parameters )
 	{
+		audiomaster->RegisterDspMsgHandle(parameter, parameter->Handle());
+
 		if( parameter->WavesParameterIndex >= 0 )
 		{
 			// cope with 'gaps' in the parameter indices.
@@ -1440,17 +1422,17 @@ void DspPatchManager::setParameterNormalized( timestamp_t timestamp, int vstPara
 }
 #endif
 
-dsp_patch_parameter_base* DspPatchManager::GetHostControl( int hostConnect )
+dsp_patch_parameter_base* DspPatchManager::GetHostControl(int32_t hostControl, int32_t attachedToContainerHandle)
 {
-	for( auto parameter : m_parameters )
+	for (auto parameter : m_parameters)
 	{
 		// Does not handle polyphonic host-controls.
-		if (parameter->getHostControlId() == hostConnect && parameter->getVoiceContainerHandle() == -1)
+		if (parameter->getHostControlId() == hostControl && parameter->getVoiceContainerHandle() == attachedToContainerHandle)
 		{
 			return parameter;
 		}
 	}
-	return nullptr;
+	return {};
 }
 
 dsp_patch_parameter_base* DspPatchManager::GetParameter(ug_container* voiceControlContainer, HostControls hostConnect)
@@ -1502,6 +1484,8 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 				auto paramElement = new TiXmlElement("Param");
 				element->LinkEndChild(paramElement);
 				paramElement->SetAttribute("id", parameter->Handle());
+
+				// old way. monophonic only. Retained for compatibility.
 				paramElement->SetAttribute("val", parameter->GetValueAsXml());
 
 				// MIDI learn.
@@ -1511,6 +1495,33 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 
 					if(!parameter->getAutomationSysex().empty())
 						paramElement->SetAttribute("MIDI_SYSEX", WStringToUtf8(parameter->getAutomationSysex()));
+				}
+
+				// new way
+				auto list_xml = new TiXmlElement("patch-list");
+				paramElement->LinkEndChild(list_xml);
+
+				TiXmlElement* patch_xml = {};
+				const int voiceCount = parameter->isPolyphonic() ? 128 : 1;
+				for (int voice = 0; voice < voiceCount; ++voice)
+				{
+					std::string prev_patch_value;
+					int repeat_count = 1;
+
+					const auto text = parameter->GetValueAsXml(voice);
+					if (prev_patch_value == text && patch_xml)
+					{
+						patch_xml->SetAttribute("repeat", ++repeat_count);
+					}
+					else
+					{
+						patch_xml = new TiXmlElement("s");
+						list_xml->LinkEndChild(patch_xml);
+						patch_xml->LinkEndChild(new TiXmlText(text.c_str()));
+
+						prev_patch_value = text;
+						repeat_count = 1;
+					}
 				}
 			}
 		}
@@ -1536,7 +1547,7 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 //	_RPT1(_CRT_WARN, "DspPatchManager::getPresetState:\n%s\n\n", printer.CStr());
 }
 
-void DspPatchManager::setPresetState(const std::string& chunk, bool overrideIgnoreProgramChange)
+void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncRestart)
 {
 	TiXmlDocument doc;
 	doc.Parse( chunk.c_str() );
@@ -1582,14 +1593,14 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool overrideIgno
 	{
 		if( parameter->getHostControlId() == HC_PROGRAM_NAME)
 		{
-			if (parameter->SetValueFromXml(presetName, 0, 0))
+			if (parameter->SetValueFromXml(presetName, 0, 0) && !isAsyncRestart)
 			{
 				parameter->OnValueChangedFromGUI(false, 0);
 			}
 		}
 		else if( parameter->getHostControlId() == HC_PROGRAM_CATEGORY )
 		{
-			if (parameter->SetValueFromXml(categoryName, 0, 0))
+			if (parameter->SetValueFromXml(categoryName, 0, 0) && !isAsyncRestart)
 			{
 				parameter->OnValueChangedFromGUI(false, 0);
 			}
@@ -1624,15 +1635,39 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool overrideIgno
 			}
 		}
 
-		if (parameter->isPolyphonic()) // crashes scopes.
+		if (!isAsyncRestart && mEmulateIgnoreProgramChange && parameter->ignorePatchChange())
 			continue;
 
-		if (!overrideIgnoreProgramChange && mEmulateIgnoreProgramChange && parameter->ignorePatchChange())
-			continue;
-
+		// new style
+		auto patchListE = ParamElement->FirstChildElement("patch-list");
+		if (patchListE)
 		{
-			string v = ParamElement->Attribute("val");
-			if (parameter->SetValueFromXml(v, 0, 0))
+			int voice = 0;
+			const int voiceCount = parameter->isPolyphonic() ? 128 : 1;
+			for (auto valE = patchListE->FirstChildElement("s"); valE; valE = valE->NextSiblingElement("s"))
+			{
+				const auto xmlvalue = valE->GetText();
+				int repeat = 1;
+				valE->QueryIntAttribute("repeat", &repeat);
+
+				for (int i = 0; i < repeat; ++i)
+				{
+					if (xmlvalue && voice < voiceCount)
+					{
+						if (parameter->SetValueFromXml(xmlvalue, voice, 0) && !isAsyncRestart)
+						{
+							parameter->OnValueChangedFromGUI(false, voice);
+						}
+					}
+
+					++voice;
+				}
+			}
+		}
+		else // old way
+		{
+			const string v = ParamElement->Attribute("val");
+			if (parameter->SetValueFromXml(v, 0, 0) && !isAsyncRestart)
 			{
 				parameter->OnValueChangedFromGUI(false, 0);
 			}

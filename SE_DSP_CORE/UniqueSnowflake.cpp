@@ -241,7 +241,7 @@ int UniqueSnowflakeOwner::GenerateUniqueHandleValue(bool temporaryHandle)
 void UniqueSnowflakeOwner::debugVerify()
 {
 	// check that all objects in list still exist and have correct handle.
-	for( unique_object_map_t::iterator it = m_unique_objects.begin() ; it != m_unique_objects.end() ; ++it )
+	for( auto it = m_unique_objects.begin() ; it != m_unique_objects.end() ; ++it )
 	{
 		assert( (*it).first == (*it).second->Handle() );
 	}

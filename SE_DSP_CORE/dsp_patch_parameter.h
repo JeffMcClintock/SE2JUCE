@@ -107,8 +107,9 @@ public:
 		// assert( !typeIsVariableSize() && " specialize this for variable-size types like strings");
 		return patchMemory[voice]->SetValue( RawData3(value), RawSize(value), patch );
 	}
-	virtual std::string GetValueAsXml( int patch, int voice )
+	virtual std::string GetValueAsXml(int voice )
 	{
+		constexpr int patch = 0;
 		auto data = patchMemory[voice]->GetValue( patch );
 		int size = patchMemory[voice]->GetValueSize( patch );
 		T value = RawToValue<T>( data, size );

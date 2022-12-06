@@ -6,7 +6,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_slider)
 
 namespace
 {
-REGISTER_MODULE_1_BC(5,L"Slider", IDS_MN_SLIDER,IDS_MG_CONTROLS,ug_slider ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"Allows direct control of an input voltage.  For example connect one to an Oscillators's 'Pitch' input.  Can appear as a knob or button as well (See 'Appearance' parameter). Can be configured to send any MIDI controller or NRPN number, handy for controlling external MIDI gear.");
+REGISTER_MODULE_1(L"Slider", IDS_MN_SLIDER,IDS_MG_CONTROLS,ug_slider ,CF_STRUCTURE_VIEW|CF_PANEL_VIEW,L"Allows direct control of an input voltage.  For example connect one to an Oscillators's 'Pitch' input.  Can appear as a knob or button as well (See 'Appearance' parameter). Can be configured to send any MIDI controller or NRPN number, handy for controlling external MIDI gear.");
 }
 
 #define PLG_OUT 6

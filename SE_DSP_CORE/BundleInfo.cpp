@@ -16,7 +16,6 @@ extern const char* se2juce_getNamedResource(const char* name, int& returnBytes);
 // extern const char* se2juce_getIndexedResource(int index, int& returnBytes);
 #endif
 
-
 #if defined( _WIN32 )
 #include <Windows.h>
 #include "Shlobj.h"

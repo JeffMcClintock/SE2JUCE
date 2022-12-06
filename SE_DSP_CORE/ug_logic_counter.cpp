@@ -15,8 +15,8 @@ SE_DECLARE_INIT_STATIC_FILE(StepSequencer3);
 
 namespace
 {
-REGISTER_MODULE_1_BC(125,L"Step Counter2", IDS_MN_STEP_COUNTER2,IDS_MG_LOGIC,ug_logic_counter2,CF_STRUCTURE_VIEW,L"When clocked, each output in turn goes HI (5 Volts). Similar to decade counter, but can be configured to any number of outputs");
-REGISTER_MODULE_1_BC(93,L"Step Counter", IDS_MN_STEP_COUNTER,IDS_MG_DEBUG,ug_logic_counter ,CF_STRUCTURE_VIEW,L"");
+REGISTER_MODULE_1(L"Step Counter2", IDS_MN_STEP_COUNTER2,IDS_MG_LOGIC,ug_logic_counter2,CF_STRUCTURE_VIEW,L"When clocked, each output in turn goes HI (5 Volts). Similar to decade counter, but can be configured to any number of outputs");
+REGISTER_MODULE_1(L"Step Counter", IDS_MN_STEP_COUNTER,IDS_MG_DEBUG,ug_logic_counter ,CF_STRUCTURE_VIEW,L"");
 }
 
 void ug_logic_counter::ListInterface2(InterfaceObjectArray& PList)

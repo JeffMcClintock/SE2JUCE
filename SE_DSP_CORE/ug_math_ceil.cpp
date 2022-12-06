@@ -9,7 +9,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_math_ceil)
 
 namespace
 {
-REGISTER_MODULE_1_BC(112,L"Ceil", IDS_MN_CEIL,IDS_MG_MATH,ug_math_ceil,CF_STRUCTURE_VIEW,L"Outputs the next highest whole number");
+REGISTER_MODULE_1(L"Ceil", IDS_MN_CEIL,IDS_MG_MATH,ug_math_ceil,CF_STRUCTURE_VIEW,L"Outputs the next highest whole number");
 }
 
 void ug_math_ceil::sub_process(int start_pos, int sampleframes)

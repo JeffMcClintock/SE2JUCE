@@ -113,7 +113,7 @@ int ug_notesource::getVoiceAllocationMode()
 
 namespace
 {
-	REGISTER_MODULE_1_BC(9,L"Midi to CV", IDS_MN_MIDI_TO_CV,IDS_MG_OLD,ug_midi_to_cv ,CF_NOTESOURCE|CF_DONT_EXPAND_CONTAINER|CF_STRUCTURE_VIEW,L"This module converts MIDI notes into control voltages.  The midi note number is converted into a pitch voltage ( 1Volt per octave).  Connect this to an Oscillator or Filter to control frequency.  The Trigger output goes high while the key is depressed.  Connect the trigger output to an ADSR gate to trigger an envelope.  This module plays an important part in making SynthEdit Polyphonic. You must put each MIDI to CV module in it's own Container.  See <a href=signals.htm>Signal Levels and Conversions</a> for Voltage to pitch conversion info");
+	REGISTER_MODULE_1(L"Midi to CV", IDS_MN_MIDI_TO_CV,IDS_MG_OLD,ug_midi_to_cv ,CF_NOTESOURCE|CF_DONT_EXPAND_CONTAINER|CF_STRUCTURE_VIEW,L"This module converts MIDI notes into control voltages.  The midi note number is converted into a pitch voltage ( 1Volt per octave).  Connect this to an Oscillator or Filter to control frequency.  The Trigger output goes high while the key is depressed.  Connect the trigger output to an ADSR gate to trigger an envelope.  This module plays an important part in making SynthEdit Polyphonic. You must put each MIDI to CV module in it's own Container.  See <a href=signals.htm>Signal Levels and Conversions</a> for Voltage to pitch conversion info");
 
 	auto r2 = internalSdk::Register<ug_midi_to_cv_redirect>::withXml(
 		(R"XML(
@@ -199,6 +199,7 @@ int ug_midi_to_cv_redirect::Open()
 
 	voiceState_.voiceControlContainer_ = parent_container;
 
+#if 0
 	{
 		// On reset, restore tuning table.
 		auto app = AudioMaster()->getShell();
@@ -208,6 +209,7 @@ int ug_midi_to_cv_redirect::Open()
 
 		//		_RPT2(_CRT_WARN, "ug_midi_to_cv_redirect[%x] TUNE %x\n", voiceState_.voiceControlContainer_->Handle(), voiceState_.GetIntKeyTune(61)); // C#4
 	}
+#endif
 
 	// To avoid double-ups from MIDI going into both patch-automator and MIDI-CV, 
 	// notify Patch-Automator to avoid allocating voices etc.

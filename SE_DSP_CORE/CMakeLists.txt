@@ -173,7 +173,6 @@ iterator.h
 lock_free_fifo.h
 Logic.h
 mfc_emulation.h
-mfc_wstring.cpp
 mfc_wstring.h
 MidiEvent.h
 midistreambuffer.h

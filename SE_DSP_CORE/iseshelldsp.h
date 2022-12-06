@@ -26,6 +26,7 @@ class ISpecialIoModuleAudio : public ISpecialIoModule
 {
 public:
 	virtual void setIoBuffers(float* const* p_outputs, int numChannels, int stride = 1) = 0;
+	virtual void startFade(bool isDucked) = 0;
 };
 
 // Core Functionality provided by all environments.
@@ -43,9 +44,6 @@ public:
 	virtual std::wstring getDefaultPath(const std::wstring& p_file_extension ) = 0;
 	virtual void GetRegistrationInfo(std::wstring& p_user_email, std::wstring& p_serial) = 0;
 	virtual void DoAsyncRestart() = 0;
-
-	virtual RawView getPersisentHostControl(int handle, int hostControl, RawView defaultValue) = 0;
-	virtual bool setPersisentHostControl(int handle, int hostControl, RawView value) = 0;
 
     virtual void OnSaveStateDspStalled() = 0;
     
@@ -68,60 +66,11 @@ public:
 		return moduleLatencies;
 	}
 
-	RawView getPersisentHostControl(int handle, int hostControl, RawView defaultValue) override
-	{
-		for (auto& h : PersistantHostControls)
-		{
-			if (h.handle == handle && h.hostControl == hostControl)
-			{
-				return h.value;
-			}
-		}
-	
-		// If we hadn't already stored this value, then do so.
-		PersistantHostControls.push_back({ handle, hostControl, defaultValue });
-
-		return defaultValue;
-	}
-
-	bool setPersisentHostControl(int handle, int hostControl, RawView value) override
-	{
-		//	_RPT3(_CRT_WARN, "setPersisentHostControl() h=%x, HC=%d v= %d\n", handle, hostControl, value);
-		for (auto& h : PersistantHostControls)
-		{
-			if (h.handle == handle && h.hostControl == hostControl)
-			{
-				const bool changed = h.value != value;
-				h.value = value;
-				return changed;
-			}
-		}
-
-		PersistantHostControls.push_back({ handle, hostControl, value });
-
-		return true;
-	}
-
 	virtual void Clear()
 	{
-		PersistantHostControls.clear();
 		moduleLatencies.clear();
 	}
 
 private:
-	struct PersistantHostControlState
-	{
-		PersistantHostControlState(int phandle, int phostControl, RawView pvalue) :
-			handle(phandle),
-			hostControl(phostControl),
-			value(pvalue)
-		{}
-
-		int handle;
-		int hostControl;
-		RawData value;
-	};
-	
-	std::vector<PersistantHostControlState> PersistantHostControls;
 	std::unordered_map<int32_t, int32_t> moduleLatencies;
 };

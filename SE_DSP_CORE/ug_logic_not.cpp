@@ -7,7 +7,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_logic_not)
 
 namespace
 {
-REGISTER_MODULE_1_BC(56,L"NOT Gate", IDS_MN_NOT_GATE,IDS_MG_LOGIC,ug_logic_not ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output is opposit of input.");
+REGISTER_MODULE_1(L"NOT Gate", IDS_MN_NOT_GATE,IDS_MG_LOGIC,ug_logic_not ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output is opposit of input.");
 }
 
 // invert input, unless indeterminate voltage

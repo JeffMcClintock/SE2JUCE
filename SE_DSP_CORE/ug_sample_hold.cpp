@@ -9,7 +9,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_sample_hold)
 
 namespace
 {
-REGISTER_MODULE_1_BC(65,L"Sample and Hold", IDS_MN_SAMPLE_AND_HOLD,IDS_MG_MODIFIERS,ug_sample_hold ,CF_STRUCTURE_VIEW,L"Sample and Hold Module");
+REGISTER_MODULE_1(L"Sample and Hold", IDS_MN_SAMPLE_AND_HOLD,IDS_MG_MODIFIERS,ug_sample_hold ,CF_STRUCTURE_VIEW,L"Sample and Hold Module");
 }
 
 #define PLG_SIGNAL		0

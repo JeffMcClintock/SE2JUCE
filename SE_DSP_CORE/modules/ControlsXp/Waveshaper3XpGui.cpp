@@ -650,6 +650,8 @@ private:
 	{
 		if( widgets.size() > 0 )
 			dynamic_cast<WsGraphWidget*>(widgets[1].get())->shape = JmUnicodeConversions::WStringToUtf8(pinShape.getValue());
+
+        invalidateRect(); // required on mac because update is async
 	}
 
 	StringGuiPin pinShape;

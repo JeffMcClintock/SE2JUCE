@@ -16,8 +16,8 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(58,L"1 Pole LP", IDS_MN_1_POLE_LP,IDS_MG_FILTERS,ug_filter_1pole ,CF_STRUCTURE_VIEW,L"A simple, efficient Low Pass filter. Has 6db/Octave response.");
-REGISTER_MODULE_1_BC(101,L"1 Pole HP", IDS_MN_1_POLE_HP,IDS_MG_FILTERS,ug_filter_1pole_hp ,CF_STRUCTURE_VIEW,L"A simple, efficient Hi Pass filter. Has 6db/Octave response.");
+REGISTER_MODULE_1(L"1 Pole LP", IDS_MN_1_POLE_LP,IDS_MG_FILTERS,ug_filter_1pole ,CF_STRUCTURE_VIEW,L"A simple, efficient Low Pass filter. Has 6db/Octave response.");
+REGISTER_MODULE_1(L"1 Pole HP", IDS_MN_1_POLE_HP,IDS_MG_FILTERS,ug_filter_1pole_hp ,CF_STRUCTURE_VIEW,L"A simple, efficient Hi Pass filter. Has 6db/Octave response.");
 }
 
 #define TABLE_SIZE 512

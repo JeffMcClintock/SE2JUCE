@@ -15,8 +15,8 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(38,L"Switch (1->Many)", IDS_MN_SWITCH_1_MANY,IDS_MG_FLOW_CONTROL,ug_switch ,CF_STRUCTURE_VIEW,L"Used to provide switchable signal routing, or on/off control of a patch cord. Right-click, Properties... to rename choices.");
-REGISTER_MODULE_1_BC(39,L"Switch (Many->1)", IDS_MN_SWITCH_MANY_1,IDS_MG_FLOW_CONTROL,ug_switch2 ,CF_STRUCTURE_VIEW,L"Used to provide switchable signal routing, or on/off control of a patch cord. Right-click, Properties... to rename choices.");
+REGISTER_MODULE_1(L"Switch (1->Many)", IDS_MN_SWITCH_1_MANY,IDS_MG_FLOW_CONTROL,ug_switch ,CF_STRUCTURE_VIEW,L"Used to provide switchable signal routing, or on/off control of a patch cord. Right-click, Properties... to rename choices.");
+REGISTER_MODULE_1(L"Switch (Many->1)", IDS_MN_SWITCH_MANY_1,IDS_MG_FLOW_CONTROL,ug_switch2 ,CF_STRUCTURE_VIEW,L"Used to provide switchable signal routing, or on/off control of a patch cord. Right-click, Properties... to rename choices.");
 }
 
 ug_switch::ug_switch() :

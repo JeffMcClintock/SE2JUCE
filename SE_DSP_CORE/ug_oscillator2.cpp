@@ -56,7 +56,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_oscillator2)
 // create unnamed namespace to 'hide' stuff
 namespace
 {
-REGISTER_MODULE_1_BC(0, L"Oscillator", IDS_OSCILLATOR ,IDS_WAVEFORM, ug_oscillator2,CF_STRUCTURE_VIEW,L"The Oscillator is the starting point for many patches. It produces a choice of simple waveforms, plus white or pink noise.  The Phase Mod input is for Yamaha DX style 'frequency modulation' (works well with a sine-wave output).  See <a href=signals.htm>Signal Levels and Conversions</a> for Voltage to pitch conversion info");
+REGISTER_MODULE_1( L"Oscillator", IDS_OSCILLATOR ,IDS_WAVEFORM, ug_oscillator2,CF_STRUCTURE_VIEW,L"The Oscillator is the starting point for many patches. It produces a choice of simple waveforms, plus white or pink noise.  The Phase Mod input is for Yamaha DX style 'frequency modulation' (works well with a sine-wave output).  See <a href=signals.htm>Signal Levels and Conversions</a> for Voltage to pitch conversion info");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters

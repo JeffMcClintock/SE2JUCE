@@ -1,7 +1,79 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <PluginList>
-  <Plugin id="SE Lookahead" name="Lookahead" category="Special">
+	<Plugin id="SE Butterworth LP2" name="Butterworth Low-pass 2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+			<!-- 
+			<Pin name="D1" direction="out" datatype="float" rate="audio"/>
+			<Pin name="D2" direction="out" datatype="float" rate="audio"/>
+			<Pin name="D3" direction="out" datatype="float" rate="audio"/>
+			-->
+		</Audio>
+	</Plugin>
+	
+	<Plugin id="SE Butterworth HP2" name="Butterworth High-pass2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+	<Plugin id="SE Butterworth BP2" name="Butterworth Band-pass2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Width Hz" datatype="float" default="1000" metadata="1,20000"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+
+	<Plugin id="SE Butterworth BR2" name="Butterworth Band-reject2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Width Hz" datatype="float" default="1000" metadata="1,20000"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+
+	<Plugin id="SE Butterworth LS2" name="Butterworth Low-shelf2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Gain Db" datatype="float" default="0" metadata="-100,100"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+	<Plugin id="SE Butterworth HS2" name="Butterworth High-shelf2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Gain Db" datatype="float" default="0" metadata="-100,100"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+
+	<Plugin id="SE Butterworth BS2" name="Butterworth Band-shelf2" category="Filters">
+		<Audio>
+			<Pin name="Signal" datatype="float" rate="audio" default="0"/>
+			<Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
+			<Pin name="Width Hz" datatype="float" default="1000" metadata="1,20000"/>
+			<Pin name="Gain Db" datatype="float" default="0" metadata="-100,100"/>
+			<Pin name="Poles" datatype="enum" default="4" metadata="1=1,2,3,4,5,6,7,8,9,10,11,12"/>
+			<Pin name="Output" direction="out" datatype="float" rate="audio"/>
+		</Audio>
+	</Plugin>
+	
+	<Plugin id="SE Lookahead" name="Lookahead" category="Special">
     <Audio>
       <Pin name="ms" datatype="float" default="1" metadata="1,500"/>
       <Pin name="Signal In" datatype="float" rate="audio" linearInput="true"/>
@@ -26,7 +98,7 @@
     </Audio>
   </Plugin>
 
-  <Plugin id="SE Butterworth LP" name="Butterworth Low Pass" category="Filters">
+  <Plugin id="SE Butterworth LP" name="Butterworth Low Pass" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -35,7 +107,7 @@
     </Audio>
   </Plugin>
 
-  <Plugin id="SE Butterworth HP" name="Butterworth High Pass" category="Filters">
+  <Plugin id="SE Butterworth HP" name="Butterworth High Pass" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -44,7 +116,7 @@
     </Audio>
   </Plugin>
 
-  <Plugin id="SE Butterworth BP" name="Butterworth Band Pass" category="Filters">
+  <Plugin id="SE Butterworth BP" name="Butterworth Band Pass" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -54,7 +126,7 @@
     </Audio>
   </Plugin>
   
-  <Plugin id="SE Butterworth BR" name="Butterworth Band Reject" category="Filters">
+  <Plugin id="SE Butterworth BR" name="Butterworth Band Reject" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -64,7 +136,7 @@
     </Audio>
   </Plugin>
 
-  <Plugin id="SE Butterworth LS" name="Butterworth Low Shelf" category="Filters">
+  <Plugin id="SE Butterworth LS" name="Butterworth Low Shelf" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -73,7 +145,7 @@
       <Pin name="Output" direction="out" datatype="float" rate="audio"/>
     </Audio>
   </Plugin>
-  <Plugin id="SE Butterworth HS" name="Butterworth High Shelf" category="Filters">
+  <Plugin id="SE Butterworth HS" name="Butterworth High Shelf" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -83,7 +155,7 @@
     </Audio>
   </Plugin>
 
-  <Plugin id="SE Butterworth BS" name="Butterworth Band Shelf" category="Filters">
+  <Plugin id="SE Butterworth BS" name="Butterworth Band Shelf" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -94,7 +166,7 @@
     </Audio>
   </Plugin>
 <!-- buggy on mac
-  <Plugin id="SE Elliptic LP" name="Elliptic Low Pass" category="Filters">
+  <Plugin id="SE Elliptic LP" name="Elliptic Low Pass" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>
@@ -104,7 +176,7 @@
       <Pin name="Output" direction="out" datatype="float" rate="audio"/>
     </Audio>
   </Plugin>
-  <Plugin id="SE Elliptic HP" name="Elliptic High Pass" category="Filters">
+  <Plugin id="SE Elliptic HP" name="Elliptic High Pass" category="Old/Filters">
     <Audio>
       <Pin name="Signal" datatype="float" rate="audio" default="0"/>
       <Pin name="Pitch Hz" datatype="float" default="400" metadata="1,20000"/>

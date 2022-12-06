@@ -11,11 +11,11 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(57,L"NOR Gate", IDS_MN_NOR_GATE,IDS_MG_LOGIC,ug_logic_NOR ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high if all inputs low");
-REGISTER_MODULE_1_BC(55,L"NAND Gate", IDS_MN_NAND_GATE,IDS_MG_LOGIC,ug_logic_NAND ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when any inputs low.");
-REGISTER_MODULE_1_BC(54,L"XOR Gate", IDS_MN_XOR_GATE,IDS_MG_LOGIC,ug_logic_XOR ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when exactly one input high.");
-REGISTER_MODULE_1_BC(53,L"OR Gate", IDS_MN_OR_GATE,IDS_MG_LOGIC,ug_logic_OR ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when any one input high.");
-REGISTER_MODULE_1_BC(52,L"AND Gate", IDS_MN_AND_GATE,IDS_MG_LOGIC,ug_logic_AND ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when all inputs high.");
+REGISTER_MODULE_1(L"NOR Gate", IDS_MN_NOR_GATE,IDS_MG_LOGIC,ug_logic_NOR ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high if all inputs low");
+REGISTER_MODULE_1(L"NAND Gate", IDS_MN_NAND_GATE,IDS_MG_LOGIC,ug_logic_NAND ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when any inputs low.");
+REGISTER_MODULE_1(L"XOR Gate", IDS_MN_XOR_GATE,IDS_MG_LOGIC,ug_logic_XOR ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when exactly one input high.");
+REGISTER_MODULE_1(L"OR Gate", IDS_MN_OR_GATE,IDS_MG_LOGIC,ug_logic_OR ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when any one input high.");
+REGISTER_MODULE_1(L"AND Gate", IDS_MN_AND_GATE,IDS_MG_LOGIC,ug_logic_AND ,CF_STRUCTURE_VIEW,L"Simulated Logic Gate. Output goes high when all inputs high.");
 }
 
 ug_logic_gate::ug_logic_gate() :

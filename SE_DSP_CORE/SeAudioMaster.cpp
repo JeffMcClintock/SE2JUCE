@@ -424,17 +424,12 @@ void SeAudioMaster::BuildDspGraph(
 		auto moduleType = ModuleFactory()->GetById( L"Container" );
 		assert( main_container == 0 );
 		main_container = dynamic_cast<ug_container*>( moduleType->BuildSynthOb() );
-
 		main_container->Setup(this, pElem);
+		main_container->SetupPatchManager(pElem->FirstChildElement("PatchManager"), pendingPresets);
 
 #if defined( _DEBUG )
 		main_container->debug_name = L"Main";
 #endif
-		// Any container with legacy notesource NEEDS patch-param-setter (else will crash on first note on).
-		// In the rare case where container has no other modules neededing patch-param-setter, manually create it.
-		// PROBLEM, when created here, it's patch_control_container is NULL (becuase patch manager not created yet)
-		// if REALLY needed, then need to manually set patch_control_container after BuildModules() below.
-		//main_container->GetParamete rSetter();
 		BuildModules(
 			main_container,
 			main_container,
@@ -443,6 +438,10 @@ void SeAudioMaster::BuildDspGraph(
 			pendingPresets,
 			mutedContainers
 		);
+
+		// Lastly add the ug_patch_automator, ug_patch_automator_out.
+		// Done after adding modules so if user already had a ug_patch_automator, we skip adding a second.
+		main_container->BuildAutomationModules();
 
 #if defined( _DEBUG )
 		if( !debug_missing_modules.empty() )
@@ -695,7 +694,8 @@ void AudioMasterBase::BuildModules(
 	std::vector<int32_t>& mutedContainers
 )
 {
-	// Look for Patch PatchManager.
+#if 0 // moved
+	// Look for PatchManager.
 	auto patchManager_xml = xml->FirstChildElement("PatchManager");
 	if( patchManager_xml )
 	{
@@ -715,6 +715,7 @@ void AudioMasterBase::BuildModules(
 		container->BuildPatchManager( patchManager_xml, presetXml);
 		container->get_patch_manager()->setupContainerHandles(container);
 	}
+#endif
 
 	// Look for "Modules" list.
 	TiXmlElement* modules_xml = xml->FirstChildElement("Modules");
@@ -727,155 +728,200 @@ void AudioMasterBase::BuildModules(
 			auto moduleType = ModuleFactory()->GetById(Utf8ToWstring(typeS));
 
 			ug_base* generator = nullptr;
-            if( moduleType )
+            if(moduleType)
             {
-               generator = moduleType->BuildSynthOb();
+				generator = moduleType->BuildSynthOb();
             }
 
+			if(!generator)
+			{
 #if defined( _DEBUG)
-			if( generator == 0)
-			{
-                auto it = find(debug_missing_modules.begin(), debug_missing_modules.end(), typeS);
-                if( it == debug_missing_modules.end() )
+                if(find(debug_missing_modules.begin(), debug_missing_modules.end(), typeS) == debug_missing_modules.end())
 					debug_missing_modules.push_back(typeS);
+#endif
+				continue;
 			}
-#endif
 
-			if( generator )
+			// when expanding inline, a module can have a different patch manager than other in the same container
+			// we use the call-stack to bookkeep this
+			generator->patch_control_container = patch_control_container;
+
+			// this is "build-in" container, not correct parent container.
+			generator->cpuParent = cpu_parent; // container;
+			const bool isContainer = strcmp(typeS, "Container") == 0;
+
+			if( isContainer )
 			{
-				generator->patch_control_container = patch_control_container;
+				auto child_container = dynamic_cast<ug_container*>(generator);
+				auto child_patch_control_container = patch_control_container;
 
-				// this is "build-in" container, not correct parent container.
-				generator->cpuParent = cpu_parent; // container;
-				const bool isContainer = strcmp(typeS, "Container") == 0;
+				// child not deserialized yet, so get it's handle manually.
+				int32_t child_handle{};
+				pElem->QueryIntAttribute("Id", &child_handle);
+				child_container->SetHandle(child_handle);
 
-				if( isContainer )
+				// we don't nesc have the chain of parent containers setup, so manually figure out where the patch manager is
+				auto child_patch_manager = container->get_patch_manager(); // default to parent.
+
+				// Build PatchManager if needed.
+				TiXmlElement* child_patchManager_xml{};
 				{
+					child_patchManager_xml = pElem->FirstChildElement("PatchManager");
+					if (child_patchManager_xml)
+					{
+						child_container->SetupPatchManager(child_patchManager_xml, pendingPresets);
+						child_patch_manager = child_container->get_patch_manager();
+						child_patch_control_container = child_container;
+					}
+				}
+
 #if SE_RUNTIME_MUTABLE_CONTAINERS
-					{
-						int handle = -1;
-						pElem->QueryIntAttribute("Id", &handle);
+				{
+					int handle = -1;
+					pElem->QueryIntAttribute("Id", &handle);
 
-						if (std::find(mutedContainers.begin(), mutedContainers.end(), handle) != mutedContainers.end())
-						{
-							delete generator;
-							continue;
-						}
+					if (std::find(mutedContainers.begin(), mutedContainers.end(), handle) != mutedContainers.end())
+					{
+						delete generator;
+						continue;
 					}
+				}
 #endif
-					int expandInline = 1;			// default is Yes.
-					int oversampleFactor = 0;		// default is none.
+				int expandInline = 1;			// default is Yes.
+				pElem->QueryIntAttribute("ExpandInline", &expandInline);
 
-					pElem->QueryIntAttribute("ExpandInline", &expandInline);
-
-					pElem->QueryIntAttribute( "Oversample", &oversampleFactor );
-
+				int oversampleFactor = 0;
+				{
+					auto oversamplingParam = child_patch_manager->GetHostControl(HC_OVERSAMPLING_RATE, child_handle);
+					if (oversamplingParam)
 					{
-						int handle;
-						pElem->QueryIntAttribute("Id", &handle);
-						oversampleFactor = (int32_t) getShell()->getPersisentHostControl(handle, HC_OVERSAMPLING_RATE, RawView(oversampleFactor));
+						oversampleFactor = (int32_t)oversamplingParam->GetValueRaw2();
 					}
-					
-					if (oversampleFactor > 0 && SampleRate() == container->getSampleRate()) // scale back oversampling if host already in HD (unless nested).
-					{
-						oversampleFactor = calcOversampleFactor( oversampleFactor, (int) container->getSampleRate() );
-					}
+				}
+				
+				if (oversampleFactor > 0 && SampleRate() == container->getSampleRate()) // scale back oversampling if host already in HD (unless nested).
+				{
+					oversampleFactor = calcOversampleFactor( oversampleFactor, (int) container->getSampleRate() );
+				}
 
-					// With Oversampling we substitute ug_oversampler, then put the container inside the oversampler.
-					if( oversampleFactor > 0 )
-					{
-						expandInline = 0;
-					}
-					else
-					{
-						// With no Oversampling we just add the container alongside it's modules.
-						container->AddUG( generator );
-					}
-
-					// attempt to fix default values ignored by oversampler (becuase it couldn't get to the defaut setter)
-					auto original_parent = generator->parent_container;
-					if(!original_parent)
-						generator->parent_container = container;
-
-					generator->Setup( this, pElem );
-					
-					generator->parent_container = original_parent;
-
-					if(	expandInline )
-					{
-						generator->SetFlag(UGF_NEVER_EXECUTES);
-						BuildModules( container, patch_control_container, pElem, generator, pendingPresets, mutedContainers);
-					}
-					else // Build self-contained container.
-					{
-						ug_container* c = dynamic_cast<ug_container*>(generator);
-
-						// Oversampling.
-						ug_oversampler* oversampler = 0;
-						if( oversampleFactor != 0 )
-						{
-							int oversamplerFilterPoles_ = 7; // default.
-
-// In plugins this is redundant, the patch-parameter value will already be available and overwrite this.
-// Retained only for Waves and SE at present. Could probaby remove it from SE also if SE supported getPersisentHostControl()
-pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
-
-							{
-								int handle;
-								pElem->QueryIntAttribute("Id", &handle);
-								oversamplerFilterPoles_ = (int)getShell()->getPersisentHostControl(handle, HC_OVERSAMPLING_FILTER, RawView(oversamplerFilterPoles_));
-							}
-
-							oversampler = new ug_oversampler();
-							AssignTemporaryHandle(oversampler);
-							container->AddUG( oversampler );
-							oversampler->SetAudioMaster(this);
-							oversampler->main_container = c;
-							oversampler->Setup1( oversampleFactor, oversamplerFilterPoles_ );
-							oversampler->cpuParent = container;
-
-							// Containers without own patch manager need PM proxy.
-							if( !pElem->FirstChildElement("PatchManager"))
-							{
-								oversampler->CreatePatchManagerProxy();
-							}
-						}
-
-						patch_control_container->get_patch_manager()->setupContainerHandles(c);
-
-						// Any container with legacy notesource NEEDS patch-param-setter (else will crash on first note on).
-						// In the rare case where container has no other modules neededing patch-param-setter, manually create it.
-						// c->GetParameterSetter();
-						// possible should be oversampler->BuildModules() because oversampler is the "AudioMaster"  LOOK DOWN to generator->Setup(this, pElem);
-
-						// re-route from container to oversampler in/out modules.
-						if( oversampleFactor != 0 )
-						{
-							oversampler->BuildModules( c, patch_control_container, pElem, oversampler, pendingPresets, mutedContainers);
-							oversampler->Setup2(true);
-						}
-						else
-						{
-							BuildModules(c, patch_control_container, pElem, c, pendingPresets, mutedContainers);
-							c->PostBuildStuff(true);
-						}
-					}
+				// With Oversampling we substitute ug_oversampler, then put the container inside the oversampler.
+				if( oversampleFactor > 0 )
+				{
+					expandInline = 0;
 				}
 				else
 				{
-					// Regular module.
-					container->AddUG(generator);
-					generator->Setup(this, pElem); // "this" is meant to be audiomaster of generator, but in case of oversampling, it's not the correct one.
+					// With no Oversampling we just add the container alongside it's modules.
+					container->AddUG( generator );
+				}
+
+				// attempt to fix default values ignored by oversampler (becuase it couldn't get to the defaut setter)
+				auto original_parent = generator->parent_container;
+				if(!original_parent)
+					generator->parent_container = container;
+
+				generator->Setup( /*this*/ container->AudioMaster(), pElem);
+					
+				generator->parent_container = original_parent;
+
+				if (child_container->isContainerPolyphonic())
+				{
+					int32_t VoiceCount = 6;
+					int32_t VoiceReserveCount = 3;
+					if (auto param = child_patch_manager->GetHostControl(HC_POLYPHONY, child_handle); param)
+					{
+						VoiceCount = (int32_t)param->GetValueRaw2();
+					}
+					if (auto param = child_patch_manager->GetHostControl(HC_POLYPHONY_VOICE_RESERVE, child_handle); param)
+					{
+						VoiceReserveCount = (int32_t)param->GetValueRaw2();
+					}
+
+					child_container->setVoiceReserveCount(VoiceReserveCount);
+					child_container->setVoiceCount(VoiceCount);
+				}
+
+				if(	expandInline )
+				{
+					generator->SetFlag(UGF_NEVER_EXECUTES);
+					BuildModules( container, child_patch_control_container, pElem, generator, pendingPresets, mutedContainers);
+				}
+				else // Build self-contained container.
+				{
+					// Oversampling.
+					ug_oversampler* oversampler = 0;
+					if( oversampleFactor != 0 )
+					{
+						int oversamplerFilterPoles_ = 7; // default.
+						{
+							auto oversamplingParam = child_patch_manager->GetHostControl(HC_OVERSAMPLING_FILTER, child_handle);
+							if (oversamplingParam)
+							{
+								oversamplerFilterPoles_ = (int32_t)oversamplingParam->GetValueRaw2();
+							}
+						}
+#if 0
+// In plugins this is redundant, the patch-parameter value will already be available and overwrite this.
+// Retained only for Waves and SE at present. Could probaby remove it from SE also if SE supported getPersisentHostControl()
+pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
+						{
+							int handle;
+							pElem->QueryIntAttribute("Id", &handle);
+							oversamplerFilterPoles_ = (int)getShell()->getPersisentHostControl(handle, HC_OVERSAMPLING_FILTER, RawView(oversamplerFilterPoles_));
+						}
+#endif
+
+//	?? if not already child_container->patch_control_container = container->patch_control_container;
+
+						oversampler = new ug_oversampler();
+						AssignTemporaryHandle(oversampler);
+						container->AddUG( oversampler );
+//							oversampler->SetAudioMaster(this);
+						oversampler->SetAudioMaster(container->AudioMaster());
+						oversampler->main_container = child_container;
+						oversampler->Setup1( oversampleFactor, oversamplerFilterPoles_ ); // reassigns childs audiomaster to itself
+						oversampler->cpuParent = container;
+
+						// Containers without own patch manager need PM proxy.
+						if( !pElem->FirstChildElement("PatchManager"))
+						{
+							oversampler->CreatePatchManagerProxy();
+						}
+					}
+
+					// For polyphonic containers, help the patch manager (which may be in a higher container)
+					// associate it's polyphonic parameter (gate etc) with the container* that is controlling the voices.
+					child_container->get_patch_manager()->setupContainerHandles(child_container);
+
+					// possible should be oversampler->BuildModules() because oversampler is the "AudioMaster"  LOOK DOWN to generator->Setup(this, pElem);
+
+					// re-route from container to oversampler in/out modules.
+					if( oversampleFactor != 0 )
+					{
+						oversampler->BuildModules( child_container, child_patch_control_container, pElem, oversampler, pendingPresets, mutedContainers);
+						oversampler->Setup2(true);
+					}
+					else
+					{
+						BuildModules(child_container, child_patch_control_container, pElem, child_container, pendingPresets, mutedContainers);
+						child_container->PostBuildStuff(true);
+					}
+				}
+
+				// Lastly add the ug_patch_automator, ug_patch_automator_out.
+				// Done after adding modules so if user already had a ug_patch_automator, we skip adding a second.
+				if (child_patchManager_xml) // this indicates that it has a real patchmanager, not merely a proxy
+				{
+					child_container->BuildAutomationModules();
 				}
 			}
+			else
+			{
+				// Regular module.
+				container->AddUG(generator);
+				generator->Setup(this, pElem); // "this" is meant to be audiomaster of generator, but in case of oversampling, it's not the correct one.
+			}
 		}
-	}
-
-	// Lastly add the ug_patch_automator, ug_patch_automator_out.
-	// Done after adding modules so if user already had a ug_patch_automator, we skip adding a second.
-	if( patchManager_xml )
-	{
-		container->BuildAutomationModules();
 	}
 
 	// Lines.
@@ -908,7 +954,7 @@ pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
 void SeAudioMaster::end_run()
 { 
 #if defined( SE_EDIT_SUPPORT )
-	if (AudioOutUgs)
+	if (audioOutModule)
 	{
 		TriggerShutdown();
 	}
@@ -917,7 +963,6 @@ void SeAudioMaster::end_run()
 		// cause audio driver to stop ASAP (important for unit tests to record correct length of wavefile).
 		state = audioMasterState::Stopping;
 		getShell()->OnFadeOutComplete();
-//		done_flag = true;
 	}
 #endif
 }
@@ -1161,12 +1206,12 @@ void SeAudioMaster::HandleInterrupt()
 #if defined(SE_TARGET_PLUGIN)
 		if (vst_out) // will be null under automated testing.
 		{
-			vst_out->StartFadeOut(true); // TODO: fade up all notes off (ref SE1.4 'SetDucked')
+			vst_out->startFade(true); // TODO: fade up all notes off (ref SE1.4 'SetDucked')
 		}
 #else
-		if (AudioOutUgs)
+		if (audioOutModule)
 		{
-			AudioOutUgs->StartFadeOut();
+			audioOutModule->startFade(true);
 		}
 #endif
 

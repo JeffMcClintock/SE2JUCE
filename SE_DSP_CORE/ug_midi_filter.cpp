@@ -7,7 +7,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_midi_filter)
 
 namespace
 {
-REGISTER_MODULE_1_BC(92,L"MIDI Filter", IDS_MN_MIDI_FILTER,IDS_MG_MIDI,ug_midi_filter ,CF_STRUCTURE_VIEW,L"Filters MIDI data based on Channel, Velocity and Note information.  Use to create Keyboard Splits and Velocity Switching between Synths");
+REGISTER_MODULE_1(L"MIDI Filter", IDS_MN_MIDI_FILTER,IDS_MG_MIDI,ug_midi_filter ,CF_STRUCTURE_VIEW,L"Filters MIDI data based on Channel, Velocity and Note information.  Use to create Keyboard Splits and Velocity Switching between Synths");
 }
 
 #define PN_MIDI_OUT 1

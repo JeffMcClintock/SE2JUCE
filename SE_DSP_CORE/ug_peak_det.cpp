@@ -16,7 +16,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(41,L"Peak Follower", IDS_MN_PEAK_FOLLOWER,IDS_MG_MODIFIERS,ug_peak_det ,CF_STRUCTURE_VIEW,L"The output attempts to follow the envelope (level) of the input signal.");
+REGISTER_MODULE_1(L"Peak Follower", IDS_MN_PEAK_FOLLOWER,IDS_MG_MODIFIERS,ug_peak_det ,CF_STRUCTURE_VIEW,L"The output attempts to follow the envelope (level) of the input signal.");
 }
 
 // prevent divide by zero

@@ -46,12 +46,12 @@
 
 #define CF_ALWAYS_EXPORT			(1 << 25)	// e.g. Voice-Mute.
 
+// macro for generating unique variable or function name.
+#define PASTE_FUNCT2(x,y) x##y
+#define PASTE_FUNCT1(x,y) PASTE_FUNCT2(x,y)
 
 // structure modules, using default CUG as GUI class
-#define REGISTER_MODULE_1( module_id, sid_name, sid_group, ug, flags, desc ) bool res_##ug = ModuleFactory()->RegisterModule(new Module_Info(module_id, sid_name, sid_group, 0, ug::CreateObject, flags) );
-
-// same (backward compatible)
-#define REGISTER_MODULE_1_BC( old_type_id, module_id, sid_name, sid_group, ug, flags, desc ) bool res_##old_type_id = ModuleFactory()->RegisterModule(new Module_Info(module_id, sid_name, sid_group, 0, ug::CreateObject, flags) );
+#define REGISTER_MODULE_1( module_id, sid_name, sid_group, ug, flags, desc ) bool PASTE_FUNCT1(res,__LINE__) = ModuleFactory()->RegisterModule(new Module_Info(module_id, sid_name, sid_group, 0, ug::CreateObject, flags) );
 
 #define ModuleFactory() CModuleFactory::Instance()
 
@@ -74,6 +74,7 @@ public:
 	void RegisterPluginsXml( const char* xmlFile );
 	void RegisterPluginsXml( class TiXmlNode* pluginList );
 #if defined( SE_EDIT_SUPPORT )
+	Module_Info* GetByIdSerializing(const std::wstring& p_id);
 	void RegisterExternalPluginsXml(class TiXmlDocument* doc, const std::wstring& full_path, const std::wstring& group_name, bool isShellPlugin = false);
 #else
 	void RegisterExternalPluginsXmlOnce(TiXmlNode*);

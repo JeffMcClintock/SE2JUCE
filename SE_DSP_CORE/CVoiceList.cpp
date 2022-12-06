@@ -1,34 +1,25 @@
 // VoiceList.cpp
 // Class to help VoiceList keep track of cloned VList
-//
 
 #include "pch.h"
 #include <assert.h>
 #include <math.h>
 #include "CVoiceList.h"
 #include "ug_base.h"
-
-#include "IDspPatchManager.h"
-
-#include "ug_voice_monitor.h"
+#include "SeAudioMaster.h"
 #include "ug_container.h"
-#include "conversion.h"
+#include "modules/shared/voice_allocation_modes.h"
+#include "ug_oversampler.h"
+#include "ug_voice_monitor.h"
 #include "UgDatabase.h"
-#include "ug_event.h"
 #include "ug_patch_automator.h"
 #include "midi_defs.h"
-#include "modules/shared/voice_allocation_modes.h"
-#include "ug_patch_param_setter.h"
-#include "SeAudioMaster.h"
-#include "sample.h"
-#include "ug_oversampler.h"
 #include "dsp_patch_manager.h"
+#include "ug_patch_param_setter.h"
 
 #ifdef _DEBUG
-
 #include <iomanip>
 #include <sstream>
-
 #endif
 
 #ifdef _DEBUG
@@ -764,13 +755,7 @@ void VoiceList::setVoiceCount(int c)
 
 	auto container = dynamic_cast<ug_container*>(this);
 
-//	container->AudioMaster()->getShell()->setPersisentHostControl(container->Handle(), HC_POLYPHONY, RawView(c));
-
-	if(Polyphony < c)
-	{
-//		container->AudioMaster()->getShell()->DoAsyncRestart();
-	}
-	else
+	if(Polyphony >= c)
 	{
 		// Kill sounding notes so we don't get a polyphony 'overhang' (temporary excess voices playing)
 		// Voice manager can only kill one voice per new note, so reducing polyphony appears to happen gradually otherwise.
@@ -1082,6 +1067,8 @@ void Voice::SetUpNoteMonitor( bool secondPass )
 
 					if( secondPass ) // No terminal module found, Try to find last audio connection in chain. Even if it's to a polyphonic module (Trigger-to-MIDI)
 					{
+						// Voice Monitor Fallback
+						// having difficulty finding voices terminal module, try other strategies.
 						for( auto to_plug : p->connections )
 						{
 							if( to_plug->UG->GetPolyphonic() )
@@ -2125,6 +2112,11 @@ void HostVoiceControl::sendValue( timestamp_t clock, ug_container* container, in
     for( auto plug : outputPins_ )
     {
         timestamp_t timestamp = plug->UG->ParentContainer()->CalculateOversampledTimestamp( container, clock );
+
+		if (plug->GetFlag(PF_PARAMETER_1_BLOCK_LATENCY))
+		{
+			timestamp += plug->UG->AudioMaster()->BlockSize();
+		}
 
         plug->TransmitPolyphonic( timestamp, physicalVoiceNumber, size, data );
     }

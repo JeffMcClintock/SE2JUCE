@@ -16,7 +16,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_vst_in)
 
 namespace
 {
-REGISTER_MODULE_1_BC(94,L"VST Input", IDS_MN_VST_INPUT,IDS_MG_DEBUG,ug_vst_in ,CF_HIDDEN,L"");
+REGISTER_MODULE_1(L"VST Input", IDS_MN_VST_INPUT,IDS_MG_DEBUG,ug_vst_in ,CF_HIDDEN,L"");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters

@@ -16,7 +16,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(48,L"Moog Filter", IDS_MN_MOOG_FILTER, IDS_MG_FILTERS,ug_filter_biquad ,CF_STRUCTURE_VIEW,L"A very 'Fat' 4 pole low pass filter.  Has built in overdrive if pushed too far. Has higher CPU load than the SV Filter.");
+REGISTER_MODULE_1(L"Moog Filter", IDS_MN_MOOG_FILTER, IDS_MG_FILTERS,ug_filter_biquad ,CF_STRUCTURE_VIEW,L"A very 'Fat' 4 pole low pass filter.  Has built in overdrive if pushed too far. Has higher CPU load than the SV Filter.");
 }
 
 #define TABLE_SIZE 512

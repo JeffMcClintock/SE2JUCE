@@ -68,7 +68,6 @@ enum HostControls { HC_NONE=-1, HC_PATCH_COMMANDS, HC_MIDI_CHANNEL, HC_PROGRAM_N
 					HC_CAN_REDO,
 
 					// leave last
-					HC_VOICE_TUNING, // psudo host-control. used only for persistance of tuning table in getPersisentHostControl().
 					HC_NUM_HOST_CONTROLS,
 };
 

@@ -19,7 +19,7 @@ static pin_description plugs[] =
 
 static module_description_dsp mod =
 {
-	"FloatToVolts", IDS_FLOAT_TO_VOLTS, IDS_MG_CONVERSION , &ug_float_to_volts::CreateObject, CF_STRUCTURE_VIEW,plugs, sizeof(plugs)/sizeof(pin_description)
+	"FloatToVolts", IDS_FLOAT_TO_VOLTS, IDS_MG_CONVERSION , &ug_float_to_volts::CreateObject, CF_STRUCTURE_VIEW, plugs, std::size(plugs)
 };
 
 bool res = ModuleFactory()->RegisterModule( mod );

@@ -10,7 +10,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(98,L"Comparator", IDS_MN_COMPARATOR,IDS_MG_MODIFIERS,ug_comparator ,CF_STRUCTURE_VIEW,L"Compares the two input levels. If input A is greater, output is high (5), else low (-5).");
+REGISTER_MODULE_1(L"Comparator", IDS_MN_COMPARATOR,IDS_MG_MODIFIERS,ug_comparator ,CF_STRUCTURE_VIEW,L"Compares the two input levels. If input A is greater, output is high (5), else low (-5).");
 }
 
 #define PN_INPUT1	0

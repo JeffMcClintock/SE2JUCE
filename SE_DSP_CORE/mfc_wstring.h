@@ -1,5 +1,4 @@
 #pragma once
-#include "pch.h"
 #include <string>
 
 // No MFC in plugin.

@@ -1,5 +1,5 @@
 #pragma once
-#include "mp_sdk_stdint.h"
+//#include "mp_sdk_stdint.h"
 #include <assert.h>
 #include "../se_sdk3/mp_midi.h"
 

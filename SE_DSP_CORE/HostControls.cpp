@@ -237,7 +237,6 @@ bool HostControlAttachesToParentContainer( HostControls hostControlId )
         case HC_OVERSAMPLING_FILTER:
 		case HC_VOICE_VOLUME:
 		case HC_VOICE_PAN:
-		case HC_VOICE_TUNING:
 		case HC_VOICE_PITCH_BEND:
 		case HC_VOICE_VIBRATO:
 		case HC_VOICE_EXPRESSION:
@@ -276,7 +275,6 @@ bool HostControlisPolyphonic(HostControls hostControlId)
 	case HC_VOICE_PORTAMENTO_ENABLE:
 	case HC_VOICE_VOLUME:
 	case HC_VOICE_PAN:
-//nope	case HC_VOICE_TUNING:
 	case HC_VOICE_PITCH_BEND:
 	case HC_VOICE_VIBRATO:
 	case HC_VOICE_EXPRESSION:

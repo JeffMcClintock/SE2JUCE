@@ -6,14 +6,12 @@ SE_DECLARE_INIT_STATIC_FILE(ug_multiplier)
 
 namespace
 {
-REGISTER_MODULE_1_BC(61,L"Ring Modulator", IDS_MN_RING_MODULATOR,IDS_MG_EFFECTS,ug_multiplier ,CF_STRUCTURE_VIEW,L"One input controls the level of the other.  It can be used for ring modulation, or to apply an envelope to a signal ( amplitude modulation ), or to scale a signal by a fixed amount.");
-REGISTER_MODULE_1_BC(11,L"Level Adj", IDS_MN_LEVEL_ADJ,IDS_MG_MODIFIERS,ug_multiplier ,CF_STRUCTURE_VIEW,L"This multiplies one input by the other.  It can be used for ring modulation, or to apply an envelope to a signal ( amplitude modulation ), or to scale a signal by a fixed amount.  Note: to apply an volume envelope use the DCA module (it changes the volume of the signal on a decibel scale, not a linear scale).");
+	REGISTER_MODULE_1(L"Ring Modulator", IDS_MN_RING_MODULATOR, IDS_MG_EFFECTS, ug_multiplier, CF_STRUCTURE_VIEW, L"One input controls the level of the other.  It can be used for ring modulation, or to apply an envelope to a signal ( amplitude modulation ), or to scale a signal by a fixed amount.");
+	REGISTER_MODULE_1(L"Level Adj", IDS_MN_LEVEL_ADJ, IDS_MG_MODIFIERS, ug_multiplier, CF_STRUCTURE_VIEW, L"This multiplies one input by the other.  It can be used for ring modulation, or to apply an envelope to a signal ( amplitude modulation ), or to scale a signal by a fixed amount.  Note: to apply an volume envelope use the DCA module (it changes the volume of the signal on a decibel scale, not a linear scale).");
 }
 
 #define PN_INPUT1	0
-
 #define PN_INPUT2	1
-
 #define PN_OUT		2
 
 // Fill an array of InterfaceObjects with plugs and parameters

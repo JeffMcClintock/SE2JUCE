@@ -2,14 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(Filters)
 
-build_gmpi_plugin(
-    PROJECT_NAME ${PROJECT_NAME}
-    HAS_DSP
-    SOURCE_FILES
-        Lookahead.cpp
-        ButterworthLp.cpp
-        ButterworthLp.h
-        ../shared/FilterBase.h
+set( DSP_FILTERS_SRC
         DSPFilters/Biquad.h
         DSPFilters/Biquad.cpp
         DSPFilters/Butterworth.h
@@ -24,3 +17,18 @@ build_gmpi_plugin(
         DSPFilters/Layout.h
         DSPFilters/MathSupplement.h
 )
+
+build_gmpi_plugin(
+    PROJECT_NAME ${PROJECT_NAME}
+    HAS_DSP
+    SOURCE_FILES
+        IIR_Filters2.cpp
+        Lookahead.cpp
+        ButterworthLp.cpp
+        ButterworthLp.h
+        ../shared/FilterBase.h
+        ${DSP_FILTERS_SRC}
+
+)
+
+source_group(DspFilter FILES ${DSP_FILTERS_SRC})

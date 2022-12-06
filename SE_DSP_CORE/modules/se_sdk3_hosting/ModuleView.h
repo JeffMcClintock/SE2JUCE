@@ -343,12 +343,12 @@ namespace SynthEdit2
 
 	struct pinViewInfo
 	{
+		std::string name;
 		int indexCombined; // Numbers both GUI and DSP pins into one long list.
+		int plugDescID;
 		char direction;
 		char datatype;
-		std::string name;
 		bool isGuiPlug;
-		int plugDescID;
 		bool isVisible;
 		bool isIoPlug;
 		bool isAutoduplicatePlug;

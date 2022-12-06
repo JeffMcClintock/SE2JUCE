@@ -6,7 +6,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_adsr)
 
 namespace
 {
-REGISTER_MODULE_1_BC(2,L"ADSR", IDS_MN_ADSR,IDS_MG_OLD,ug_adsr ,CF_STRUCTURE_VIEW,L"This module provides a standard 5 section envelope.  The attack, decay and release times are based on an exponential scale.  You can use negative voltages for shorter durations. See <a href=signals.htm>Signal Levels and Conversions</a> for Votage-Time conversion info");
+REGISTER_MODULE_1(L"ADSR", IDS_MN_ADSR,IDS_MG_OLD,ug_adsr ,CF_STRUCTURE_VIEW,L"This module provides a standard 5 section envelope.  The attack, decay and release times are based on an exponential scale.  You can use negative voltages for shorter durations. See <a href=signals.htm>Signal Levels and Conversions</a> for Votage-Time conversion info");
 }
 
 #define PN_ATTACK	1

@@ -16,7 +16,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(12,L"SV Filter", IDS_MN_SV_FILTER,IDS_MG_OLD,ug_filter_sv ,CF_STRUCTURE_VIEW,L"'State Variable' Filter. Changes the frequency content of the sound.  Provides Low Pass ( only low frequencies pass through), High Pass, Band Pass, and Band Reject outputs.  The resonance control adds a peak to the response (great for dance music bass lines). 2 pole, 12 db/ octave response");
+REGISTER_MODULE_1(L"SV Filter", IDS_MN_SV_FILTER,IDS_MG_OLD,ug_filter_sv ,CF_STRUCTURE_VIEW,L"'State Variable' Filter. Changes the frequency content of the sound.  Provides Low Pass ( only low frequencies pass through), High Pass, Band Pass, and Band Reject outputs.  The resonance control adds a peak to the response (great for dance music bass lines). 2 pole, 12 db/ octave response");
 }
 
 /* from synthmaker website

@@ -16,7 +16,7 @@ REGISTER_MODULE_1( L"Float Adder2", IDS_MN_FLOAT_ADDER2,IDS_MG_DEBUG,ug_adder2 ,
 }
 namespace
 {
-REGISTER_MODULE_1_BC(118,L"Voice Combiner", IDS_MN_VOICE_COMBINER,IDS_MG_SPECIAL,ug_voice_combiner,CF_STRUCTURE_VIEW,L"Forces signal to be monophonic. Usefull for triggering a monophonic LFO from a MIDI CV gate signal.");
+REGISTER_MODULE_1(L"Voice Combiner", IDS_MN_VOICE_COMBINER,IDS_MG_SPECIAL,ug_voice_combiner,CF_STRUCTURE_VIEW,L"Forces signal to be monophonic. Usefull for triggering a monophonic LFO from a MIDI CV gate signal.");
 }
 
 namespace

@@ -8,7 +8,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_logic_decade)
 
 namespace
 {
-REGISTER_MODULE_1_BC(83,L"Decade Counter", IDS_MN_DECADE_COUNTER,IDS_MG_DEBUG,ug_logic_decade ,CF_STRUCTURE_VIEW,L"When triggered, send MIDI note messages");
+REGISTER_MODULE_1(L"Decade Counter", IDS_MN_DECADE_COUNTER,IDS_MG_DEBUG,ug_logic_decade ,CF_STRUCTURE_VIEW,L"When triggered, send MIDI note messages");
 }
 
 void ug_logic_decade::ListInterface2(InterfaceObjectArray& PList)

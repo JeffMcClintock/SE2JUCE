@@ -7,11 +7,10 @@
 #include <array>
 #include <functional>
 #include <list>
-#include "modules/se_sdk3/hasMidiTuning.h"
 #include "se_types.h"
+#include "modules/se_sdk3/hasMidiTuning.h"
 #include "HostControls.h"
 #include "HostVoiceControl.h"
-#include "modules/se_sdk2/se_datatypes.h"
 
 class SeAudioMaster;
 

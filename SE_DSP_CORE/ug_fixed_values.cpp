@@ -10,7 +10,7 @@ using namespace std;
 
 namespace
 {
-	REGISTER_MODULE_1_BC(62, L"Fixed Values", IDS_MN_FIXED_VALUES, IDS_MG_CONTROLS, ug_fixed_values, CF_STRUCTURE_VIEW, L"Provides a fixed voltage source, handy if you need a control voltage that won't appear on the control panel.");
+	REGISTER_MODULE_1( L"Fixed Values", IDS_MN_FIXED_VALUES, IDS_MG_CONTROLS, ug_fixed_values, CF_STRUCTURE_VIEW, L"Provides a fixed voltage source, handy if you need a control voltage that won't appear on the control panel.");
 	REGISTER_MODULE_1(L"SE:Fixed Values_Text", L"Fixed Values (text)", L"Controls", ug_fixed_values_text, CF_STRUCTURE_VIEW, L"Provides a fixed voltage source, handy if you need a control voltage that won't appear on the control panel.");
 	REGISTER_MODULE_1(L"SE:Fixed Values_Float", L"Fixed Values (float)", L"Controls", ug_fixed_values_float, CF_STRUCTURE_VIEW, L"Provides a fixed voltage source, handy if you need a control voltage that won't appear on the control panel.");
 	REGISTER_MODULE_1(L"SE:Fixed Values_Int" , L"Fixed Values (int)", L"Controls", ug_fixed_values_int, CF_STRUCTURE_VIEW, L"Provides a fixed voltage source, handy if you need a control voltage that won't appear on the control panel.");

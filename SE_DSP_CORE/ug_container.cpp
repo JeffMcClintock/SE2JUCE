@@ -333,7 +333,6 @@ int ug_container::Close()
 // For oversampler.
 ug_base* ug_container::Copy(ISeAudioMaster* audiomaster, CUGLookupList& UGLookupList )
 {
-//	CUGLookupList unused;
 	auto clone = dynamic_cast<ug_container*>(ug_base::Copy(audiomaster, UGLookupList));
 
 	clone->front()->CopyFrom(audiomaster, clone, front(), UGLookupList);
@@ -436,7 +435,7 @@ void ug_container::ConnectPatchCables()
 			{
 				// can fail on *terminated* patch points in oversampler,
 				// because oversampler is set up before outer container (which is also connecting all patch cables). i.e we handled unterminated patch-cables BEFORE we even tried to connect any.
-
+				// fix will require re-thinkin how oversamplers are constructed.
 				assert(!from->GetFlag(UGF_VOICE_MON_IGNORE)); // 'from' is flagged as 'unterminated' (yet here we are connecting it). see ug_plugin3Base::PPGetActiveFlag()
 
 				auto fromPlug = from->GetPlug(c.fromUgPin);
@@ -1129,19 +1128,26 @@ void ug_container::Setup(class ISeAudioMaster* am, class TiXmlElement* xml)
 	if (temp == 1)
 	{
 		SetContainerPolyphonic();
-
-		int32_t VoiceCount = 6;
-		int32_t VoiceReserveCount = 3;
-		xml->QueryIntAttribute("VoiceCount", &VoiceCount);
-		xml->QueryIntAttribute("VoiceReserveCount", &VoiceReserveCount);
-
-		VoiceCount = (int32_t) AudioMaster()->getShell()->getPersisentHostControl(Handle(), HC_POLYPHONY, VoiceCount);
-		_RPTN(0, "Persisent VoiceCount = %d\n", VoiceCount);
-		VoiceReserveCount = (int32_t)AudioMaster()->getShell()->getPersisentHostControl(Handle(), HC_POLYPHONY_VOICE_RESERVE, VoiceReserveCount);
-
-		setVoiceReserveCount(VoiceReserveCount);
-		setVoiceCount(VoiceCount);
 	}
+}
+
+void ug_container::SetupPatchManager(class TiXmlElement* patchManager_xml, std::vector< std::pair<int32_t, std::string> >& pendingPresets)
+{
+	// ensure child modules know this container holds their patchdata.
+	patch_control_container = this;
+
+	// check for any preset that was saved during an async restart.
+	const std::string* presetXml{};
+	for (const auto& preset : pendingPresets)
+	{
+		if (preset.first != Handle())
+			continue;
+
+		presetXml = &preset.second;
+	}
+
+	BuildPatchManager(patchManager_xml, presetXml);
+//	get_patch_manager()->setupContainerHandles(this);
 }
 
 // This must be done BEFORE any other module is built, so they can hook up their parameter pins to something.

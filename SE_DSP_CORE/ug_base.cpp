@@ -1506,6 +1506,11 @@ void ug_base::FlagUpStream(int flag, bool debugTrace)
 			for( auto fromPlug : p->connections )
 			{
 				auto ug = fromPlug->UG;
+
+				// Avoid flagging modules outside the patch-automators container, they will have their own patch-automator
+				if (ug->patch_control_container != patch_control_container)
+					continue;
+
 				if (ug->GetFlag(UGF_PARAMETER_SETTER) && flag == UGF_UPSTREAM_PARAMETER) // ignore snapshot upstream flagging.
 				{
 					// Re-route to secondary pp-setter.

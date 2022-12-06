@@ -52,7 +52,7 @@ public:
 	float InitializeVoiceParameters(ug_container* voiceControlContainer, timestamp_t timestamp, Voice* voice, /*int voiceId, bool hardReset,*/ bool sendTrigger) override;
 	void vst_Automation2(timestamp_t p_clock, int p_controller_id, const void* data, int size ) override;
 
-    virtual	class dsp_patch_parameter_base* GetHostControl( int hostControl ) override;
+	class dsp_patch_parameter_base* GetHostControl(int32_t hostControl, int32_t attachedToContainerHandle = -1) override;
 #if defined(SE_TARGET_PLUGIN)
 	virtual	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue ) override; // VST3.
 #endif

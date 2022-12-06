@@ -591,6 +591,8 @@ void CModuleFactory::RegisterPluginsXml(TiXmlNode* pluginList )
 void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType fileType)
 {
 #if defined( SE_EDIT_SUPPORT )
+	assert(m_in_use_old_module_list.empty());
+
 	const bool loadingCache = (fileType == SAT_SEM_CACHE);
 
 	// load module infos stored in file, add any unknown ones to database
@@ -665,12 +667,6 @@ void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 			}
 			else
 			{
-				// store pointer so object can be deleted after load.
-				{
-					std::unique_ptr<Module_Info> ptr(mi);
-					m_in_use_old_module_list.push_back(std::move(ptr));
-				}
-
 				if (!loadingCache)
 				{
 					// Check stored pin data compatible with local version of module (rough check). Ck_Waveshaper1 has this problem. two versions with same ID but different pin count.
@@ -683,6 +679,9 @@ void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 						oss << L"WARNING This project was created with a different version of '" << localModuleInfo->GetName() << L"'.  This module will be replaced with your local version.";
 						SafeMessagebox(0,oss.str().c_str(), L"", MB_OK | MB_ICONSTOP);
 					}
+
+					// store pointer so object can be deleted after load.
+					m_in_use_old_module_list.insert({ mi->UniqueId(), std::unique_ptr<Module_Info>{mi} });
 				}
 			}
 		}
@@ -1922,7 +1921,7 @@ void CModuleFactory::SerialiseModuleInfo( CArchive& ar, bool loadingCache )
 					// store pointer so object can be deleted after load.
 					{
 						std::unique_ptr<Module_Info> ptr(mi);
-						m_in_use_old_module_list.push_back(std::move(ptr));
+						m_in_use_old_module_list.insert({ mi->UniqueId(), std::move(ptr) });
 					}
 
 					if (!loadingCache)
@@ -2200,6 +2199,19 @@ parameter_description* Module_Info::getParameterByPosition(int index)
 
 	return 0;
 }
+
+#if defined( SE_EDIT_SUPPORT )
+// when loading a project, the module info can be different.
+// provide the original module info.
+Module_Info* CModuleFactory::GetByIdSerializing(const std::wstring& p_id)
+{
+	auto it = std::find(m_in_use_old_module_list.begin(), m_in_use_old_module_list.end(), p_id);
+	if (it != m_in_use_old_module_list.end())
+		return it->second.get();
+
+	return GetById(p_id);
+}
+#endif
 
 Module_Info* CModuleFactory::GetById(const std::wstring& p_id)
 {

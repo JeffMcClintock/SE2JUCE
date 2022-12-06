@@ -10,7 +10,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_logic_shift)
 
 namespace
 {
-REGISTER_MODULE_1_BC(85,L"Shift Register", IDS_MN_SHIFT_REGISTER,IDS_MG_LOGIC,ug_logic_shift ,CF_STRUCTURE_VIEW,L"Digital Shift Register. For you seriously warped experimenters");
+REGISTER_MODULE_1(L"Shift Register", IDS_MN_SHIFT_REGISTER,IDS_MG_LOGIC,ug_logic_shift ,CF_STRUCTURE_VIEW,L"Digital Shift Register. For you seriously warped experimenters");
 }
 
 #define PN_CLOCK 0

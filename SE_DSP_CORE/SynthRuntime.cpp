@@ -50,7 +50,10 @@ void SynthRuntime::prepareToPlay(
 
 		auto bundleinfo = BundleInfo::instance();
 		auto dspXml = bundleinfo->getResource("dsp.se.xml");
-		Scramble(dspXml);
+		if (!dspXml.empty() && '<' != dspXml[0])
+		{
+			Scramble(dspXml);
+		}
 
 		std::lock_guard<std::mutex> x(generatorLock);
 

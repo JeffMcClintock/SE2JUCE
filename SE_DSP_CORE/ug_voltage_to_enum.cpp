@@ -12,7 +12,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1_BC(99,L"Voltage To List", IDS_MN_VOLTAGE_TO_LIST,IDS_MG_OLD,ug_voltage_to_enum ,CF_STRUCTURE_VIEW,L"Converts a voltage to a List, allows any voltage source to control a list selection input, e.g Oscillator Waveform selection");
+REGISTER_MODULE_1(L"Voltage To List", IDS_MN_VOLTAGE_TO_LIST,IDS_MG_OLD,ug_voltage_to_enum ,CF_STRUCTURE_VIEW,L"Converts a voltage to a List, allows any voltage source to control a list selection input, e.g Oscillator Waveform selection");
 REGISTER_MODULE_1(L"SE Int To List", IDS_MN_INT_TO_LIST, IDS_MG_CONVERSION, ug_int_to_enum, CF_STRUCTURE_VIEW, L"Converts a voltage to a List, allows any voltage source to control a list selection input, e.g Oscillator Waveform selection");
 REGISTER_MODULE_1(L"Voltage To List2", IDS_MN_VOLTAGE_TO_LIST2, IDS_MG_CONVERSION, ug_voltage_to_enum2, CF_STRUCTURE_VIEW, L"Converts a voltage to a List, allows any voltage source to control a list selection input, e.g Oscillator Waveform selection");
 }

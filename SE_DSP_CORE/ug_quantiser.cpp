@@ -12,7 +12,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_quantiser)
 
 namespace
 {
-REGISTER_MODULE_1_BC(103,L"Quantiser", IDS_MN_QUANTISER,IDS_MG_MODIFIERS,ug_quantiser,CF_STRUCTURE_VIEW,L"Use to contrain the voltage to discrete 'steps', e.g. to the nearest whole Volt.");
+REGISTER_MODULE_1(L"Quantiser", IDS_MN_QUANTISER,IDS_MG_MODIFIERS,ug_quantiser,CF_STRUCTURE_VIEW,L"Use to contrain the voltage to discrete 'steps', e.g. to the nearest whole Volt.");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters

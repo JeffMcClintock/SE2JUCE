@@ -475,6 +475,7 @@ public:
 								int tune = (tuneEntry[0] << 14) + (tuneEntry[1] << 7) + tuneEntry[2];
 								float semitone = tune / (float)0x4000;
 
+								oss.precision(6);
 								oss << L"TUNE: k" << midiKeyNumber << " " << semitone;
 							}
 						}

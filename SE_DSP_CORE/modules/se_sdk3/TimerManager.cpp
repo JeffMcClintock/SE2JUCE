@@ -24,10 +24,10 @@
 #ifdef _WIN32
 
 void CALLBACK SynthEditVstTimerProc(
-   HWND hWnd,      // handle of CWnd that called SetTimer
-   UINT nMsg,      // WM_TIMER
+   HWND /*hWnd*/,      // handle of CWnd that called SetTimer
+   UINT /*nMsg*/,      // WM_TIMER
    UINT_PTR nIDEvent,   // timer identification
-   DWORD dwTime    // system time
+   DWORD /*dwTime*/    // system time
 )
 {
 	static bool reentrant = false;

@@ -93,7 +93,7 @@ double rad( double x );
 
 int   EE_ERROR;              /* The error number */
 char  ERTOK[Evaluator::TOKLEN + 1];     /* The token that generated the error */
-int   ERPOS;                 /* The offset from the start of the expression */
+int64_t   ERPOS;             /* The offset from the start of the expression */
 char* ERANC;                 /* Used to calculate ERPOS */
 
 /*
@@ -303,7 +303,7 @@ int Evaluator::SetValue( const char* name, double* value )
 	  {
 		 strcpy( Vars[i].name, name );
 		//_strlwr( Vars[i].name ); // always lower case var names.
-          std::transform(Vars[i].name,Vars[i].name+strlen(Vars[i].name),Vars[i].name,tolower);
+          std::transform(Vars[i].name,Vars[i].name+strlen(Vars[i].name),Vars[i].name,::tolower);
 		 Vars[i].name[VARLEN] = 0;
 		 Vars[i].value = *value;
 		 return( 1 );
@@ -612,7 +612,7 @@ int Evaluator::Evaluate( const char* e, double* result, int* a )
 		  EVALUATOR_ERROR( E_EMPTY );
 		*a = Level1( result );
 	}
-	catch( EvaluatorException e )
+	catch( EvaluatorException )
 	{
 		*result = 0.0f;
 		return( EE_ERROR );
