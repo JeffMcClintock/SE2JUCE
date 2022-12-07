@@ -24,7 +24,7 @@ clone SE2JUCE repo. https://github.com/JeffMcClintock/SE2JUCE
 get JUCE. https://juce.com/get-juce/download
 
 Optional:
-* Add VST2 headers to JUCE if you need them.
+* Add VST2 headers to JUCE if you need to make VST2 plugins.
 * get AAX SDK if you need it. https://www.avid.com/alliance-partner-program/aax-connectivity-toolkit
 
 clone SE2JUCE_Projects repo. This provides an example plugin you can copy. https://github.com/JeffMcClintock/SE2JUCE_Projects
