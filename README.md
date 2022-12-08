@@ -1,3 +1,5 @@
+<img src="Docs/Images/SE2JUCE.gif"/>
+
 # Introduction 
 SE2JUCE supports exporting SynthEdit projects to C++ JUCE projects.
 
