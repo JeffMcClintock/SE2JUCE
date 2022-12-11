@@ -847,6 +847,11 @@ namespace SynthEdit2
 		{
 			if(dragline == (*it).get())
 			{
+				if (mouseCaptureObject == dragline)
+				{
+					releaseCapture();
+				}
+
 				temp = std::move(*it);
 				it = children.erase(it);
 				auto r = temp->GetClipRect();

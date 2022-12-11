@@ -11,9 +11,14 @@ build_gmpi_plugin(
         Waveshapers.cpp
         Waveshaper2.h
         Waveshaper2.cpp
+        Waveshaper2BGUIGui.cpp
         ../shared/unicode_conversion.h
         ../shared/expression_evaluate.h
         ../shared/expression_evaluate.cpp
+        ../shared/FontCache.h
+        ../shared/FontCache.cpp
+        ../shared/ImageMetadata.h
+        ../shared/ImageMetadata.cpp
       
 )
 # 32-bit only

@@ -40,7 +40,7 @@ ug_patch_param_setter::ug_patch_param_setter()
 int ug_patch_param_setter::Open()
 {
 	SET_CUR_FUNC( &ug_base::process_sleep );
-	short r = ug_base::Open();
+	auto r = ug_base::Open();
 
 	RUN_AT(SampleClock(), &ug_patch_param_setter::SendPendingOutputChanges);
 
@@ -226,6 +226,15 @@ void ug_patch_param_setter::TransferConnectiontoSecondary(UPlug* from)
 	{
 		return;
 	}
+
+#if 0 //def _DEBUG
+
+	{
+		_RPTN(_CRT_WARN, "TransferConnectiontoSecondary %d pin %d -> %d\n", Handle(), from->getPlugIndex(), secondary->Handle());
+	}
+
+#endif
+
 
 	auto it2 = plugs.begin();
 	++it2; // skip MIDI plugs.

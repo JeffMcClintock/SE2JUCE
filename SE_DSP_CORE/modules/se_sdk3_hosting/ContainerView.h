@@ -14,7 +14,7 @@ namespace SynthEdit2
 namespace SynthEdit2
 {
 	// The one top-level view.
-	class ContainerView : public ViewBase, public IGraphicsRedrawClient
+	class ContainerView : public ViewBase, public IGraphicsRedrawClient, public gmpi_gui_api::IMpKeyClient
 	{
 		std::string skinName_;
 
@@ -59,6 +59,8 @@ namespace SynthEdit2
 
 		void PreGraphicsRedraw() override;
 
+		int32_t MP_STDCALL OnKeyPress(wchar_t c) override;
+
 		int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
 		{
 			*returnInterface = nullptr;
@@ -66,6 +68,13 @@ namespace SynthEdit2
 			if (iid == IGraphicsRedrawClient::guid)
 			{
 				*returnInterface = static_cast<IGraphicsRedrawClient*>(this);
+				addRef();
+				return gmpi::MP_OK;
+			}
+
+			if (iid == gmpi_gui_api::IMpKeyClient::guid)
+			{
+				*returnInterface = static_cast<gmpi_gui_api::IMpKeyClient*>(this);
 				addRef();
 				return gmpi::MP_OK;
 			}

@@ -464,7 +464,7 @@ public:
 			}
 		}
 	}
-	virtual void OnRender(GmpiDrawing::Graphics& g) override
+	void OnRender(GmpiDrawing::Graphics& g) override
 	{
 		const auto originalTransform = g.GetTransform();
 		auto adjustedTransform = Matrix3x2::Translation(position.left, position.top) * originalTransform;

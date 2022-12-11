@@ -409,6 +409,21 @@ namespace SynthEdit2
 		Presenter()->GetPatchManager()->serviceGuiQueue();
 	}
 
+	int32_t ContainerView::OnKeyPress(wchar_t c)
+	{
+		if (c == 0x1B) // <ESC> to cancel cable drag
+		{
+			if (auto cable = dynamic_cast<SynthEdit2::ConnectorViewBase*>(mouseCaptureObject); cable)
+			{
+				EndCableDrag({ -10000, -10000 }, cable);
+//				return mouseCaptureObject->OnKeyPress(c);
+				return gmpi::MP_OK;
+			}
+		}
+
+		return gmpi::MP_UNHANDLED;
+	}
+
 } // namespace
 
  

@@ -132,7 +132,7 @@ namespace SynthEdit2
 			for(int i = 0; i < numColors; ++i)
 			{
 				brushes[i][0] = g.CreateSolidColorBrush(datatypeColors[i]);					// Visible
-				brushes[i][1] = g.CreateSolidColorBrush(Color(datatypeColors[i], 0.4f));	// Faded
+				brushes[i][1] = g.CreateSolidColorBrush(Color(datatypeColors[i], 0.5f));	// Faded
 			}
 		}
 	};

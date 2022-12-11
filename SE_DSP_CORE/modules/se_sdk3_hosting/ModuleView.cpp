@@ -735,7 +735,7 @@ namespace SynthEdit2
 	{
 		GmpiDrawing::Rect r{0.f, 0.f, 101.f, 100.f};
 		const float dx = (bounds_.getWidth() - r.getWidth()) * 0.5f;
-		r.Offset(dx, -10.f - r.getHeight());
+		r.Offset(dx, -12.f - r.getHeight());
 		return r;
 	}
 
@@ -896,7 +896,7 @@ namespace SynthEdit2
 		std::wostringstream oss;
 		oss << setiosflags(ios_base::fixed) << setprecision(4) << cpuInfo->cpu_average << L" %";
 		bg.SetColor(Color::Black);
-		g.DrawTextW(oss.str().c_str(), textFormat, Rect(child_width - 40, rectBottom - 2, child_width, rectBottom - 14), bg);
+		g.DrawTextW(oss.str().c_str(), textFormat, Rect(child_rect.right - 40, rectBottom, child_rect.right, rectBottom - 12), bg);
 
 		g.PopAxisAlignedClip();
 	}

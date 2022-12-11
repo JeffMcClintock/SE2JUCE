@@ -1894,7 +1894,7 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 			presetIndex = idx;
 			break;
 		}
-		if (preset.name == presetName)
+		if (preset.name == presetName && !preset.isSession)
 		{
 			presetSameNameIndex = idx;
 			break;
@@ -1905,13 +1905,6 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 
 	if (presetIndex == -1)
 	{
-		// remove any existing "Session preset"
-		presets.erase(
-			std::remove_if(presets.begin(), presets.end(), [](presetInfo& preset) { return preset.isSession; })
-			, presets.end()
-		);
-		session_preset_xml.clear();
-
 		if (presetSameNameIndex != -1)
 		{
 			// assume it's the same preset, except it's been modified
@@ -1927,7 +1920,14 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 		}
 		else
 		{
-			// preset not available and not the same name as any existing ones, add it to presets.
+			// remove any existing "Session preset"
+			presets.erase(
+				std::remove_if(presets.begin(), presets.end(), [](presetInfo& preset) { return preset.isSession; })
+				, presets.end()
+			);
+			session_preset_xml.clear();
+			
+			// preset not available and not the same name as any existing ones, add it to presets as 'session' preset.
 			presetIndex = static_cast<int32_t>(presets.size());
 			presets.push_back(
 				parsePreset({}, xml)

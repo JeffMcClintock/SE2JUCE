@@ -124,9 +124,8 @@ ug_base::~ug_base()
 void ug_base::DeleteAllPlugs()
 {
 	// Delete all plugs
-	for( vector<UPlug*>::iterator it = plugs.begin() ; it != plugs.end() ; ++it )
+	for( auto p : plugs )
 	{
-		UPlug* p = *it;
 		delete p;
 	}
 
@@ -1932,6 +1931,8 @@ void ug_base::connect( UPlug* from_plug, UPlug* to_plug )
 			assert( a2 && "only adder2 supported here at present");
 			if (a2) // patch cables from snapshots can accidentally try to connect to DT_INTs toggether, which is not supported.
 			{
+				a2->patch_control_container = to_plug->UG->patch_control_container;
+
 				to_plug->DeleteConnection(old_from);
 
 				// connect adder input to 'from_plug'
