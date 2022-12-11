@@ -4,7 +4,7 @@
 SE2JUCE supports exporting SynthEdit projects to C++ JUCE projects.
 
 JUCE Projects
-* Can target more plugin formats, like AAX, Standalone, VST2 and CLAP etc.
+* Can target more plugin formats than SynthEdit alone, like AAX, Standalone, VST2 and CLAP etc.
 * Hide all resources and SEMs inside a single binary file.
 * Can display the GUI you created in SynthEdit, or a custom GUI made with JUCE.
 

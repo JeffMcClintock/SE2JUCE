@@ -17,7 +17,7 @@
 #include "../../UniqueSnowflake.h"
 #include "../shared/FileWatcher.h"
 #include "mfc_emulation.h"
-#if (GMPI_IS_PLATFORM_JUCE==0)
+#if !defined(SE_USE_JUCE_UI)
 #include "GuiPatchAutomator3.h"
 #endif
 #include "BundleInfo.h"
@@ -811,7 +811,7 @@ void UndoManager::copyAB(MpController* controller)
 
 gmpi_gui::IMpGraphicsHost* MpController::getGraphicsHost()
 {
-#if (GMPI_IS_PLATFORM_JUCE==0)
+#if !defined(SE_USE_JUCE_UI)
 	for (auto g : m_guis2)
 	{
 		auto pa = dynamic_cast<GuiPatchAutomator3*>(g);
@@ -924,8 +924,7 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 				break;
 			};
 
-#if (GMPI_IS_PLATFORM_JUCE==0)
-            
+#if !defined(SE_USE_JUCE_UI)
             // L"Load Preset=2,Save Preset,Import Bank,Export Bank"
             if (patchCommand > 5)
                 break;
