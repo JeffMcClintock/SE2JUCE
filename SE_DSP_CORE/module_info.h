@@ -39,6 +39,10 @@ public:
 	bool scanned_xml_gui;
 	bool scanned_xml_parameters;
 
+#if defined( _DEBUG)
+	bool load_failed_gui = false;
+#endif
+
 	Module_Info(const std::wstring& p_unique_id); // new, SDK3-based
 	Module_Info(ug_base *(*ug_create)(), const char* xml); // new, Internal
 

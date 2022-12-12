@@ -575,7 +575,9 @@ void CModuleFactory::RegisterPluginsXml(TiXmlNode* pluginList )
 					// * Check this file contains 'INIT_STATIC_FILE' macro.
 					// if JUCE, it's OK not to register GUI modules because they are not supported.
 					_RPT1(0, "Module not available: %S\n", pluginId.c_str());
-//                    assert(false);
+#if defined( _DEBUG)
+					failedGuiModules.push_back(pluginId);
+#endif
 					continue;
                 #endif
 			}
@@ -2234,6 +2236,29 @@ Module_Info* CModuleFactory::GetById(const std::wstring& p_id)
 	}
 }
 
+#if defined( _DEBUG)
+std::string CModuleFactory::GetFailedGuiModules()
+{
+	std::string ret;
+	for (auto& it : module_list)
+	{
+		if (it.second->load_failed_gui)
+		{
+			ret += WStringToUtf8(it.second->UniqueId()) + "\n";
+		}
+	}
+
+	sort(failedGuiModules.begin(), failedGuiModules.end());
+	failedGuiModules.erase(unique(failedGuiModules.begin(), failedGuiModules.end()), failedGuiModules.end());
+
+	for (auto& s : failedGuiModules)
+	{
+		ret += WStringToUtf8(s) + "\n";
+	}
+
+	return ret;
+}
+#endif
 
 #if defined(_DEBUG) && defined(SE_TARGET_PLUGIN)
 bool CModuleFactory::debugInitCheck(const char* modulename)
@@ -2305,7 +2330,6 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryTextOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryList3_Gui);
-	INIT_STATIC_FILE(PatchPoints);
 	INIT_STATIC_FILE(Slider_Gui)
 	INIT_STATIC_FILE(Image3_Gui)
 	INIT_STATIC_FILE(GUIBoolInverter_Gui)
@@ -2322,7 +2346,6 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 #endif
 
 #else
-	INIT_STATIC_FILE(MidiToCv2);
 	INIT_STATIC_FILE(ug_denormal_detect);
 	INIT_STATIC_FILE(ug_denormal_stop);
 	INIT_STATIC_FILE(ug_filter_allpass);
@@ -2337,6 +2360,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(ug_logic_Bin_Count);
 
 #endif
+	INIT_STATIC_FILE(MidiToCv2);
 
 #if defined( SE_TARGET_PLUGIN )
 	INIT_STATIC_FILE(ug_vst_in);

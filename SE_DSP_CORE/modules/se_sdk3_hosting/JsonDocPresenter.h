@@ -403,6 +403,22 @@ public:
 		nagUser_ = gui_json["vst_nag_user"].asBool();
 
 		view->Refresh(&gui_json, guiObjectMap_);
+
+#if defined( _DEBUG)
+		const auto failText = CModuleFactory::Instance()->GetFailedGuiModules();
+		auto gh = view->getGuiHost();
+		if (!failText.empty() && gh)
+		{
+			nagDialog.setNull(); // free previous.
+			gh->createOkCancelDialog(0, nagDialog.GetAddressOf());
+
+			if (!nagDialog.isNull())
+			{
+				nagDialog.SetText("Failed to load the following GUI modules:\n" + failText);
+				nagDialog.ShowAsync([this](int32_t result) -> void {; });
+			}
+		}
+#endif
 	}
 
 #if 1 //defined(SE_TARG ET_VST3) || defined(SE_TAR GET_AU)

@@ -97,6 +97,10 @@ public:
 	std::vector<std::string> staticInitCheck; // list of modules with SE_DECLARE_INIT_STATIC_FILE
 	std::vector<std::string> staticInitCheck2; // list of modules with INIT_STATIC_FILE
 #endif
+#if defined( _DEBUG)
+	std::vector<std::wstring> failedGuiModules;
+	std::string GetFailedGuiModules();
+#endif
 
 private:
 #ifndef SE_EDIT_SUPPORT

@@ -413,9 +413,7 @@ namespace SynthEdit2
 		{
 #if defined( _DEBUG)
 			_RPTN(0, "FAILED TO LOAD: %S\n", mi->UniqueId().c_str() );
-			//auto it = find(debug_missing_modules.begin(), debug_missing_modules.end(), typeS);
-			//if (it == debug_missing_modules.end())
-			//	debug_missing_modules.push_back(typeS);
+			mi->load_failed_gui = true;
 #endif
 
 			return;

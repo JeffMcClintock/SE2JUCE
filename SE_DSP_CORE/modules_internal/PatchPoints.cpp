@@ -7,7 +7,7 @@
 #include "../iseshelldsp.h"
 #include "../ug_plugin3.h"
 
-#if (GMPI_IS_PLATFORM_JUCE==0)
+#if !defined(SE_USE_JUCE_UI)
 #include "../modules/se_sdk3_hosting/ModuleView.h"
 #include "../modules/se_sdk3_hosting/ViewBase.h"
 #endif
@@ -104,7 +104,7 @@ public:
 };
 
 
-#if (GMPI_IS_PLATFORM_JUCE==0)
+#if !defined(SE_USE_JUCE_UI)
 class PatchCableChangeNotifier : public gmpi_gui::MpGuiInvisibleBase
 {
 public:
