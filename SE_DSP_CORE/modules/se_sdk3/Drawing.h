@@ -1667,16 +1667,16 @@ namespace GmpiDrawing
 			return Get()->getPixelFormat();
 		}
 
-		inline int32_t getPixel(int x, int y)
+		inline uint32_t getPixel(int x, int y)
 		{
 			auto data = reinterpret_cast<int32_t*>(getAddress());
 			return data[x + y * getBytesPerRow() / ((int) sizeof(int32_t))];
 		}
 
-		inline void setPixel(int x, int y, int32_t pixel)
+		inline void setPixel(int x, int y, uint32_t pixel)
 		{
-			auto data = reinterpret_cast<int32_t*>(getAddress());
-			data[x + y * getBytesPerRow() / ((int) sizeof(int32_t))] = pixel;
+			auto data = reinterpret_cast<uint32_t*>(getAddress());
+			data[x + y * getBytesPerRow() / ((int) sizeof(uint32_t))] = pixel;
 		}
 
 		inline void Blit(BitmapPixels& source, GmpiDrawing_API::MP1_POINT_L destinationTopLeft, GmpiDrawing_API::MP1_RECT_L sourceRectangle, int32_t unused = 0)

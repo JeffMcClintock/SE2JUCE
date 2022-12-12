@@ -2,6 +2,8 @@
 
 using namespace gmpi;
 
+SE_DECLARE_INIT_STATIC_FILE(Converters_GUI)
+
 typedef SimpleGuiConverter<int, bool> IntToBool;
 typedef SimpleGuiConverter<int, float> IntToFloat;
 typedef SimpleGuiConverter<int, std::wstring> IntToText;

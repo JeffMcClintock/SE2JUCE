@@ -1,5 +1,6 @@
 #include "./FloatScaler2Gui.h"
 
+SE_DECLARE_INIT_STATIC_FILE(FloatScaler2Gui);
 REGISTER_GUI_PLUGIN( FloatScaler2Gui, L"SE Float Scaler2" );
 
 FloatScaler2Gui::FloatScaler2Gui( IMpUnknown* host ) : MpGuiBase(host)

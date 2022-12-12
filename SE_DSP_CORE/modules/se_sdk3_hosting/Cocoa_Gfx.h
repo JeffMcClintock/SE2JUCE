@@ -1114,7 +1114,9 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
                 const int bitsPerSample = 8;
                 const int samplesPerPixel = 4;
                 const int bitsPerPixel = bitsPerSample * samplesPerPixel;
-                
+#if 0
+// PROBLEM: This is not specific enough, images with the wrong gamma (or something) are getting though.
+// Ref Guys 'Sideffect.vst3' plugin
                 // in read-only case, look for existing imagerep in correct format.
                 if (flags == GmpiDrawing_API::MP1_BITMAP_LOCK_READ)
                 {
@@ -1133,11 +1135,12 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
                                 )
                             {
                                 bitmap2 = pixels;
+                                break;
                             }
                         }
                     }
                 }
-                
+#endif
                 if(!bitmap2)
                 {
                     synthesizedImagerep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil
@@ -1153,17 +1156,18 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
                         bitsPerPixel : bitsPerPixel];
                     
                     bitmap2 = synthesizedImagerep;
-                }
-                
-                if (0 != (flags & GmpiDrawing_API::MP1_BITMAP_LOCK_READ))
-                {
-                    NSGraphicsContext * context;
-                    context = [NSGraphicsContext graphicsContextWithBitmapImageRep : bitmap2];
-                    [NSGraphicsContext saveGraphicsState];
-                    [NSGraphicsContext setCurrentContext : context];
-                    [*inBitmap drawAtPoint: NSZeroPoint fromRect: NSZeroRect operation: NSCompositingOperationCopy fraction: 1.0];
                     
-                    [NSGraphicsContext restoreGraphicsState];
+                    // we didn't find a suitable imagerep, so we made a fresh one. Now copy the image to the new imageRep (effectivly converts it to correct pixel format)
+                    if (0 != (flags & GmpiDrawing_API::MP1_BITMAP_LOCK_READ))
+                    {
+                        NSGraphicsContext * context;
+                        context = [NSGraphicsContext graphicsContextWithBitmapImageRep : bitmap2];
+                        [NSGraphicsContext saveGraphicsState];
+                        [NSGraphicsContext setCurrentContext : context];
+                        [*inBitmap drawAtPoint: NSZeroPoint fromRect: NSZeroRect operation: NSCompositingOperationCopy fraction: 1.0];
+                        
+                        [NSGraphicsContext restoreGraphicsState];
+                    }
                 }
 			}
 
@@ -1193,7 +1197,7 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
 			int32_t MP_STDCALL getBytesPerRow() const override { return bytesPerRow; }
 			int32_t MP_STDCALL getPixelFormat() const override { return kRGBA; }
 
-			static inline uint8_t fast8bitScale(uint8_t a, uint8_t b)
+			inline uint8_t fast8bitScale(uint8_t a, uint8_t b) const
 			{
 				int t = (int)a * (int)b;
 				return (uint8_t)((t + 1 + (t >> 8)) >> 8); // fast way to divide by 255
@@ -1281,13 +1285,13 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
 				return nativeBitmap_;
 			}
 
-			virtual GmpiDrawing_API::MP1_SIZE MP_STDCALL GetSizeF() override
+			GmpiDrawing_API::MP1_SIZE MP_STDCALL GetSizeF() override
 			{
 				NSSize s = [nativeBitmap_ size];
 				return GmpiDrawing::Size(s.width, s.height);
 			}
 
-			virtual int32_t MP_STDCALL GetSize(GmpiDrawing_API::MP1_SIZE_U* returnSize) override
+			int32_t MP_STDCALL GetSize(GmpiDrawing_API::MP1_SIZE_U* returnSize) override
 			{
 				NSSize s = [nativeBitmap_ size];
 
@@ -1308,7 +1312,7 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
 				return gmpi::MP_OK;
 			}
 
-			virtual int32_t MP_STDCALL lockPixelsOld(GmpiDrawing_API::IMpBitmapPixels** returnInterface, bool alphaPremultiplied) override
+			int32_t MP_STDCALL lockPixelsOld(GmpiDrawing_API::IMpBitmapPixels** returnInterface, bool alphaPremultiplied) override
 			{
 				*returnInterface = 0;
 return gmpi::MP_FAIL;
@@ -1320,7 +1324,7 @@ return gmpi::MP_FAIL;
  */
 			}
 
-			virtual int32_t MP_STDCALL lockPixels(GmpiDrawing_API::IMpBitmapPixels** returnInterface, int32_t flags) override
+			int32_t MP_STDCALL lockPixels(GmpiDrawing_API::IMpBitmapPixels** returnInterface, int32_t flags) override
 			{
 				*returnInterface = 0;
 

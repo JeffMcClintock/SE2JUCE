@@ -2325,14 +2325,18 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 
 	// when the UI is defined in JUCE, not SynthEdit, we don't include GUI modules
 #if !defined(SE_USE_JUCE_UI)
+	INIT_STATIC_FILE(Converters_GUI)
+	INIT_STATIC_FILE(FloatScaler2Gui);
 	INIT_STATIC_FILE(PatchMemoryFloat_Gui)
 	INIT_STATIC_FILE(PatchMemoryFloatOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryTextOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryList3_Gui);
+	INIT_STATIC_FILE(PatchPoints);
 	INIT_STATIC_FILE(Slider_Gui)
 	INIT_STATIC_FILE(Image3_Gui)
 	INIT_STATIC_FILE(GUIBoolInverter_Gui)
+	INIT_STATIC_FILE(ListEntry4_Gui);
 	INIT_STATIC_FILE(PanelGroup_Gui)
 	INIT_STATIC_FILE(PatchInfo_Gui)
 	INIT_STATIC_FILE(PolyphonyControl_Gui)
@@ -2346,6 +2350,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 #endif
 
 #else
+	INIT_STATIC_FILE(MidiToCv2);
 	INIT_STATIC_FILE(ug_denormal_detect);
 	INIT_STATIC_FILE(ug_denormal_stop);
 	INIT_STATIC_FILE(ug_filter_allpass);

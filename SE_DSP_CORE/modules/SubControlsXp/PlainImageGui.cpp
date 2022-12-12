@@ -9,11 +9,7 @@ using namespace GmpiDrawing;
 GMPI_REGISTER_GUI(MP_SUB_TYPE_GUI2, PlainImageGui, L"SE Plain Image" );
 SE_DECLARE_INIT_STATIC_FILE(PlainImage_Gui);
 
-#ifdef _DEBUG
 #define USE_BITMAP_BRUSH 1
-#else
-#define USE_BITMAP_BRUSH 0
-#endif
 
 PlainImageGui::PlainImageGui()
 {
@@ -43,6 +39,7 @@ void PlainImageGui::onSetMode()
 
 int32_t PlainImageGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext)
 {
+#if 0 // dead code
 	// Create tiled image (need to be arranged first in order to know module dimensions).
 	if (bitmap_.isNull() && !USE_BITMAP_BRUSH)
 	{
@@ -92,7 +89,8 @@ int32_t PlainImageGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContex
 			}
 		}
 	}
-
+#endif
+	
 	Graphics g(drawingContext);
 	auto moduleRect = getRect();
 
