@@ -2332,7 +2332,6 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryTextOut_Gui)
 	INIT_STATIC_FILE(PatchMemoryList3_Gui);
-	INIT_STATIC_FILE(PatchPoints);
 	INIT_STATIC_FILE(Slider_Gui)
 	INIT_STATIC_FILE(Image3_Gui)
 	INIT_STATIC_FILE(GUIBoolInverter_Gui)
@@ -2344,9 +2343,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(TextEntry4_Gui)
 	INIT_STATIC_FILE(Increment3_Gui)
 	INIT_STATIC_FILE(ListEntry_Gui);
-	INIT_STATIC_FILE(PatchPointsGui)
 	INIT_STATIC_FILE(PlainImage_Gui)
-	INIT_STATIC_FILE(RegistrationCheck) // has DSP also,but too bad.
 #endif
 
 #else
@@ -2366,6 +2363,11 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 
 #endif
 	INIT_STATIC_FILE(MidiToCv2);
+	INIT_STATIC_FILE(RegistrationCheck) // has DSP also,but too bad.
+
+#if !defined(SE_USE_JUCE_UI)
+	INIT_STATIC_FILE(PatchPointsGui)
+#endif
 
 #if defined( SE_TARGET_PLUGIN )
 	INIT_STATIC_FILE(ug_vst_in);

@@ -1210,6 +1210,16 @@ void ug_container::BuildAutomationModules()
 	assert( automation_output_device->GetPlug(L"MIDI Out") == automation_output_device->GetPlug(2) );
 	automation_input_device->GetPlug(2)->Proxy = automation_output_device->GetPlug(2);
 	assert( automation_output_device != 0 );
+	// and move any existing connection over.
+	{
+		auto oldFrom = automation_input_device->GetPlug(2);
+		auto newFrom = automation_output_device->GetPlug(2);
+		for (auto c : oldFrom->connections)
+		{
+			connect(newFrom, c);
+		}
+		oldFrom->connections.clear();
+	}
 
 	// p_patch_control_container same as generator???
 	assert(patch_control_container==this);
