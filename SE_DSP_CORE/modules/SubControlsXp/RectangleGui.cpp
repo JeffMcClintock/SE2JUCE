@@ -31,7 +31,7 @@ Color FromHexStringBackwardCompatible(const std::wstring &s)
 	constexpr float oneOver255 = 1.0f / 255.0f;
 
 	wchar_t* stopString;
-	uint32_t hex = wcstoul(s.c_str(), &stopString, 16);
+	uint32_t hex = static_cast<uint32_t>(wcstoul(s.c_str(), &stopString, 16));
 	float alpha = (hex >> 24) * oneOver255;
 
 	return Color(se_sdk::FastGamma::sRGB_to_float((hex >> 16) & 0xff), se_sdk::FastGamma::sRGB_to_float((hex >> 8) & 0xff), se_sdk::FastGamma::sRGB_to_float(hex & 0xff), alpha);

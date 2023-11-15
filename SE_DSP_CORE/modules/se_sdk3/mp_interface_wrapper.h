@@ -39,6 +39,7 @@ namespace GmpiSdk
 	// not for end-users.
 	namespace Internal
 	{
+		// wraps an interface as a value-type
 		template<class InterfaceClass>
 		class GmpiIWrapper
 		{
@@ -70,11 +71,11 @@ namespace GmpiSdk
         // DEPRECATED, USE GmpiIWrapper TEMPLATE.
 		// todo, use more modern template approach: https://github.com/kennykerr/modern/tree/master/10.0.10240.complete/modern
 #define GMPIGUISDK_DEFINE_CLASS(THIS_CLASS, BASE_CLASS, INTERFACE)                                                                      \
-        THIS_CLASS() {}                                                                                                                 \
-        THIS_CLASS(INTERFACE * other)        : BASE_CLASS(other) {}                                                                     \
-        THIS_CLASS(THIS_CLASS const & other) : BASE_CLASS(other) {}                                                                     \
-        THIS_CLASS(THIS_CLASS && other)      : BASE_CLASS(std::move(other)) {}                                                          \
-        THIS_CLASS & operator=(THIS_CLASS && other)      { Move(std::move(other)); return *this; }                                      \
+        THIS_CLASS() noexcept {}                                                                                                                 \
+        THIS_CLASS(INTERFACE * other) noexcept        : BASE_CLASS(other) {}                                                                     \
+        THIS_CLASS(THIS_CLASS const & other) noexcept : BASE_CLASS(other) {}                                                                     \
+        THIS_CLASS(THIS_CLASS && other) noexcept      : BASE_CLASS(std::move(other)) {}                                                          \
+        THIS_CLASS & operator=(THIS_CLASS && other) noexcept      { Move(std::move(other)); return *this; }                                      \
         auto Get() -> INTERFACE* {                 return static_cast<INTERFACE *>(m_ptr.get()); }                                 \
         auto GetAddressOf() -> INTERFACE ** { assert(!m_ptr); return reinterpret_cast<INTERFACE **>(m_ptr.asIMpUnknownPtr()  ); }       \
 		auto asIMpUnknownPtr() -> void** { assert(!m_ptr); return m_ptr.asIMpUnknownPtr(); }											\

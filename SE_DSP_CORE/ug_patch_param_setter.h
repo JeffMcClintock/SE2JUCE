@@ -19,6 +19,7 @@ public:
 	void ConnectHostParameter(class dsp_patch_parameter_base* parameter, UPlug* toPlug);
 	void ConnectParameter(dsp_patch_parameter_base * parameter, UPlug * toPlug);
 	void ConnectParameter(int32_t moduleHandle, int moduleParameterId, UPlug* plug);
+	void ReRoutePlugs() override;
 
 private:
 	// Connection are usually to a parameter.

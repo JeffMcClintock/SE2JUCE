@@ -1,3 +1,4 @@
+#pragma once
 
 /* Copyright (c) 2007-2021 SynthEdit Ltd
 * All rights reserved.
@@ -52,20 +53,7 @@
 #ifndef MP_SDK_STDINT_H_INCLUDED
 #define MP_SDK_STDINT_H_INCLUDED
 
-// Detect C99 support (i.e. specified integer sizes)
-#if (__STDC_VERSION__ >= 199901L) || (__cplusplus >= 201103L)
 #include <stdint.h>
-#else
-// else replicate it.
-// clash with Waves. typedef signed char  int8_t;
-typedef short int16_t;
-typedef int int32_t;
-typedef long long int64_t;
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-#endif
 
 #endif // MP_SDK_STDINT_H_INCLUDED
 
@@ -134,8 +122,6 @@ namespace gmpi
 #if defined __BORLANDC__
 	#pragma -a8
 #elif defined(_WIN32) || defined(__FLAT__) || defined (CBUILDER)
-	// GCC 3 err #pragma pack(push)
-	// #pragma pack(8)
 	#pragma pack(push,8)
 #endif
 
@@ -355,7 +341,7 @@ public:
 
 enum MP_PinDirection{ MP_IN, MP_OUT };
 
-enum MP_PinDatatype{ MP_ENUM=0, MP_STRING=1, MP_MIDI=2, MP_FLOAT64, MP_BOOL=4, MP_AUDIO=5, MP_FLOAT32=6, MP_INT32=8, MP_INT64=9, MP_BLOB=10, MP_STRING_UTF8=12 };
+enum MP_PinDatatype{ MP_ENUM=0, MP_STRING=1, MP_MIDI=2, MP_FLOAT64, MP_BOOL=4, MP_AUDIO=5, MP_FLOAT32=6, MP_INT32=8, MP_INT64=9, MP_BLOB=10, MP_STRING_UTF8=12, MP_BLOB2 };
 
 // SynthEdit imbedded file.
 class IProtectedFile
@@ -386,6 +372,7 @@ static const MpGuid MP_IID_PROTECTED_FILE2 =
 
 
 // DSP pin iterator.
+// TODO make a new iterator that can access pin ID, don't use this faulty version in GMPI.
 class IMpPinIterator : public IMpUnknown
 {
 public:
@@ -393,7 +380,7 @@ public:
 	virtual int32_t MP_STDCALL first() = 0;
 	virtual int32_t MP_STDCALL next() = 0;
 
-	virtual int32_t MP_STDCALL getPinId( int32_t& returnValue ) = 0;
+	virtual int32_t MP_STDCALL getPinId( int32_t& returnValue ) = 0; // returns *index* not ID.
 	virtual int32_t MP_STDCALL getPinDirection( int32_t& returnValue ) = 0;
 	virtual int32_t MP_STDCALL getPinDatatype( int32_t& returnValue ) = 0;
 };
@@ -514,6 +501,17 @@ public:
 // {B486F4DE-9010-4AA0-9D0C-DCD9F8879257}
 static const MpGuid MP_IID_HOST_EMBEDDED_FILE_SUPPORT =
 { 0xb486f4de, 0x9010, 0x4aa0, { 0x9d, 0xc, 0xdc, 0xd9, 0xf8, 0x87, 0x92, 0x57 } };
+
+// SynthEdit-specific.
+class ISharedBlob : public IMpUnknown
+{
+public:
+	virtual int32_t MP_STDCALL read(uint8_t** returnData, int64_t* returnSize) = 0;
+
+	// {770D50E5-796D-4495-9C3E-6C21EBEA7F72}
+	inline static const MpGuid guid =
+	{ 0x770d50e5, 0x796d, 0x4495, { 0x9c, 0x3e, 0x6c, 0x21, 0xeb, 0xea, 0x7f, 0x72 } };
+};
 
 
 // GUI PLUGIN
@@ -1162,17 +1160,25 @@ private:
 	template <class U, int N> struct PinDataTypeTraits
 	{
 	};
-	template<int N> struct PinDataTypeTraits<int,N>
+	template<int N> struct PinDataTypeTraits<int32_t, N>
 	{
 		enum { result = gmpi::MP_INT32 };
+	};
+	template<int N> struct PinDataTypeTraits<int64_t, N>
+	{
+		enum { result = gmpi::MP_INT64 };
 	};
 	template<int N> struct PinDataTypeTraits<bool,N>
 	{
 		enum { result = gmpi::MP_BOOL };
 	};
-	template<int N> struct PinDataTypeTraits<float,N>
+	template<int N> struct PinDataTypeTraits<float, N>
 	{
 		enum { result = gmpi::MP_FLOAT32 };
+	};
+	template<int N> struct PinDataTypeTraits<double, N>
+	{
+		enum { result = gmpi::MP_FLOAT64 };
 	};
 	template<int N> struct PinDataTypeTraits<std::wstring,N>
 	{
@@ -1182,7 +1188,7 @@ private:
 	{
 		enum { result = gmpi::MP_STRING_UTF8 };
 	};
-	template<int N> struct PinDataTypeTraits<MpBlob,N>
+	template<int N> struct PinDataTypeTraits<MpBlob, N>
 	{
 		enum { result = gmpi::MP_BLOB };
 	};
@@ -1544,7 +1550,7 @@ namespace gmpi_sdk
 			return reinterpret_cast<void**>(&obj);
 		}
 
-		bool isNull()
+		bool isNull() const
 		{
 			return obj == nullptr;
 		}
@@ -1563,3 +1569,62 @@ namespace gmpi_sdk
 }
 
 #endif // MP_SHARED_PTR_H_INCLUDED
+
+namespace GmpiSdk
+{
+	class UriFile
+	{
+		gmpi_sdk::mp_shared_ptr<gmpi::IProtectedFile2> file;
+
+	public:
+		UriFile() {}
+		UriFile(gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> obj)
+		{
+			if (!obj)
+				return;
+
+			obj->queryInterface(gmpi::MP_IID_PROTECTED_FILE2, file.asIMpUnknownPtr());
+		}
+		UriFile(gmpi_sdk::mp_shared_ptr<gmpi::IProtectedFile2> obj) :
+			file(obj) {}
+
+		int64_t size()
+		{
+			if (file.isNull())
+				return 0;
+
+			int64_t s;
+			file->getSize(&s);
+			return s;
+		}
+
+		int32_t read(char* dest, size_t size)
+		{
+			if (file.isNull())
+				return gmpi::MP_FAIL;
+
+			return file->read(dest, size);
+		}
+
+		int64_t seek(int64_t distanceToMove, int32_t moveMethod)
+		{
+			if (file.isNull())
+				return -1;
+
+			int64_t newPos{};
+			file->seek(distanceToMove, moveMethod, &newPos);
+
+			return newPos;
+		}
+
+		gmpi::IProtectedFile2* get()
+		{
+			return file.get();
+		}
+
+		explicit operator bool()
+		{
+			return !file.isNull();
+		}
+	};
+}

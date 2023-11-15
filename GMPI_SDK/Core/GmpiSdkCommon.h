@@ -18,6 +18,7 @@
 */
 
 #include "GmpiApiCommon.h"
+#include "RefCountMacros.h"
 
 // Helper for comparing GUIDs
 inline bool operator==(const gmpi::api::Guid& left, const gmpi::api::Guid& right)
@@ -47,7 +48,7 @@ public:
 	// Attach object without incrementing ref count. For objects created with new.
 	void Attach(wrappedObjT* newobj)
 	{
-		wrappedObjT* old = obj;
+		auto old = obj;
 		obj = newobj;
 
 		if( old )
@@ -133,4 +134,65 @@ private:
 		}
 	}
 };
-} // namespace gmpi2_sdk
+
+template<typename INTERFACE>
+INTERFACE* as(api::IUnknown* com_object)
+{
+	INTERFACE* result{};
+	com_object->queryInterface(&INTERFACE::guid, (void**)&result);
+	return result;
+}
+
+// Helper for returning strings.
+class ReturnString : public gmpi::api::IString
+{
+	std::string cppString;
+
+public:
+/*
+	MpString() {}
+	MpString(const std::string& other) : cppString(other)
+	{
+	}
+	MpString(const char* pData, int32_t pSize) : cppString(pData, pSize)
+	{
+	}
+*/
+
+	gmpi::ReturnCode setData(const char* data, int32_t size) override
+	{
+		if (size < 1)
+		{
+			cppString.clear();
+		}
+		else
+		{
+			cppString.assign(data, static_cast<size_t>(size));
+		}
+		return gmpi::ReturnCode::Ok;
+	}
+
+	int32_t getSize() override
+	{
+		return static_cast<int32_t>(cppString.size());
+	}
+	const char* getData() override
+	{
+		return cppString.data();
+	}
+
+	const char* c_str() const
+	{
+		return cppString.c_str();
+	}
+
+	const std::string& str() const
+	{
+		return cppString;
+	}
+	// identification and reference counting
+	GMPI_QUERYINTERFACE(gmpi::api::IString::guid, gmpi::api::IString);
+	GMPI_REFCOUNT_NO_DELETE;
+};
+
+} // namespace gmpi

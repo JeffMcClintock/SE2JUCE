@@ -14,16 +14,6 @@ using namespace GmpiMidiHdProtocol;
 
 */
 
-#if 0 // needed? screws up subclasses
-#if defined(__GNUC__)
-#pragma pack(push,1)
-#else
-#pragma pack(push)
-#pragma pack(1)
-#endif
-
-#endif
-
 namespace gmpi
 {
 	namespace midi
@@ -87,6 +77,39 @@ namespace gmpi
 				// trickyness is: we discard lowest 8 bits to avoid overflow to negative.
 				constexpr float f = 1.0f / (static_cast<float>(1 << 24) - 1);
 				return f * float((m[0] << 16) | (m[1] << 8) | m[2]);
+			}
+
+			// upscale a lower resolution value to a higher on.
+			// always scale the value to the full range
+			inline uint32_t scaleUp(uint32_t srcVal, int srcBits, int dstBits) {
+				// simple bit shift
+				int scaleBits = (dstBits - srcBits);
+				uint32_t bitShiftedValue = srcVal << scaleBits;
+				unsigned int srcCenter = 2 ^ (srcBits - 1);
+				if (srcVal <= srcCenter) {
+					return bitShiftedValue;
+				}
+				// expanded bit repeat scheme
+				int repeatBits = srcBits - 1;
+				int repeatMask = (2 ^ repeatBits) - 1;
+				int repeatValue = srcVal & repeatMask;
+				if (scaleBits > repeatBits) {
+					repeatValue <<= scaleBits - repeatBits;
+				}
+				else {
+					repeatValue >>= repeatBits - scaleBits;
+				}
+				while (repeatValue != 0) {
+					bitShiftedValue |= repeatValue;
+					repeatValue >>= repeatBits;
+				}
+				return bitShiftedValue;
+			}
+
+			inline uint32_t scaleDown(uint32_t srcVal, int srcBits, int dstBits) {
+				// simple bit shift
+				const int scaleBits = (srcBits - dstBits);
+				return srcVal >> scaleBits;
 			}
 		}
 
@@ -284,6 +307,8 @@ namespace GmpiMidi
 		CC_AllSoundOff = 120,
 		CC_ResetAllControllers = 121,
 		CC_AllNotesOff = 123,
+		CC_MonoOn = 126,
+		CC_PolyOn = 127,
 	};
 }
 
@@ -393,15 +418,19 @@ namespace gmpi
 
 		inline headerInfo decodeHeader(midi::message_view msg)
 		{
-			assert(msg.size() > 1);
+			assert(msg.size() > 0);
 
-			return
+			headerInfo hdr{};
+			hdr.messageType = static_cast<uint8_t>(msg[0] >> 4);
+			hdr.group = static_cast<uint8_t>(msg[0] & 0x0f);
+
+			if (msg.size() > 1)
 			{
-				static_cast<uint8_t>(msg[0] >> 4),
-				static_cast<uint8_t>(msg[0] & 0x0f),
-				static_cast<uint8_t>(msg[1] & 0x0f),
-				static_cast<uint8_t>(msg[1] >> 4)
-			};
+				hdr.channel = static_cast<uint8_t>(msg[1] & 0x0f);
+				hdr.status = static_cast<uint8_t>(msg[1] >> 4);
+			}
+
+			return hdr;
 		}
 
 		struct noteInfo
@@ -625,13 +654,13 @@ namespace gmpi
 			};
 		}
 
-		inline rawMessage64 makeNotePitchMessage(uint8_t noteNumber, float value, uint8_t channel = 0, uint8_t channelGroup = 0)
+		inline rawMessage64 makeNotePitchMessage(uint8_t noteNumber, float semitone, uint8_t channel = 0, uint8_t channelGroup = 0)
 		{
 			// 7 bits: Pitch in semitones, based on default Note Number equal temperament scale.
 			// 25 bits: Fractional Pitch above Note Number (i.e., fraction of one semitone).
 			constexpr float semitoneToNormalized = static_cast<float>(1 << 24);
 
-			const int32_t rawValue = static_cast<uint32_t>(value * semitoneToNormalized);
+			const int32_t rawValue = static_cast<uint32_t>(semitone * semitoneToNormalized);
 			return rawMessage64
 			{
 				static_cast<uint8_t>((gmpi::midi_2_0::ChannelVoice64 << 4) | (channelGroup & 0x0f)),
@@ -853,7 +882,7 @@ namespace gmpi
 			unsigned short incoming_nrpn[16] = {};
 			unsigned short incoming_rpn_value = {};
 			// RPNs are 14 bit values, so this value never occurs, represents "no rpn"
-			static const unsigned short NULL_RPN = 0xffff;
+			inline static const unsigned short NULL_RPN = 0xffff;
 			void cntrl_update_msb(unsigned short& var, short hb) const
 			{
 				var = (var & 0x7f) + (hb << 7);	// mask off high bits and replace
@@ -866,7 +895,10 @@ namespace gmpi
 		public:
 			MidiConverter2(std::function<void(const midi::message_view, int)> psink) :
 				sink(psink)
-			{}
+			{
+				std::fill(std::begin(incoming_rpn), std::end(incoming_rpn), NULL_RPN);
+				std::fill(std::begin(incoming_nrpn), std::end(incoming_nrpn), NULL_RPN);
+			}
 
 			void processMidi(const midi::message_view msg, int timestamp)
 			{
@@ -939,7 +971,8 @@ namespace gmpi
 
 					const auto msgout = gmpi::midi_2_0::makePolyPressure(
 						controller.controllerNumber, // actually key-number
-						controller.value
+						controller.value,
+						header.channel
 					);
 
 					sink({ msgout.m }, timestamp);
@@ -980,7 +1013,7 @@ namespace gmpi
 						{
 							const auto msgout = gmpi::midi_2_0::makeRpnRaw(
 								incoming_rpn[header.channel],
-								static_cast<uint32_t>(incoming_rpn_value) << 18, // 14 bit value shifted as far as possible int 32-bit value.
+								gmpi::midi::utils::scaleUp(incoming_rpn_value, 14, 32), // 14 bit value converted to 32-bit value.
 								header.channel
 							);
 							sink({ msgout.m }, timestamp);
@@ -989,7 +1022,7 @@ namespace gmpi
 						{
 							const auto msgout = gmpi::midi_2_0::makeNrpnRaw(
 								incoming_rpn[header.channel],
-								static_cast<uint32_t>(incoming_rpn_value) << 18,
+								gmpi::midi::utils::scaleUp(incoming_rpn_value, 14, 32), // 14 bit value converted to 32-bit value.
 								header.channel
 							);
 							sink({ msgout.m }, timestamp);
@@ -1001,14 +1034,26 @@ namespace gmpi
 					{
 						cntrl_update_lsb(incoming_rpn_value, static_cast<short>(msg[2]));
 
+						if (incoming_rpn[header.channel] != NULL_RPN)
+						{
 						const auto msgout = gmpi::midi_2_0::makeRpnRaw(
 							incoming_rpn[header.channel],
-							static_cast<uint32_t>(incoming_rpn_value) << 16,
+								gmpi::midi::utils::scaleUp(incoming_rpn_value, 14, 32), // 14 bit value converted to 32-bit value.
 							header.channel
 						);
 
 						sink({ msgout.m }, timestamp);
 					}
+						else
+						{
+							const auto msgout = gmpi::midi_2_0::makeNrpnRaw(
+								incoming_rpn[header.channel],
+								gmpi::midi::utils::scaleUp(incoming_rpn_value, 14, 32), // 14 bit value converted to 32-bit value.
+								header.channel
+							);
+							sink({ msgout.m }, timestamp);
+						}
+						}
 					break;
 
 					default:
@@ -1098,9 +1143,12 @@ namespace gmpi
 			int lowerZoneMasterChannel = 0;
 			int upperZoneMasterChannel = -1;
 
+			// for not specifically MPE stuff, just use a normal MIDI 1.0 -> 2.0 converter
+			MidiConverter2 midiConverter2;
 		public:
 			MpeConverter(std::function<void(const midi::message_view, int)> psink) :
-				sink(psink)
+				sink(psink),
+				midiConverter2([this](const midi::message_view msg, int timestamp) { sink(msg, timestamp);})
 			{
 				std::fill(std::begin(channelBender), std::end(channelBender), 0.5f);
 				std::fill(std::begin(channelBrightness), std::end(channelBrightness), 0.0f);
@@ -1118,9 +1166,10 @@ namespace gmpi
 				const auto header = midi_1_0::decodeHeader(msg);
 
 				// 'Master' MIDI Channels are reserved for conveying messages that apply to the entire Zone.
+				// Just convert to MIDI 2.0 and pass them though unchanged.
 				if (header.channel == lowerZoneMasterChannel || header.channel == upperZoneMasterChannel)
 				{
-// ?? need more info					pinMIDIOut.send(midiMessage, size);
+					midiConverter2.processMidi(msg, timestamp);
 					return;
 				}
 
@@ -1220,7 +1269,7 @@ namespace gmpi
 							note.velocity
 						);
 
-						//pinMIDIOut.send((const unsigned char*)&out, sizeof(out));
+						//pinMIDIOut.send(out.begin(), out.size());
 						sink({ msgout.m }, timestamp);
 					}
 				}
@@ -1266,7 +1315,7 @@ namespace gmpi
 								info.MidiKeyNumber,
 								channelPressure[header.channel]
 							);
-							//pinMIDIOut.send((const unsigned char*)&out, sizeof(out));
+							//pinMIDIOut.send(out.begin(), out.size());
 							sink({ msgout.m }, timestamp);
 						}
 					}
@@ -1665,7 +1714,7 @@ namespace gmpi
 					uint8_t msgout[] = {
 						static_cast<uint8_t>((midi_1_0::status_type::NoteOn << 4) | header.channel),
 						keyNumber,
-						(std::max)((uint8_t)1, gmpi::midi::utils::floatToU7(note.velocity))
+						(std::max)((uint8_t)1, gmpi::midi::utils::floatToU7(note.velocity)) // note on w Vel zero is note OFF (don't allow)
 					};
 
 					sink({ msgout }, timestamp);
@@ -1746,7 +1795,7 @@ namespace gmpi
 					uint8_t msgout[] = {
 						static_cast<uint8_t>((midi_1_0::status_type::PolyAfterTouch << 4) | header.channel),
 						midi2NoteToKey[aftertouch.noteNumber],
-						(std::max)((uint8_t)1, gmpi::midi::utils::floatToU7(aftertouch.value))
+						gmpi::midi::utils::floatToU7(aftertouch.value)
 					};
 
 					sink({ msgout }, timestamp);
@@ -1961,6 +2010,3 @@ namespace gmpi
 	}
 }
 
-#if 0
-#pragma pack(pop)
-#endif

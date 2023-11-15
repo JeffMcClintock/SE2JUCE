@@ -18,6 +18,7 @@ public:
 	*/
 
 private:
+	std::string getDefaultFolder(std::wstring extension);
 	void OnWidgetUpdate(const std::string& newvalue);
 	void OnBrowseButton(float newvalue);
 	void onSetpatchValue();

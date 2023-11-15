@@ -121,11 +121,12 @@ static const HostControlStruct lookup[] =
 	{L"ProgramCategory"			,HC_PROGRAM_CATEGORY			, DT_TEXT, ControllerType::None},
 	{L"ProgramCategoriesList"	,HC_PROGRAM_CATEGORIES_LIST		, DT_TEXT, ControllerType::None},
 
-	{L"MpeMode"					,HC_MPE_MODE					, DT_INT, ControllerType::None},
+	{L"MpeMode"					,HC_MPE_MODE					, DT_ENUM, ControllerType::None},
 	{L"Presets/ProgramModified"	,HC_PROGRAM_MODIFIED			, DT_BOOL, ControllerType::None},
 	{L"Presets/CanUndo"			,HC_CAN_UNDO					, DT_BOOL, ControllerType::None},
 	{L"Presets/CanRedo"			,HC_CAN_REDO					, DT_BOOL, ControllerType::None },
-
+	{ L"Processor/ClearTails"	, HC_CLEAR_TAILS				, DT_INT, ControllerType::None }, // a 'trigger' style HC. Actual value don't matter, only that it changed.
+	
 	// MAINTAIN ORDER TO PRESERVE OLDER WAVES EXPORTS DSP.XML consistancy
 };
 
@@ -214,8 +215,28 @@ int GetHostControlAutomation( HostControls hostControlId )
 	return ControllerType::None;
 }
 
-// Most host controls 'belong' to the Patch Automator, however a handfull apply to the local parent container.
-bool HostControlAttachesToParentContainer( HostControls hostControlId )
+bool AttachesToParentContainer(HostControls hostControlId)
+{
+	switch (hostControlId)
+	{
+	case HC_OVERSAMPLING_RATE:
+	case HC_OVERSAMPLING_FILTER:
+	case HC_SNAP_MODULATION__DEPRECATED:
+		return true;
+		break;
+
+	default:
+		return false;
+		break;
+	}
+
+	return false;
+}
+
+
+// Most host controls 'belong' to the Patch Automator, however a handfull apply to the ancestor container which controls voices (has a MIDI-CV etc).
+// see also 'getVoiceControlContainer'
+bool AttachesToVoiceContainer( HostControls hostControlId )
 {
 	switch( hostControlId )
 	{
@@ -233,8 +254,6 @@ bool HostControlAttachesToParentContainer( HostControls hostControlId )
 		case HC_CHANNEL_PRESSURE :
         case HC_POLYPHONY:
         case HC_POLYPHONY_VOICE_RESERVE:
-        case HC_OVERSAMPLING_RATE:
-        case HC_OVERSAMPLING_FILTER:
 		case HC_VOICE_VOLUME:
 		case HC_VOICE_PAN:
 		case HC_VOICE_PITCH_BEND:
@@ -245,7 +264,6 @@ bool HostControlAttachesToParentContainer( HostControls hostControlId )
 		case HC_VOICE_USER_CONTROL1:
 		case HC_VOICE_USER_CONTROL2:
 		case HC_VOICE_PORTAMENTO_ENABLE:
-		case HC_SNAP_MODULATION__DEPRECATED:
 		case HC_PORTAMENTO:
 		case HC_GLIDE_START_PITCH:
 		case HC_BENDER_RANGE:

@@ -66,6 +66,7 @@ namespace SynthEdit2
 			auto ob = std::make_unique<ModuleViewPanel>(L"SE PatchCableChangeNotifier", this, Presenter()->GenerateTemporaryHandle());
 			patchCableNotifier = ob.get();
 			guiObjectMap.insert(std::pair<int, ModuleView*>(ob->getModuleHandle(), ob.get()));
+			assert(!isIteratingChildren);
 			children.push_back(std::move(ob));
 		}
 
@@ -108,6 +109,7 @@ namespace SynthEdit2
 			{
 				if(typeName == "Line")
 				{
+					assert(!isIteratingChildren);
 					children.push_back(std::make_unique<ConnectorView2>(&module_json, this));
 				}
 				else
@@ -144,10 +146,12 @@ namespace SynthEdit2
 
 				if( (module->getSelected() || isBackground) && Presenter()->editEnabled())
 				{
+					assert(!isIteratingChildren);
 					children.push_back(module->createAdorner(this));
 				}
 
 				guiObjectMap.insert(std::pair<int, ModuleView*>(module->getModuleHandle(), module.get()));
+				assert(!isIteratingChildren);
 				children.push_back(std::move(module));
 			}
 		}
@@ -168,6 +172,7 @@ namespace SynthEdit2
 				auto r = guiObjectMap.insert(std::pair<int, ModuleView*>(ob->getModuleHandle(), ob.get()));
 				assert(r.second);
 
+				assert(!isIteratingChildren);
 				children.push_back(std::move(ob)); // ob now null.
 			}
 
@@ -180,7 +185,7 @@ namespace SynthEdit2
 
 	void ViewBase::ConnectModules(const Json::Value& context, std::map<int, class ModuleView*>& guiObjectMap)//, ModuleView* patchAutomatorWrapper)
 	{
-		int32_t containerHandle = context["handle"].asInt();
+		const int32_t containerHandle = context["handle"].asInt();
 
 		std::vector< std::pair< SynthEdit2::ModuleView*, int> > connectedInputs;
 
@@ -331,15 +336,17 @@ namespace SynthEdit2
 							{
 								assert(pinInfo.isHostControlledPlug(0));
 
-								int hostConnect = pinInfo.getHostConnect(0); // pass as negative field to identify it as host-connect.
+								const int hostConnect = pinInfo.getHostConnect(0); // pass as negative field to identify it as host-connect.
 
-								// Most host controls 'belong' to the Patch Automator, however a handful apply to the local parent container.
 								int32_t attachedToHandle = -1; // = not attached.
-								if(HostControlAttachesToParentContainer((HostControls)hostConnect))
+								if(AttachesToVoiceContainer((HostControls)hostConnect))
+								{
+									attachedToHandle = module_element["VoiceContainer"].asInt();
+								}
+								else if (AttachesToParentContainer((HostControls)hostConnect))
 								{
 									attachedToHandle = containerHandle;
 								}
-
 								pmPinIdx = patchAutomator->Register(attachedToHandle, -1 - hostConnect, (ParameterFieldType)pinInfo.getParameterFieldId(0)); // PM->Plugin.
 							}
 
@@ -421,7 +428,7 @@ namespace SynthEdit2
 		for(auto& m : children)
 		{
 			auto b = m->GetClipRect();
-			if(!Intersect(b, cliprect).empty()) //  b.right >= cliprect.left && b.left <= cliprect.right && b.top <= cliprect.bottom && b.bottom >= cliprect.top)
+			if(isOverlapped(b, cliprect))
 			{
 				if(dynamic_cast<ConnectorViewBase*>(m.get()))
 				{
@@ -582,7 +589,9 @@ namespace SynthEdit2
 			{
 				if((flags & gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON) != 0) // Drag selection box.
 				{
+					assert(!isIteratingChildren);
 					children.push_back(std::unique_ptr<IViewChild>(new SelectionDragBox(this, point)));
+					autoScrollStart();
 					return gmpi::MP_OK;
 				}
 			}
@@ -598,6 +607,7 @@ namespace SynthEdit2
 		{
 			if ((*it).get() == child)
 			{
+				assert(!isIteratingChildren);
 				children.erase(it);
 				break;
 			}
@@ -650,7 +660,7 @@ namespace SynthEdit2
 		if(elementBeingDragged) // could this be handled with custom mouseCaptureObject? to remove need for check here?
 		{
 			// Snap-to-grid logic.
-			auto snapGridSize = Presenter()->GetSnapSize();
+			const auto snapGridSize = Presenter()->GetSnapSize();
 			GmpiDrawing::Size delta(point.x - pointPrev.x, point.y - pointPrev.y);
 			if(delta.width != 0.0f || delta.height != 0.0f) // avoid false snap on selection
 			{
@@ -679,10 +689,18 @@ namespace SynthEdit2
 		return gmpi::MP_OK;
 	}
 
+	void ViewBase::onSubPanelMadeVisible()
+	{
+		// if a sub-panel just blinked into existence, need to update mouse over object on myself AND on it. Else the next click will be ignored.
+		// calling ViewBase to avoid the offset imposed by the sub-panel (which has already been accounted for)
+		ViewBase::onPointerMove(0, lastMovePoint);
+	}
+
 	void ViewBase::calcMouseOverObject(int32_t flags)
 	{
 		IViewChild* hitObject{};
 
+		isIteratingChildren = true;
 		for(auto it = children.rbegin(); it != children.rend(); ++it) // iterate in reverse for correct Z-Order.
 		{
 			auto& m = *it;
@@ -692,6 +710,7 @@ namespace SynthEdit2
 				break;
 			}
 		}
+		isIteratingChildren = false;
 
 		if(hitObject != mouseOverObject)
 		{
@@ -797,6 +816,7 @@ namespace SynthEdit2
 			cable->pickup(1, fromPoint);
 			cable->type = type;
 
+			assert(!isIteratingChildren);
 			children.push_back(std::unique_ptr<IViewChild>(cable));
 
 			int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_NEW | gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
@@ -840,34 +860,15 @@ namespace SynthEdit2
 	// moving an existing cable
 	int32_t ViewBase::EndCableDrag(GmpiDrawing_API::MP1_POINT point, ConnectorViewBase* dragline)
 	{
-		std::unique_ptr<IViewChild> temp; // keep dragline alive until end of method. While still removing it from children.
-
-		// Remove drag line.
-		for(auto it = children.begin(); it != children.end(); ++it)
-		{
-			if(dragline == (*it).get())
-			{
-				if (mouseCaptureObject == dragline)
-				{
-					releaseCapture();
-				}
-
-				temp = std::move(*it);
-				it = children.erase(it);
-				auto r = temp->GetClipRect();
-				invalidateRect(&r);
-				break;
-			}
-		}
-
+		bool presenterGonnaRefresh = false;
+		
 		if(dragline->type == CableType::StructureCable)
 		{
-			bool success = false;
 			for(auto it = children.rbegin(); it != children.rend(); ++it) // iterate in reverse for correct Z-Order.
 			{
 				if((*it)->EndCableDrag(point, dragline))
 				{
-					success = true;
+					presenterGonnaRefresh = true;
 					break;
 				}
 			}
@@ -907,35 +908,65 @@ namespace SynthEdit2
 				if(bestModule)
 					newModuleHandle = bestModule->getModuleHandle();
 			}
+			
+			// dragline to be deleted, save nesc info.
+			const auto fromModuleHandle = dragline->fromModuleHandle();
+			const auto fromModulePin = dragline->fromPin();
+			const auto toModuleHandle = dragline->toModuleHandle();
+			const auto toModulePin = dragline->toPin();
+			const auto draggingFromEnd = dragline->draggingFromEnd;
+			int colorIndex = 0;
+			if (auto patchcable = dynamic_cast<PatchCableView*>(dragline); patchcable)
+			{
+				colorIndex = patchcable->getColorIndex();
+			}
 
 			// In the case of dragging the end of an existing cable, erase old route.
-			Presenter()->RemovePatchCable(dragline->fromModuleHandle(), dragline->fromPin(), dragline->toModuleHandle(), dragline->toPin());
+			Presenter()->RemovePatchCable(fromModuleHandle, fromModulePin, toModuleHandle, toModulePin);
 
 			if(newModuleHandle != -1)
 			{
 				bool droppedBackInPlace;
-				if(dragline->draggingFromEnd == 0)
+				if(draggingFromEnd == 0)
 				{
-					droppedBackInPlace = newModuleHandle == dragline->fromModuleHandle() && newModulePin == dragline->fromPin();
+					droppedBackInPlace = newModuleHandle == fromModuleHandle && newModulePin == fromModulePin;
 				}
 				else
 				{
-					droppedBackInPlace = newModuleHandle == dragline->toModuleHandle() && newModulePin == dragline->toPin();
+					droppedBackInPlace = newModuleHandle == toModuleHandle && newModulePin == toModulePin;
 				}
 
 				if(existingModuleHandle >= 0)
 				{
-					int colorIndex = 0;
-					if (auto patchcable = dynamic_cast<PatchCableView*>(dragline); patchcable)
-					{
-						colorIndex = patchcable->getColorIndex();
-					}
-
-					Presenter()->AddPatchCable(existingModuleHandle, existingModulePin, newModuleHandle, newModulePin, colorIndex, droppedBackInPlace);
+					presenterGonnaRefresh = Presenter()->AddPatchCable(existingModuleHandle, existingModulePin, newModuleHandle, newModulePin, colorIndex, droppedBackInPlace);
 				}
 			}
 
-			invalidateRect();
+			if (!presenterGonnaRefresh)
+				invalidateRect();
+		}
+
+		// avoid erasing the drawline immediatly if it's going to result in a new line anyhow (to avoid jarring wait for new line to appear).
+		// we're relying on a complete refresh to discard the temporary drag-line
+		if (!presenterGonnaRefresh)
+		{
+			// Remove drag line.
+			for (auto it = children.begin(); it != children.end(); ++it)
+			{
+				if (dragline == (*it).get())
+				{
+					if (mouseCaptureObject == dragline)
+					{
+						releaseCapture();
+					}
+					const auto dragLineRect = (*it)->GetClipRect();
+					invalidateRect(&dragLineRect);
+
+					assert(!isIteratingChildren);
+					it = children.erase(it);
+					break;
+				}
+			}
 		}
 
 		return gmpi::MP_OK;
@@ -967,6 +998,7 @@ namespace SynthEdit2
 				{
 					mouseOverObject = {};
 				}
+				assert(!isIteratingChildren);
 				it = children.erase(it);
 				continue;
 			}
@@ -980,6 +1012,7 @@ namespace SynthEdit2
 		for(auto& c : cableList.cables)
 		{
 			//			_RPT2(_CRT_WARN, "New Cable %x -> %x\n", c.fromUgHandle, c.toUgHandle);
+			assert(!isIteratingChildren);
 			children.push_back(std::make_unique<PatchCableView>(this, c.fromUgHandle, c.fromUgPin, c.toUgHandle, c.toUgPin, c.colorIndex));
 		}
 
@@ -1057,6 +1090,7 @@ namespace SynthEdit2
 			if(*it == child)
 			{
 				auto c = std::move(*it);
+				assert(!isIteratingChildren);
 				it = children.erase(it);
 				children.push_back(std::move(c));
 				break;
@@ -1070,6 +1104,7 @@ namespace SynthEdit2
 		{
 			if(*it == child)
 			{
+				assert(!isIteratingChildren);
 				auto c = std::move(*it);
 				it = children.erase(it);
 				children.insert(children.begin(), std::move(c));
@@ -1119,6 +1154,7 @@ namespace SynthEdit2
 						GmpiDrawing::Size unused(0, 0);
 						adorner->measure(GmpiDrawing::Size(0, 0), &unused); // provide for resizbility calc.
 						invalidRect = adorner->getLayoutRect();
+						assert(!isIteratingChildren);
 						children.push_back(std::move(adorner));
 					}
 					else
@@ -1141,6 +1177,7 @@ namespace SynthEdit2
 						auto r = m->GetClipRect();
 						invalidateRect(&r);
 
+						assert(!isIteratingChildren);
 						it = children.erase(it);
 						if(mouseOverObject == m)
 						{
@@ -1197,6 +1234,7 @@ namespace SynthEdit2
 			releaseCapture();
 
 		// Clear out previous view.
+		assert(!isIteratingChildren);
 		children.clear();
 		elementBeingDragged = nullptr;
 		patchAutomatorWrapper_ = nullptr;

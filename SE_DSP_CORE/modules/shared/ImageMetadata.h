@@ -252,16 +252,12 @@ struct FontMetadata
 
 struct SkinMetadata
 {
-	SkinMetadata() : defaultFont_("default")
-	{
-		defaultFont_.faceFamilies_.push_back("Arial");
-		defaultFont_.color_ = 0xff000000 | GmpiDrawing::Color::Black; // From SE.
-	}
+	SkinMetadata();
 	const FontMetadata* getFont(std::string category) const;
 	void Serialise(gmpi_sdk::mp_shared_ptr<gmpi::IProtectedFile2> stream);
 
-	std::vector<FontMetadata> fonts_;
-	FontMetadata defaultFont_;
+	std::vector<std::unique_ptr<FontMetadata>> fonts_; // need to be pointers (not members) to prevent invalidation of already handed-out pointers when a new skin is pushed back
+	std::unique_ptr<FontMetadata> defaultFont_;
 	std::string skinUri;
 };
 

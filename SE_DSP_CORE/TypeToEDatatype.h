@@ -36,6 +36,13 @@ struct SeDatatypeTraits<MpBlob>
 	enum { result = DT_BLOB };
 };
 
+// TODO
+//template<>
+//struct SeDatatypeTraits<MpBlob2>
+//{
+//	enum { result = DT_BLOB2 };
+//};
+
 template<>
 struct SeDatatypeTraits<short>
 {

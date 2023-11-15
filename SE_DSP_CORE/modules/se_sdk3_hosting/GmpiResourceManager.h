@@ -6,7 +6,7 @@
 class GmpiResourceManager
 {
 #if defined(SE_EDIT_SUPPORT)
-	class CSynthEditAppBase* application;
+	class CSynthEditAppBase* application = {};
 #endif
 	std::multimap< int32_t, std::string > resourceUris_;
 

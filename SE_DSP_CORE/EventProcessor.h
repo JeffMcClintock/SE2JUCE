@@ -231,9 +231,8 @@ public:
 	}
 #endif
 
-	void DiscardOldPinEvents( int pin_index );
-	void DiscardOldEvents( int eventType );
-	void AddEvent(SynthEditEvent* p_event/*, bool p_wake = true*/);
+	void DiscardOldPinEvents( int pin_index, int datatype);
+	void AddEvent(SynthEditEvent* p_event, int datatype = DT_NONE);
 	void DeleteEvents();
 	void SetClockRescheduleEvents(timestamp_t p_sampleclock);
 	void RunDelayed( timestamp_t p_timestamp, ug_func p_function );

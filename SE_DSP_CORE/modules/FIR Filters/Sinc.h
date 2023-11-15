@@ -3,7 +3,7 @@
 #define SINC_FILTER_H_INCLUDED
 
 /*
-#include "SincFilter.h"
+#include "Sinc.h"
 */
 
 #include <string.h>

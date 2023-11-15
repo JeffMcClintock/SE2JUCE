@@ -84,7 +84,7 @@ class GuiPinOwner
 {
 public:
 	GuiPinOwner(){}
-	~GuiPinOwner(){}
+	virtual ~GuiPinOwner(){}
 	void addPin( int pinId, MpGuiPinBase& pin );
 	MpGuiPinBase* getPin( int pinId );
 
@@ -95,6 +95,90 @@ public:
 
 protected:
 	GuiPins_t pins_;
+};
+
+class UiHost
+{
+	gmpi::IMpUserInterfaceHost* host_ = {};
+	gmpi::IMpUserInterfaceHost2* host2_ = {};
+	
+public:
+	~UiHost()
+	{
+		if (host_)
+			host_->release();
+		
+		if (host2_)
+			host2_->release();
+	}
+	
+	int32_t Init(gmpi::IMpUnknown* phost)
+	{
+		phost->queryInterface(gmpi::MP_IID_UI_HOST, (void**)&host_);
+		return phost->queryInterface(gmpi::MP_IID_UI_HOST2, (void**)&host2_);
+	}
+
+#if 0
+	// Plugin UI updates a parameter.
+	virtual int32_t MP_STDCALL pinTransmit(int32_t pinId, int32_t size, /*const*/ void* data, int32_t voice = 0) = 0;
+
+	// Backdoor to Audio class. Not recommended. Use Parameters instead to support proper automation.
+	virtual int32_t MP_STDCALL sendMessageToAudio(int32_t id, int32_t size, /*const*/ void* messageData) = 0;
+
+	// Start/Stop regular idle timer calls to plugin UI. Deprecated. Don't use.
+	virtual int32_t MP_STDCALL setIdleTimer(int32_t active) = 0;
+
+	// Each plugin instance has unique handle shared by UI and Audio class.
+	virtual int32_t MP_STDCALL getHandle(int32_t& returnValue) = 0;
+
+	// Identify Host. e.g. "SynthEdit"
+	virtual int32_t MP_STDCALL getHostId(int32_t maxChars, wchar_t* returnString) = 0;
+
+	// Query Host version number. e.g. returnValue of 400000 is Version 4.0
+	virtual int32_t MP_STDCALL getHostVersion(int32_t& returnValue) = 0;
+
+	// Get list of UI's pins.
+	virtual int32_t MP_STDCALL createPinIterator(gmpi::IMpPinIterator** returnIterator) = 0;
+	// Backward compatibility,
+	inline int32_t createPinIterator(void** returnIterator)
+	{
+		return createPinIterator((gmpi::IMpPinIterator**)returnIterator);
+	}
+	
+	// SynthEdit-specific.  Add item to context (right-click) menu in reponse to onCreateContextMenu().
+	// index must be between 0 - 1000.
+	virtual int32_t MP_STDCALL addContextMenuItem( /*const*/ wchar_t* menuText, int32_t index, int32_t flags = MI_NONE) = 0;
+
+	// SynthEdit-specific.  Get count of UI's pins. Usefull with autoduplicate pins. UPDATE: Not suitable for autoduplicating pins becuase it's not avail in constructor when we need to init pins. open() is too late.
+	virtual int32_t MP_STDCALL getPinCount(int32_t& returnCount) = 0;
+
+#endif
+	
+	// SynthEdit-specific.  Determine file's location depending on host application's conventions. // e.g. "bell.wav" -> "C:/My Documents/bell.wav"
+	// IMpUserInterfaceHost
+	std::wstring resolveFilename(std::wstring filename)
+	{
+		wchar_t fullFilename[500] = L"";
+		host_->resolveFilename(filename.c_str(), static_cast<int32_t>(std::size(fullFilename)), fullFilename);
+		return fullFilename;
+	}
+	
+	// SynthEdit-specific.  Determine file's location depending on host application's conventions. // e.g. "bell.wav" -> "C:/My Documents/bell.wav"
+	// DEPRECATED: GmpiSdk::UriFile openProtectedFile(const wchar_t* shortFilename);
+	
+	// SynthEdit-specific.  Locate resources and make SynthEdit imbedd them during save-as-vst.
+	// IMpUserInterfaceHost2
+	void ClearResourceUris()
+	{
+		if (host2_)
+			host2_->ClearResourceUris();
+	}
+	
+	std::string RegisterResourceUri(const char* resourceName, const char* resourceType);
+	GmpiSdk::UriFile OpenUri(std::string uri);
+
+	// Locate resources without imbedding them during save-as-vst.
+	std::string FindResourceU(const char* resourceName, const char* resourceType);
 };
 
 // Abstract base class for several derived classes.
@@ -172,6 +256,7 @@ public:
 
 protected:
 	gmpi::IMpUserInterfaceHost* patchMemoryHost_;
+	UiHost uiHost;
 };
 
 class MpGuiBase :
@@ -291,6 +376,8 @@ public:
 
 		return gmpi::MP_NOSUPPORT;
 	}
+	
+	UiHost uiHost;
 };
 
 class SeGuiInvisibleBase :
@@ -547,7 +634,7 @@ protected:
 		// new. Don't create temporary variable (wasteful for large blobs).
 		if( size == variableRawSize(value_) )
 		{
-			if( memcmp( variableRawData(value_), data, size ) == 0 )
+			if( memcmp( variableRawData(value_), data, static_cast<size_t>(size)) == 0 )
 			{
 				return false;
 			}

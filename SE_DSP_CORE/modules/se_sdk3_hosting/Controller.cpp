@@ -1023,16 +1023,15 @@ void MpController::HostControlToDsp(MpParameter* param, int32_t voice)
 }
 #endif
 
-void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream, MpParameter* param)
+void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream, MpParameter* param, int32_t voice)
 {
 	//---send a binary message
-	const int32_t voice = 0;
 	bool isVariableSize = param->datatype_ == DT_TEXT || param->datatype_ == DT_BLOB;
 
 	auto raw = param->getValueRaw(gmpi::MP_FT_VALUE, voice);
 
 	bool due_to_program_change = false;
-	int32_t recievingMessageLength = (int)(sizeof(int32_t) + sizeof(bool) + raw.size());
+	int32_t recievingMessageLength = (int)(sizeof(bool) + raw.size());
 	if (isVariableSize)
 	{
 		recievingMessageLength += (int)sizeof(int32_t);
@@ -1043,12 +1042,8 @@ void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream
 		recievingMessageLength += (int)sizeof(int32_t);
 	}
 
-	int patch = 0;
-
 	stream << recievingMessageLength;
-
 	stream << due_to_program_change;
-	stream << patch;
 
 	if (param->isPolyPhonic())
 	{
@@ -1069,8 +1064,8 @@ void MpController::ParamToDsp(MpParameter* param, int32_t voice)
 {
 	assert(dynamic_cast<SeParameter_vst3_hostControl*>(param) == nullptr); // These have (not) "unique" handles that may map to totally random DSP parameters.
 
-	my_msg_que_output_stream s(getQueueToDsp(), param->parameterHandle_, "ppc\0");
-	SerialiseParameterValueToDsp(s, param);
+	my_msg_que_output_stream s(getQueueToDsp(), param->parameterHandle_, "ppc\0"); // "ppc"
+	SerialiseParameterValueToDsp(s, param, voice);
 }
 
 void MpController::UpdateProgramCategoriesHc(MpParameter* param)

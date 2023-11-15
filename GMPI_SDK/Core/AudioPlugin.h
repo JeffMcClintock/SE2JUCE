@@ -135,14 +135,7 @@ public:
 	{
 		if(e->eventType == api::EventType::PinSet)
 		{
-			if(e->extraData != 0)
-			{
-				setValueRaw(e->parm2, e->extraData);
-			}
-			else
-			{
-				setValueRaw(e->parm2, &(e->parm3));
-			}
+			setValueRaw(e->size(), e->data());
 			freshValue_ = true;
 		};
 	}
@@ -303,13 +296,13 @@ public:
 	}
 };
 
-typedef MpControlPin<int, static_cast<int>(PinDirection::In)>				IntInPin;
+typedef MpControlPin<int, static_cast<int>(PinDirection::In)>			IntInPin;
 typedef MpControlPin<int, static_cast<int>(PinDirection::Out)>			IntOutPin;
 typedef MpControlPin<float, static_cast<int>(PinDirection::In)>			FloatInPin;
-typedef MpControlPin<float, static_cast<int>(PinDirection::Out)>			FloatOutPin;
-typedef MpControlPin<Blob, static_cast<int>(PinDirection::In)>		BlobInPin;
-typedef MpControlPin<Blob, static_cast<int>(PinDirection::Out)>		BlobOutPin;
-typedef MpControlPin<std::string, static_cast<int>(PinDirection::In)>		StringInPin;
+typedef MpControlPin<float, static_cast<int>(PinDirection::Out)>		FloatOutPin;
+typedef MpControlPin<Blob, static_cast<int>(PinDirection::In)>			BlobInPin;
+typedef MpControlPin<Blob, static_cast<int>(PinDirection::Out)>			BlobOutPin;
+typedef MpControlPin<std::string, static_cast<int>(PinDirection::In)>	StringInPin;
 typedef MpControlPin<std::string, static_cast<int>(PinDirection::Out)>	StringOutPin;
 
 typedef MpControlPin<bool, static_cast<int>(PinDirection::In)>			BoolInPin;
@@ -356,6 +349,24 @@ public:
 	virtual void send(const unsigned char* data, int size, int blockPosition = -1);
 };
 
+class AudioPluginHostWrapper
+{
+	gmpi::shared_ptr<api::IAudioPluginHost> host;
+
+public:
+	ReturnCode Init(api::IUnknown* phost);
+	api::IAudioPluginHost* get();
+
+	// IAudioPluginHost
+	ReturnCode setPin(int32_t timestamp, int32_t pinId, int32_t size, const void* data);
+	ReturnCode setPinStreaming(int32_t timestamp, int32_t pinId, bool isStreaming);
+	ReturnCode setLatency(int32_t latency);
+	ReturnCode sleep();
+	int32_t getBlockSize() const;
+	int32_t getSampleRate() const;
+	int32_t getHandle() const;
+};
+
 class TempBlockPositionSetter;
 
 class AudioPlugin : public api::IAudioPlugin
@@ -377,7 +388,7 @@ public:
 	virtual void onMidiMessage(int pin, const uint8_t* midiMessage, int size) {}
 
 	// access to the DAW
-	gmpi::shared_ptr<api::IAudioPluginHost> host;
+	AudioPluginHostWrapper host;
 
 	// Communication with pins.
 	int getBlockPosition() const
@@ -442,7 +453,7 @@ protected:
 	void processEvent( const api::Event* e );
 	void postProcessEvent( const api::Event* e );
 
-	// identification and reference countin
+	// identification and reference counting
 	GMPI_QUERYINTERFACE(api::IAudioPlugin::guid, IAudioPlugin);
 	GMPI_REFCOUNT;
 

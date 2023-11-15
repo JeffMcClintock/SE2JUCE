@@ -4,6 +4,7 @@
 
 #include <d2d1_2.h>
 #include <d3d11_1.h>
+#include <dxgi1_6.h>
 #include <wrl.h> // Comptr
 #include <Windowsx.h>
 #include <commctrl.h>
@@ -128,6 +129,9 @@ void DrawingFrame::open(void* pParentWnd, const GmpiDrawing_API::MP1_SIZE_L* ove
 		GmpiDrawing_API::MP1_SIZE desired{};
 		gmpi_gui_client->measure(available, &desired);
 		gmpi_gui_client->arrange({ 0, 0, available.width, available.height });
+
+		// starting Timer latest to avoid first event getting 'in-between' other init events.
+		StartTimer(15); // 16.66 = 60Hz. 16ms timer seems to miss v-sync. Faster timers offer no improvement to framerate.
 	}
 }
 
@@ -137,7 +141,8 @@ void DrawingFrameBase::initTooltip()
 	{
 		auto instanceHandle = local_GetDllHandle_randomshit();
 		{
-			TOOLINFO ti;
+			TOOLINFO ti{};
+
 			// Create the ToolTip control.
 			HWND hwndTT = CreateWindow(TOOLTIPS_CLASS, TEXT(""),
 				WS_POPUP,
@@ -147,7 +152,7 @@ void DrawingFrameBase::initTooltip()
 				NULL);
 
 			// Prepare TOOLINFO structure for use as tracking ToolTip.
-			ti.cbSize = sizeof(TOOLINFO);
+			ti.cbSize = TTTOOLINFO_V1_SIZE; // win 7 compatible. sizeof(TOOLINFO);
 			ti.uFlags = TTF_SUBCLASS;
 			ti.hwnd = (HWND)getWindowHandle();
 			ti.uId = (UINT)0;
@@ -196,7 +201,7 @@ void DrawingFrameBase::ShowToolTip()
 		rc.right = (LONG)100000;
 		rc.bottom = (LONG)100000;
 		TOOLINFO ti = { 0 };
-		ti.cbSize = sizeof(TOOLINFO);
+		ti.cbSize = TTTOOLINFO_V1_SIZE; // win 7 compatible. sizeof(TOOLINFO);
 		ti.hwnd = (HWND)getWindowHandle(); // frame->getSystemWindow();
 		ti.uId = 0;
 		ti.rect = rc;
@@ -217,7 +222,7 @@ void DrawingFrameBase::HideToolTip()
 	if (tooltipWindow)
 	{
 		TOOLINFO ti = { 0 };
-		ti.cbSize = sizeof(TOOLINFO);
+		ti.cbSize = TTTOOLINFO_V1_SIZE; // win 7 compatible. sizeof(TOOLINFO);
 		ti.hwnd = (HWND)getWindowHandle(); // frame->getSystemWindow();
 		ti.uId = 0;
 		ti.lpszText = 0;
@@ -355,11 +360,12 @@ LRESULT DrawingFrameBase::WindowProc(
 		{
 			// supplied point is relative to *screen* not window.
 			POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-			MapWindowPoints(NULL, getWindowHandle(), &pos, 1);
+			MapWindowPoints(NULL, getWindowHandle(), &pos, 1); // !!! ::ScreenToClient() might be more correct. ref MyFrameWndDirectX::OnMouseWheel
 
 			GmpiDrawing::Point p(static_cast<float>(pos.x), static_cast<float>(pos.y));
 			p = WindowToDips.TransformPoint(p);
 
+            //The wheel rotation will be a multiple of WHEEL_DELTA, which is set at 120. This is the threshold for action to be taken, and one such action (for example, scrolling one increment) should occur for each delta.
 			const auto zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
 
 			int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
@@ -390,60 +396,6 @@ LRESULT DrawingFrameBase::WindowProc(
 			gmpi_key_client->OnKeyPress((wchar_t) wParam);
 		break;
 
-	case WM_NCACTIVATE:
-		//if( wParam == FALSE ) // USER CLICKED AWAY
-		//	goto we_re_done;
-		break;
-/*
-	case WM_WINDOWPOSCHANGING:
-	{
-		LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
-	}
-	break;
-*/
-	case WM_ACTIVATE:
-	{
-		/*
-		//HFONT hFont = CreateFont(18, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-		//	CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
-
-		SendMessage(child,      // Handle of edit control
-		WM_SETFONT,         // Message to change the font
-		(WPARAM)dialogFont,      // handle of the font
-		MAKELPARAM(TRUE, 0) // Redraw text
-		);
-
-		::SetWindowPos(hwndDlg, 0, dialogX, dialogY, dialogW, dialogH, SWP_NOZORDER);
-		::SetWindowPos(child, 0, 0, 0, dialogW, dialogH, SWP_NOZORDER);
-		::SetWindowText(child, dialogEditText);
-		::SetFocus(child);
-		dialogReturnValue = 1;
-		// Select all.
-		#ifdef WIN32
-		SendMessage(child, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
-		#else
-		SendMessage(child, EM_SETSEL, 0, MAKELONG(0, -1));
-		#endif
-		*/
-	}
-	break;
-
-		/*
-	case WM_COMMAND:
-		switch( LOWORD(wParam) )
-		{
-		case IDOK:
-		goto we_re_done;
-		break;
-
-		case IDCANCEL:
-		dialogReturnValue = 0;
-		EndDialog(hwndDlg, dialogReturnValue); // seems to call back here and exit at "we_re_done"
-		return TRUE;
-		}
-		break;
-		*/
-
 	case WM_PAINT:
 	{
 		OnPaint();
@@ -464,18 +416,17 @@ LRESULT DrawingFrameBase::WindowProc(
 	default:
 		return DefWindowProc(hwnd, message, wParam, lParam);
 
-	//we_re_done:
-	//	if( !GetDlgItemText(hwndDlg, IDC_EDIT1, dialogEditText, sizeof(dialogEditText) / sizeof(dialogEditText[0])) )
-	//		*dialogEditText = 0;
-	//	EndDialog(hwndDlg, dialogReturnValue);
-
 	}
 	return TRUE;
 }
 
 void DrawingFrameBase::OnSize(UINT width, UINT height)
 {
+	assert(m_swapChain);
+	assert(mpRenderTarget);
+
 	mpRenderTarget->SetTarget(nullptr);
+
 	if (S_OK == m_swapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0))
 	{
 		CreateDeviceSwapChainBitmap();
@@ -995,6 +946,18 @@ void DrawingFrameBase::CreateDevice()
 	ComPtr<IDXGIAdapter> adapter;
 	dxdevice->GetAdapter(adapter.GetAddressOf());
 
+#ifdef _DEBUG
+	ComPtr<IDXGIOutput> currentOutput;
+	adapter->EnumOutputs(0, &currentOutput);
+
+	ComPtr<IDXGIOutput6> output6;
+	currentOutput.As(&output6);
+
+	DXGI_OUTPUT_DESC1 desc1; // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 (standard  sRGB or SDR displays with Advanced Color capabilities) (0). bits 8
+	output6->GetDesc1(&desc1);
+
+#endif
+
 	// adapter’s parent object is the DXGI factory
 	// 
 	ComPtr<IDXGIFactory2> factory; // Minimum supported client: Windows 8 and Platform Update for Windows 7 
@@ -1067,6 +1030,7 @@ void DrawingFrameBase::CreateDevice()
 	auto propsFallback = props;
 	propsFallback.SwapEffect = DXGI_SWAP_EFFECT_SEQUENTIAL;	// Less efficient blit.
 	propsFallback.Format = fallbackFormat;
+	propsFallback.Scaling = DXGI_SCALING_STRETCH;
 
 	for (int x = 0 ; x < 2 ;++x)
 	{
@@ -1089,6 +1053,16 @@ void DrawingFrameBase::CreateDevice()
 	get IDXGISwapChain4 interface
 	sc->SetColorSpace1(DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709)
 	*/
+#ifdef _DEBUG
+
+	ComPtr<IDXGISwapChain3> advancedSwapChain;
+	m_swapChain->QueryInterface(advancedSwapChain.ReleaseAndGetAddressOf());
+	UINT colorSpaceSupport = 0;
+	if (advancedSwapChain)
+	{
+		advancedSwapChain->CheckColorSpaceSupport(DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, &colorSpaceSupport);
+	}
+#endif
 
 	// Creating the Direct2D Device
 	ComPtr<ID2D1Device> device;
@@ -1158,7 +1132,7 @@ void DrawingFrameBase::CreateDeviceSwapChainBitmap()
 	swapChainSize.width = static_cast<int32_t>(bitmapsize.width);
 	swapChainSize.height = static_cast<int32_t>(bitmapsize.height);
 
-//_RPT2(_CRT_WARN, "B[%f,%f]\n", bitmapsize.width, bitmapsize.height);
+//_RPT2(_CRT_WARN, "%x B[%f,%f]\n", this, bitmapsize.width, bitmapsize.height);
 
 	// Now attach Device Context to swapchain bitmap.
 	mpRenderTarget->SetTarget(bitmap.Get());
@@ -1173,8 +1147,6 @@ void DrawingFrameBase::CreateDeviceSwapChainBitmap()
 void DrawingFrameBase::CreateRenderTarget()
 {
 	CreateDevice();
-
-	StartTimer(15); // 16.66 = 60Hz. 16ms timer seems to miss v-sync. Faster timers offer no improvement to framerate.
 }
 
 void DrawingFrame::ReSize(int left, int top, int right, int bottom)

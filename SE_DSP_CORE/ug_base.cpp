@@ -140,6 +140,7 @@ UPlug* ug_base::GetPlug(int p_index)
 }
 #endif
 
+#if 0
 UPlug* ug_base::GetPlugById(int id)
 {
 /* hopefully fixed so SDK2 does store unique-id
@@ -162,45 +163,12 @@ UPlug* ug_base::GetPlugById(int id)
 
 	return 0;
 }
-
-/*
-// TODO: WRONG!, paremters to be registered by object.name, relying on GUI +DSP ordering being same is too fragile
-UPlug* ug_base::GetParameterPlug(int p_parameter_id)
-{
-	int parameter_idx = 0;
-	for( int c = 0 ; c < plugs.GetSize(); c++ )
-	{
-		UPlug *p = plugs[c];
-
-		if( (p->flags & PF _PATCH_STORE) != 0 )
-		{
-			if( parameter_idx++ == p_parameter_id )
-				return p;
-		}
-	}
-// OK,	assert(false); // forgot to add IO_UI_COMMUNICATION_DUAL flag to ug plug?
-	return 0;
-}
-*/
+#endif
 
 // big problem with dynamic plugs, this code assumes each plug appears
 // in same order as ListInterface() produces
 UPlug* ug_base::GetPlug(const std::wstring& plug_name)
 {
-	/*
-	// easy way
-	for( int c = plugs.GetUpper Bound() ; c >= 0 ; c-- )
-	{
-		UPlug *p = plugs[c];
-
-		if( strcmp( p->getStdName(), plug_name ) == 0 )
-		{
-			return p;
-		}
-	}
-
-	assert(false); // following code obs olete i hope, does plug have description ptr??
-	*/
 	// old way , phase out getting plug by name
 	//InterfaceObjectArray iobs;
 	SafeInterfaceObjectArray iobs;
@@ -380,38 +348,21 @@ void ug_base::UpdateInputVariable(SynthEditEvent* e)
 
 	case DT_TEXT:
 	{
-		if (e->parm2 > sizeof(int))
-		{
-			std::wstring temp((wchar_t*)e->extraData, e->parm2 / sizeof(wchar_t));
-			*((std::wstring*)p->io_variable) = (temp);
-		}
-		else // less than 4 bytes.
-		{
-			std::wstring temp((wchar_t*)&(e->parm3), e->parm2 / sizeof(wchar_t));
-			*((std::wstring*)p->io_variable) = temp;
-		}
+		std::wstring temp((wchar_t*)e->Data(), e->parm2 / sizeof(wchar_t));
+		*((std::wstring*)p->io_variable) = (temp);
 	}
 	break;
 
 	case DT_STRING_UTF8:
 	{
-		if (e->parm2 > sizeof(int))
-		{
-			std::string temp((const char*)e->extraData, e->parm2);
-			*((std::string*)p->io_variable) = temp;
-		}
-		else // less than 4 bytes.
-		{
-			std::string temp((const char*)&(e->parm3), e->parm2);
-			*((std::string*)p->io_variable) = temp;
-		}
+		std::string temp((const char*)e->Data(), e->parm2);
+		*((std::string*)p->io_variable) = temp;
 	}
 	break;
 
 	case DT_DOUBLE: // phase out this type. float easier
 	{
-		//*((double *)p->io_variable) = *((double *)c->From->io_variable);
-		*((double*)p->io_variable) = *((double*)e->extraData);
+		*((double*)p->io_variable) = *((double*)e->Data());
 	}
 	break;
 
@@ -422,15 +373,7 @@ void ug_base::UpdateInputVariable(SynthEditEvent* e)
 	case DT_BLOB:
 	{
 		MpBlob* blob = (MpBlob*)p->io_variable;
-
-		if (e->parm2 > sizeof(int))
-		{
-			blob->setValueRaw(e->parm2, e->extraData);
-		}
-		else // less than 4 bytes.
-		{
-			blob->setValueRaw(e->parm2, &(e->parm3));
-		}
+		blob->setValueRaw(e->parm2, e->Data());
 	}
 	break;
 
@@ -522,7 +465,14 @@ void ug_base::AddFixedPlugs()
 
 			for( auto p : pins )
 			{
-				if( (!p->isUiPlug(0) || p->isDualUiPlug(0) ) && !p->isCustomisable(0) && !p->autoDuplicate(0) )
+#if _DEBUG
+				if (p->isCustomisable(0))
+				{
+					// Theory: IO_CUSTOMISABLE are *always* IO_AUTODUPLICATE
+					assert(p->autoDuplicate(0));
+				}
+#endif				
+				if( (!p->isUiPlug(0) || p->isDualUiPlug(0) ) && /*!p->isCusto misable(0) &&*/ !p->autoDuplicate(0))
 				{
 					auto up = new UPlug( this, *p );
 					AddPlug( up );
@@ -535,7 +485,14 @@ void ug_base::AddFixedPlugs()
 			{
 				auto p = pmap.second;
 
-				if( (!p->isUiPlug(0) || p->isDualUiPlug(0) ) && !p->isCustomisable(0) && !p->autoDuplicate(0) )
+#if _DEBUG
+				if (p->isCustomisable(0))
+				{
+					// Theory: IO_CUSTOMISABLE are *always* IO_AUTODUPLICATE
+					assert(p->autoDuplicate(0));
+				}
+#endif				
+				if( (!p->isUiPlug(0) || p->isDualUiPlug(0) ) && /*!p->isCust omisable(0) &&*/ !p->autoDuplicate(0))
 				{
 					auto up = new UPlug( this, *p );
 					assignPlugVariable( p->getPlugDescID(0), up );
@@ -675,33 +632,19 @@ void ug_base::Setup( ISeAudioMaster* am, TiXmlElement* xml )
 				
 				if (plugElement->QueryIntAttribute("AutoCopy", &autoCopyDescId) == TIXML_SUCCESS)
 				{
-					InterfaceObject* pinDescription = 0;
-
-					if ((moduleType->GetFlags() & CF_OLD_STYLE_LISTINTERFACE) != 0) // Old internal, SDK1, and SDK2 modules.
-					{
-						// sometimes SDK plugins have less plugs than an older version
-						// prevent crash in this case
-						if (autoCopyDescId < moduleType->PlugCount())
-						{
-							// pinDescription = pins[autoCopyDescId];
-							pinDescription = moduleType->getPinDescriptionById(autoCopyDescId);
-						}
-					}
-					else	// Container, new-style internal modules, and SDK3.
-					{
-						pinDescription = moduleType->getPinDescriptionById(autoCopyDescId);
-					}
-
+					auto pinDescription = moduleType->getPinDescriptionById(autoCopyDescId);
 					if (pinDescription)
 					{
-						assert(pinDescription->autoDuplicate(0) || pinDescription->isCustomisable(0));
+						assert(pinDescription->autoDuplicate(0));
+/*
+* ??? STUPID ???
+* seem to be misguidely changing id to index (then using id when we should be using index)
 						UPlug* up = new UPlug(this, *pinDescription);
-
 						int uniqueId = 0;
 						plugElement->QueryIntAttribute("Id", &uniqueId);
 						up->setUniqueId(uniqueId);
-
-						AddPlug(up);
+*/
+						AddPlug(new UPlug(this, *pinDescription));
 					}
 				}
 
@@ -860,18 +803,18 @@ void ug_base::SetPinValue(timestamp_t timestamp, int pin_index, int datatype, co
 	{
 		if( datatype != DT_MIDI )
 		{
-			DiscardOldPinEvents( pin_index );
+			DiscardOldPinEvents( pin_index, datatype);
 		}
 	}
 
-	int cast_output_value = 0;
+	int32_t raw_output_value[2] = {};
 	char* extraData = 0;
 
-	if( data_size1 <= sizeof(int32_t) )
+	if( data_size1 <= sizeof(raw_output_value) )
 	{
 		if( data_size1 > 0 )
 		{
-			unsigned char* dest = (unsigned char*) &cast_output_value;
+			unsigned char* dest = (unsigned char*)raw_output_value;
 			unsigned char* src = (unsigned char*) data1;
 
 			for(int i = 0 ; i < data_size1; i++ )
@@ -894,23 +837,38 @@ void ug_base::SetPinValue(timestamp_t timestamp, int pin_index, int datatype, co
 	//timestamp_t timeStamp = block_relative_clock + AudioMaster()->BlockStartClock();
 	int eventType;
 
-	if( datatype == DT_MIDI )
+	switch(datatype)
 	{
+	case DT_MIDI:
 		eventType = UET_EVENT_MIDI;
-	}
-	else
+		break;
+
+	case DT_BLOB2:
 	{
+		// blob2 data represents a pointer to a reference counted object.
+		// need to increment the count to indicate that the data is 'in flight' and can't be reused yet.
+		auto blob2 = reinterpret_cast<gmpi::IMpUnknown**>(const_cast<void*>(data1));
+		if(*blob2)
+			(*blob2)->addRef();
+	}
+	[[fallthrough]];
+
+	default:
 		eventType = UET_EVENT_SETPIN;
+		break;
 	}
 
 	AddEvent(
-	    new_SynthEditEventB( timestamp,
-	                         eventType,
-	                         pin_index,					// int 1	- pin Index
-							 data_size1,				// int 2	- data size in bytes
-	                         cast_output_value,			// parm3	- data (if size <= 4 bytes)
-	                         0,							// parm4	- voice
-	                         extraData ));				// extra	- data (if size > 4 bytes)
+	    new_SynthEditEventB(
+			timestamp,
+			eventType,
+			pin_index,				// int 1	- pin Index
+			data_size1,				// int 2	- data size in bytes
+			raw_output_value[0],	// parm3	- data (if size <= 8 bytes)
+			raw_output_value[1],	// parm4	- voice or high word of data
+			extraData ),			// extra	- data (if size > 8 bytes)
+		datatype
+	);
 }
 
 // for older modules. Uses pins value as stored in io_variable.
@@ -961,12 +919,18 @@ void ug_base::SendPinsCurrentValue( timestamp_t timestamp, UPlug* from_plug )
 		break;
 
 	case DT_BLOB:
-		{
-		    MpBlob* b = (MpBlob*)from_plug->io_variable;
-		    data_size = b->getSize();
-		    data = b->getData();
-		}
-		break;
+	{
+		MpBlob* b = (MpBlob*)from_plug->io_variable;
+		data_size = b->getSize();
+		data = b->getData();
+	}
+	break;
+
+	case DT_BLOB2:
+	{
+		data_size = sizeof(gmpi::ISharedBlob*);
+	}
+	break;
 
 	case DT_TEXT:
 		{
@@ -985,10 +949,10 @@ void ug_base::SendPinsCurrentValue( timestamp_t timestamp, UPlug* from_plug )
 		break;
 
 	case DT_MIDI2:
-		case DT_FSAMPLE:
-			default:
-					assert(false);
-		break;
+	case DT_FSAMPLE:
+	default:
+		assert(false);
+	break;
 	}
 
 	assert( data || data_size == 0 ); // Blobs can transmit 'blank' data.
@@ -1375,7 +1339,7 @@ struct FeedbackTrace* ug_base::PPSetDownstream()
 	SetPPDownstreamFlag(true);
 
 #ifdef _DEBUG
-//	const auto polyContainer = parent_container->getOutermostPolyContainer();
+//	const auto polyContainer = parent_container->getVoiceControlContainer();
 #endif
 
 	bool hasAudioOutputs = false;
@@ -1795,7 +1759,7 @@ void ug_base::connect( UPlug* from_plug, UPlug* to_plug )
 
 	if( to_plug->DataType != from_plug->DataType )
 	{
-		const wchar_t* datatypes[] = { L"Enum", L"Text", L"Midi", L"Double", L"Bool", L"Volts", L"Float", L"", L"Int", L"Int64", L"Blob", L"class-unused", L"Text8"};
+		const wchar_t* datatypes[] = { L"Enum", L"Text", L"Midi", L"Double", L"Bool", L"Volts", L"Float", L"", L"Int", L"Int64", L"Blob", L"class-unused", L"Text8", L"Blob2"};
 
 		wchar_t temp[30];
 		swprintf(temp, sizeof(temp)/sizeof(temp[0]), L"SE %lsTo%ls", datatypes[from_plug->DataType], datatypes[to_plug->DataType]);
@@ -1884,6 +1848,8 @@ void ug_base::connect( UPlug* from_plug, UPlug* to_plug )
 		if (converter == nullptr)
 		{
 			converter = converterType->BuildSynthOb();
+			assert(converter);
+
 			// !!! Should use SetupWithoutUg() , except it currently don't assign plug variable to volts-to-float
 			AudioMaster()->AssignTemporaryHandle(converter);
 			converter->AddFixedPlugs();
@@ -1984,7 +1950,8 @@ void ug_base::connect( UPlug* from_plug, UPlug* to_plug )
 					break;
 
 			case DT_BLOB:	// new datatype in 1.1. Don't need backward compatibility.
-					break;
+			case DT_BLOB2:
+				break;
 
 				// copy current output value to destination plug.
 				// From old-days when first-sample status-send was not madatory.
@@ -2099,7 +2066,9 @@ void ug_base::AttachDebugger()
 
 void ug_base::AddPlug(UPlug* plug)
 {
+	// TEST try skipping this (id should never be confused with index)
 	// plugs without specific Unique-ID are assigned one based on position.
+// !!! hmm, just mimiking index. yet some unit tests fail without it.??????
 	if( plug->UniqueId() == -1 )
 	{
 		plug->setUniqueId( (int) plugs.size() );
@@ -2107,6 +2076,14 @@ void ug_base::AddPlug(UPlug* plug)
 
 	plug->setIndex( (int) plugs.size() );
 	plugs.push_back( plug );
+}
+
+void activateFeedbackModule(ug_base* feedback_out)
+{
+	// User has inserted a feedback module, activate it by removing dummy 'fuse' connection.
+	auto dummy = feedback_out->plugs[0];
+	dummy->connections.front()->connections.clear();
+	dummy->connections.clear();
 }
 
 FeedbackTrace* ug_base::CalcSortOrder3(int& maxSortOrderGlobal)
@@ -2126,10 +2103,21 @@ FeedbackTrace* ug_base::CalcSortOrder3(int& maxSortOrderGlobal)
 			const int order = to->UG->SortOrder2;
 			if (order == -2) // Found an feedback path, report it.
 			{
-				SortOrder2 = -1; // Allow this to be re-sorted after feedback (potentially) compensated.
-				auto e = new FeedbackTrace(SE_FEEDBACK_PATH);
-				e->AddLine(p, to);
-				return e;
+				// feedback-out encounters feedback on it's own helper.
+				if (moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 && p->DataType == DT_MIDI) // dummy pin
+				{
+					activateFeedbackModule(this);
+					// we have invalidated the iterator over 'p->connections'.
+					// need to exit the loop. note that with feedback_delay_out, there are no other input plugs anyhow, so it is safe to skip the remaining pins.
+					goto done;
+				}
+				else
+				{
+					SortOrder2 = -1; // Allow this to be re-sorted after feedback (potentially) compensated.
+					auto e = new FeedbackTrace(SE_FEEDBACK_PATH);
+					e->AddLine(p, to);
+					return e;
+				}
 			}
 
 			if (order == -1) // Found an unsorted path, go up it.
@@ -2141,10 +2129,7 @@ FeedbackTrace* ug_base::CalcSortOrder3(int& maxSortOrderGlobal)
 					// Not all modules have valid moduleType, e.g. oversampler_in
 					if (moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 && p->DataType == DT_MIDI) // dummy pin
 					{
-						// User has inserted a feedback module, activate it by removing dummy 'fuse' connection.
-						auto dummy = plugs[0];
-						dummy->connections.front()->connections.clear();
-						dummy->connections.clear();
+						activateFeedbackModule(this);
 
 						// Feedback fixed, remove feedback trace.
 						delete e;
@@ -2304,7 +2289,7 @@ const float* ug_base::GetInterpolationtable()
 			{
 				float adjusted = interpolation_table2[table_index+table_entry] / (float)fir_sum;
 
-				if( is_denormal(adjusted))
+				if (fpclassify(adjusted) == FP_SUBNORMAL)
 					adjusted = 0.f;
 
 				interpolation_table2[table_index+table_entry] = adjusted;
@@ -2359,15 +2344,41 @@ void ug_base::HandleEvent(SynthEditEvent* e)
 		}
 		break;
 
-	//case UET_PROG_CHANGE: // do nothing
-	//	break;
+		case UET_VOICE_STREAMING_STATE:
+		{
+			const auto voiceNumber = e->parm3;
+			ParentContainer()->at(voiceNumber)->outputSilentSince = (e->parm1 == ST_RUN) ? std::numeric_limits<timestamp_t>::max() : e->timeStamp;
+		}
+		break;
+		
+		case UET_VOICE_LEVEL:
+		{
+			const auto& voiceNumber = e->parm3;
+			const auto peakOutputLevel = *((float*)&(e->parm2)); // nasty.
 
-	case UET_VOICE_OUTPUT_STATUS:
-	{
-		ParentContainer()->UpdateVoiceOutputStatus(e);
-	}
-	break;
+			auto voice = ParentContainer()->at(voiceNumber);
+			voice->peakOutputLevel = peakOutputLevel;
 
+			// this is a backup for special cases like 'VoiceMonitorFallback' test where UET_VOICE_STREAMING_STATE never comes.
+			if (e->parm1 != ST_RUN && voice->outputSilentSince == std::numeric_limits<timestamp_t>::max())
+			{
+				voice->outputSilentSince = e->timeStamp;
+			}
+
+			// check for voice's that missed suspension by UET_VOICE_DONE_CHECK because they were still held.
+			voice->DoneCheck(e->timeStamp);
+		}
+		break;
+		
+		case UET_VOICE_DONE_CHECK:
+		{
+			// voice has been silent for a whole block, check if it's OK to suspend it.
+			const auto& voiceNumber = e->parm3;
+			auto voice = ParentContainer()->at(voiceNumber);
+			voice->DoneCheck(e->timeStamp);
+		}
+		break;
+#if 0	
 	// natural note end causes voice-active signal to go low.
 	case UET_DEACTIVATE_VOICE:
 		{
@@ -2393,7 +2404,8 @@ void ug_base::HandleEvent(SynthEditEvent* e)
 			}
 		}
 		break;
-
+#endif
+		
 	case UET_SUSPEND:
 		ParentContainer()->suspendVoice(e->timeStamp, e->parm3);
 		break;
@@ -2791,7 +2803,7 @@ void CreateMidiRedirector(ug_base* midiCv)
 		Problem, in 'UnterminatedPoly_Patch_point" unit test, this causes the MIDI player2 to be delayed by one block.
 		*/
 		redirector->SetupWithoutCug();
-		redirector->SetFlag(UGF_PATCH_AUTO); // prevent feedback error when controls connected to modules upstream of MIDI-CV MIDI port.
+		redirector->SetFlag(UGF_MIDI_REDIRECTOR); // prevent feedback error when controls connected to modules upstream of MIDI-CV MIDI port.
 
 		// old way was to connect dummy to MIDI-CV. Which only works if there is one MIDI-CV only and no Keyboard2.
 

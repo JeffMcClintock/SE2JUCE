@@ -39,8 +39,8 @@ namespace GmpiGuiHosting
 	protected:
 		GmpiDrawing::SizeL swapChainSize = {};
 
-		ID2D1DeviceContext* mpRenderTarget;
-		IDXGISwapChain1* m_swapChain;
+		ID2D1DeviceContext* mpRenderTarget = {};
+		IDXGISwapChain1* m_swapChain = {};
 
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics3> gmpi_gui_client; // usually a ContainerView at the topmost level
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpKeyClient> gmpi_key_client;

@@ -75,11 +75,12 @@ public:
 	virtual std::wstring getDefaultPath(const std::wstring& p_file_extension ) override;
 	virtual void GetRegistrationInfo(std::wstring& p_user_email, std::wstring& p_serial) override;
 	virtual void DoAsyncRestart() override;
+	void ClearDelaysUnsafe();
 	bool NeedsTempo( ){ return usingTempo_; }
 	// For VST process side automation.
-	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value )
+	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value, int32_t flags )
 	{
-		generator->setParameterNormalizedDsp( timestamp, paramIndex, value );
+		generator->setParameterNormalizedDsp( timestamp, paramIndex, value, flags );
 	}
 
 	void UpdateTempo( my_VstTimeInfo * ti )
@@ -87,22 +88,8 @@ public:
 		generator->UpdateTempo( ti );
 	}
     
-    void getPresetState( std::string& chunk, bool processorActive )
-    {
-        if( generator )
-        {
-			const bool saveRestartState = false;
-            generator->getPresetState_UI_THREAD( chunk, processorActive, saveRestartState);
-        }
-    }
-    void setPresetStateFromUiThread( const std::string& chunk, bool processorActive )
-    {
-		if (generator) // Can be null during AU validation.
-		{
-			generator->setPresetState_UI_THREAD(chunk, processorActive);
-		}
-    }
-    
+	void getPresetState(std::string& chunk, bool processorActive);
+	void setPresetStateFromUiThread(const std::string& chunk, bool processorActive);
 	int getNumInputs()
 	{
 		return generator->getNumInputs();

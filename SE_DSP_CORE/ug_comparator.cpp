@@ -34,7 +34,7 @@ void ug_comparator::process_both_run(int start_pos, int sampleframes)
 	float* in2 = in2_ptr + start_pos;
 	float* out = out1_ptr + start_pos;
 	float l_hi = m_hi * 0.1f;
-	float l_lo = m_lo * 0.1f;;
+	float l_lo = m_lo * 0.1f;
 
 	for( int s = sampleframes ; s > 0 ; s-- )
 	{
@@ -68,8 +68,8 @@ void ug_comparator::process_B_run(int start_pos, int sampleframes)
 	float* in1 = in1_ptr + start_pos;
 	float* in2 = in2_ptr + start_pos;
 	float* out = out1_ptr + start_pos;
-	float l_hi = m_hi * 0.1f;;
-	float l_lo = m_lo * 0.1f;;
+	float l_hi = m_hi * 0.1f;
+	float l_lo = m_lo * 0.1f;
 	float l_in1 = *in1;
 
 	for( int s = sampleframes ; s > 0 ; s-- )
@@ -112,14 +112,7 @@ void ug_comparator::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p
 	state_type input1_status = GetPlug( PN_INPUT1 )->getState();
 	state_type input2_status = GetPlug( PN_INPUT2 )->getState();
 	state_type out_stat = max( input1_status, input2_status );
-//	float in1_val = GetPlug( PN_INPUT1 )->getValue();
-//	float in2_val = GetPlug( PN_INPUT2 )->getValue();
 
-	// if one input is zero (and not changing) no need to recalc output
-	//	if( input1_status < ST_RUN && in1_val == 0.0f )
-	//		out_stat = ST_ONE_OFF;
-	//	if( input2_status < ST_RUN && in2_val == 0.0f )
-	//		out_stat = ST_ONE_OFF;
 	if( out_stat < ST_RUN )
 	{
 		SET_CUR_FUNC( &ug_comparator::process_both_stop );
@@ -144,6 +137,7 @@ void ug_comparator::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p
 		}
 	}
 
-	GetPlug(PN_OUT)->TransmitState( p_clock, out_stat );
+	// Avoid sending ST_STOP when m_hi or m_low changes, because successive ST-STOPs are ignored. We really mean ST_ONE_OFF.
+	GetPlug(PN_OUT)->TransmitState( p_clock, out_stat == ST_RUN ? ST_RUN : ST_ONE_OFF );
 }
 

@@ -74,6 +74,7 @@ public:
 	}
 
 	// IPinProperties
+	// for legacy reasons, actually returns pin index.
 	virtual int getUniqueId()
 	{
 		int32_t id;

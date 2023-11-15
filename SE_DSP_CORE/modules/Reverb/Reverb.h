@@ -106,6 +106,7 @@ private:
 	AudioInPin pinDamp;
 	AudioInPin pinMix;
 	IntInPin pinMode;
+	IntInPin pinClearTails;
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include "SynthEdit.h"
 #endif
 
+SE_DECLARE_INIT_STATIC_FILE(CpuMeterGui);
 using namespace gmpi;
 using namespace GmpiDrawing;
 
@@ -32,9 +33,10 @@ public:
 
 	int32_t MP_STDCALL OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext ) override
 	{
+		auto r = getRect();
 		Graphics g(drawingContext);
 
-		auto r = getRect();
+		ClipDrawingToBounds cd(g, r);
 
 		auto textFormat = GetGraphicsFactory().CreateTextFormat();
 		auto brush = g.CreateSolidColorBrush(Color::Green);

@@ -35,7 +35,7 @@ struct SynthEditEvent : public intrusiveListItem, AbsoluteTimeStamp, gmpi::MpEve
 	{
 		assert( eventType == UET_EVENT_SETPIN || eventType == UET_EVENT_MIDI );
 
-		if( parm2 > sizeof(int) )
+		if (extraData) // e->parm2 > sizeof(int))
 		{
 			return extraData;
 		}

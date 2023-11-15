@@ -22,6 +22,13 @@ m_prev_trigger(false)
 	initializePin( pinSaveMode);
 }
 
+std::string FileDialogGui::getDefaultFolder(std::wstring extension)
+{
+	const std::wstring searchFilename = L"dummy." + extension;
+	const auto fullFileName = uiHost.resolveFilename(searchFilename.c_str());
+	return JmUnicodeConversions::WStringToUtf8(fullFileName.substr(0, fullFileName.find(L"dummy") - 1));
+}
+
 void FileDialogGui::onSetTrigger()
 {
 	// trigger on mouse-up
@@ -38,11 +45,20 @@ void FileDialogGui::onSetTrigger()
 			int dialogMode = (int) pinSaveMode;
 			dialogHost->createFileDialog(dialogMode, nativeFileDialog.GetAddressOf());
 
-			if( ! nativeFileDialog.isNull() ) // returnFileDialog != 0 )
+			if( ! nativeFileDialog.isNull() )
 			{
 				nativeFileDialog.AddExtensionList(pinFileExtension);
 
-				nativeFileDialog.SetInitialFullPath(pinFileName);
+				auto filename = pinFileName.getValue();
+				if (!filename.empty())
+				{
+					filename = uiHost.resolveFilename(filename);
+					nativeFileDialog.SetInitialFullPath(JmUnicodeConversions::WStringToUtf8(filename));
+				}
+				else
+				{
+					nativeFileDialog.setInitialDirectory(getDefaultFolder(pinFileExtension));
+				}
 
 				nativeFileDialog.ShowAsync([this](int32_t result) -> void { this->OnFileDialogComplete(result); });
 			}
@@ -91,10 +107,9 @@ void FileDialogGui::OnFileDialogComplete(int32_t result)
 		{
 			auto shortName = StripPath(filepath);
 
-			MpString r;
-			getHost()->FindResourceU(shortName.c_str(), fileclass, &r);
-
-			if (filepath == r.str())
+			const auto r = uiHost.FindResourceU(shortName.c_str(), fileclass);
+			
+			if (filepath == r)
 			{
 				filepath = shortName;
 			}

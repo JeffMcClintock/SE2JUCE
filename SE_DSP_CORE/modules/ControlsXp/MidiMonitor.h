@@ -161,14 +161,18 @@ public:
 					const auto keyNumber = static_cast<uint8_t>(static_cast<int>(floorf(0.5f + midi2NoteTune[note.noteNumber])) & 0x7f);
 					midi2NoteToKey[note.noteNumber] = keyNumber;
 
+					float tempPitch = midi2NoteTune[note.noteNumber];
 					if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType)
 					{
-						midi2NoteTune[note.noteNumber] = note.attributeValue;
+						tempPitch = note.attributeValue;
 					}
 
-					//oss.precision(2);
-					//oss.setf(std::ios::fixed, std::ios::floatfield);
-					oss << L"Note On  (" << midi2NoteTune[note.noteNumber] << ", " << std::setprecision(2) << note.velocity << ")";
+					oss << L"Note On  (" << note.noteNumber << ", " << std::setprecision(2) << note.velocity << ")";
+					// display pitch if not default for that key
+					if (tempPitch != (float)note.noteNumber)
+					{
+						oss << " P" << tempPitch;
+					}
 				}
 				break;
 
@@ -178,7 +182,7 @@ public:
 
 					//oss.precision(2);
 					//oss.setf(std::ios::fixed, std::ios::floatfield);
-					oss << L"Note Off  (" << midi2NoteTune[note.noteNumber] << ", " << std::setprecision(2) << note.velocity << ")";
+					oss << L"Note Off  (" << note.noteNumber << ", " << std::setprecision(2) << note.velocity << ")";
 
 					// reset pitch of note number.
 					midi2NoteToKey[note.noteNumber] = note.noteNumber;
@@ -232,7 +236,10 @@ public:
 				break;
 
 				case gmpi::midi_2_0::PolyAfterTouch:
-					oss << L"PolyAfterTouch";
+				{
+					const auto aftertouch = gmpi::midi_2_0::decodePolyController(msg);
+					oss << L"PolyAfterTouch  (" << aftertouch.noteNumber << "," << aftertouch.value << ")";
+				}
 				break;
 
 				case gmpi::midi_2_0::PolyNoteManagement:
@@ -332,7 +339,7 @@ public:
 					break;
 
 				case MIDI_PolyAfterTouch:
-					oss << L"Aftertouch  (" << byte1 << "," << byte2 << ")";
+					oss << L"PolyAfterTouch  (" << byte1 << "," << byte2 << ")";
 					newMessage = oss.str();
 					break;
 

@@ -455,12 +455,12 @@ void SoundfontOscillator2::ResetWave()
 	}
 }
 
-inline bool is_denormal( float f )
-{
-	uint32_t l = *((uint32_t*)&f);
-
-	return( f != 0.f && (l & 0x7FF00000) == 0 && (l & 0x000FFFFF) != 0 ); // anything less than approx 1E-38 excluding +ve and -ve zero (two distinct values)
-}
+//inline bool is_denormal( float f )
+//{
+//	uint32_t l = *((uint32_t*)&f);
+//
+//	return( f != 0.f && (l & 0x7FF00000) == 0 && (l & 0x000FFFFF) != 0 ); // anything less than approx 1E-38 excluding +ve and -ve zero (two distinct values)
+//}
 
 // *** shared Interpolation filter setup ***
 float* SoundfontOscillator2::GetInterpolationtable()
@@ -544,7 +544,7 @@ float* SoundfontOscillator2::GetInterpolationtable()
 			for( int table_entry = 0 ; table_entry < INTERPOLATION_POINTS ; table_entry++ )
 			{
 				float adjusted = interpolation_table2[table_index+table_entry] / (float)fir_sum;
-				if( is_denormal(adjusted))
+				if (fpclassify(adjusted) == FP_SUBNORMAL)
 					adjusted = 0.f;
 				assert( (table_index+table_entry) >= 0 && (table_index+table_entry) < tableSize_ );
 				interpolation_table2[table_index+table_entry] = adjusted;

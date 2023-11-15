@@ -334,7 +334,7 @@ namespace SynthEdit2
 		// While connections are being made, note which pins already sent data.
 		std::vector<int> alreadySentDataPins_;
 
-		int32_t mouseCaptured;
+		bool mouseCaptured = false;
 
 		virtual bool isRackModule() = 0;
 

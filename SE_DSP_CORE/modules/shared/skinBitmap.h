@@ -11,21 +11,21 @@ class skinBitmap : public ImageCacheClient
 {
 protected:
 	GmpiDrawing::Bitmap bitmap_;
-	ImageMetadata* bitmapMetadata_;
+	ImageMetadata* bitmapMetadata_ = {};
 
-	GmpiDrawing::Point m_ptPrev;
+	GmpiDrawing::Point m_ptPrev = {};
 //	bool smallDragSuppression;
-	float m_rot_mode;
-	int drawAt;
-	bool hitTestPixelAccurate;
+	float m_rot_mode = 0;
+	int drawAt = 0;
+	bool hitTestPixelAccurate = true;
 	std::vector<uint64_t> fastHitTestPixels;
 	int fastHitTestStride = 0;
 	
 	// Rotary switch mode.
-	int m_rotary_steps;
-	float m_rotary_switch_start_angle; // from 0.0 (3oclock) to 1.0
-	float m_rotary_switch_range; // from 0.0 to 1.0 (360 degrees)
-	int last_frame_idx;
+	int m_rotary_steps = {};
+	float m_rotary_switch_start_angle = 0.0f; // from 0.0 (3oclock) to 1.0
+	float m_rotary_switch_range = 0.0f; // from 0.0 to 1.0 (360 degrees)
+	int last_frame_idx = 0;
 	int rotary_current_step = 0;
 
 	// Uses co-ords relative to widget (needs offset applied before use) 
@@ -164,20 +164,25 @@ protected:
 				fastHitTestPixels.assign(fastHitTestStride * imageSize.height, 0);
 
 				auto pixels = bitmap_.lockPixels();
-				for (int py = 0; py < imageSize.height; ++py)
+				for (uint32_t py = 0; py < imageSize.height; ++py)
 				{
-					for (int px = 0; px < imageSize.width; ++px)
+					for (uint32_t px = 0; px < imageSize.width; ++px)
 					{
 						auto pixel = pixels.getPixel(px, py);
 						if (((pixel >> 24) & 0xff) > 0)
 						{
-							fastHitTestPixels[py * fastHitTestStride + px / sizeof(uint64_t)] |= 1 << (px % sizeof(uint64_t));
+							fastHitTestPixels[py * fastHitTestStride + px / sizeof(uint64_t)] |= 1ULL << (px % sizeof(uint64_t));
 						}
 					}
 				}
 			}
 
-			return fastHitTestPixels[y * fastHitTestStride + x / sizeof(uint64_t)] & (1 << (x % sizeof(uint64_t)));
+			const auto index = y * fastHitTestStride + x / sizeof(uint64_t);
+
+			if (index < 0 || index >= fastHitTestPixels.size())
+				return false;
+
+			return fastHitTestPixels[index] & (1ULL << (x % sizeof(uint64_t)));
 		}
 		else
 		{
@@ -186,19 +191,7 @@ protected:
 	}
 public:
 	enum class ToggleMode { Momentary, Alternate, OnOnly };
-	ToggleMode toggleMode2;
-
-	skinBitmap() :
-		drawAt(0)
-		, m_rot_mode(0)
-		, m_rotary_switch_start_angle(0.0)
-		, m_rotary_switch_range(0.0)
-		, last_frame_idx(0)
-		, bitmapMetadata_(nullptr)
-		, toggleMode2(ToggleMode::Momentary)
-		, hitTestPixelAccurate(true)
-	{
-	}
+	ToggleMode toggleMode2 = ToggleMode::Momentary;
 
 	virtual GmpiDrawing_API::IMpBitmap* getDrawBitmap()
 	{
@@ -309,7 +302,6 @@ public:
 				GmpiDrawing::Rect knob_rect(0.f, y, (float)bitmapMetadata_->frameSize.width, (float)bitmapMetadata_->frameSize.height);
 				GmpiDrawing::Rect dest_rect(0.f, y, (float)bitmapMetadata_->frameSize.width, (float)bitmapMetadata_->frameSize.height);
 				dest_rect.Offset(topLeft);
-//				dest_rect.Offset(x, y);
 				dc.DrawBitmap(lbitmap, dest_rect, knob_rect);
 			}
 			// draw unlit seqments
@@ -322,7 +314,6 @@ public:
 				);
 				GmpiDrawing::Rect dest_rect(0.f, 0.f, (float)bitmapMetadata_->frameSize.width, y);
 				dest_rect.Offset(topLeft);
-//				dest_rect.Offset(x, y);
 				dc.DrawBitmap(lbitmap, dest_rect, knob_rect);
 			}
 		}
@@ -437,7 +428,8 @@ public:
 		bitmapMetadata_ = nullptr;
 		last_frame_idx = 0;
 		bitmap_ = 0;
-
+		fastHitTestPixels.clear();
+		
 		if (imageFile && imageFile[0] != 0) // not empty?
 		{
 			bitmap_ = GetImage(host, guiHost, imageFile, &bitmapMetadata_);

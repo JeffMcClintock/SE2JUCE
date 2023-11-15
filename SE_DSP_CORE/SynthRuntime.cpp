@@ -195,7 +195,7 @@ std::wstring SynthRuntime::ResolveFilename(const std::wstring& name, const std::
 
 std::wstring SynthRuntime::getDefaultPath(const std::wstring& p_file_extension )
 {
-    return BundleInfo::instance()->getImbeddedFileFolder();
+    return BundleInfo::instance()->getResourceFolder();
 }
 
 void SynthRuntime::GetRegistrationInfo(std::wstring& p_user_email, std::wstring& p_serial)
@@ -206,6 +206,16 @@ void SynthRuntime::GetRegistrationInfo(std::wstring& p_user_email, std::wstring&
 void SynthRuntime::DoAsyncRestart()
 {
 	reinitializeFlag = true;
+}
+
+void SynthRuntime::ClearDelaysUnsafe()
+{
+	std::lock_guard<std::mutex> x(generatorLock);
+
+	if (generator)
+	{
+		generator->ClearDelaysUnsafe();
+	}
 }
 
 void SynthRuntime::OnSaveStateDspStalled()
@@ -233,4 +243,21 @@ int32_t SynthRuntime::SeMessageBox(const wchar_t* msg, const wchar_t* title, int
 	return 0;
 }
 
+void SynthRuntime::getPresetState(std::string& chunk, bool processorActive)
+{
+	std::lock_guard<std::mutex> x(generatorLock); // avoid calling into patch-manager if it's being deleted and recreated (DSP is restarting).
+	if (generator)
+	{
+		const bool saveRestartState = false;
+		generator->getPresetState_UI_THREAD(chunk, processorActive, saveRestartState);
+	}
+}
 
+void SynthRuntime::setPresetStateFromUiThread(const std::string& chunk, bool processorActive)
+{
+	std::lock_guard<std::mutex> x(generatorLock);
+	if (generator) // Can be null during AU validation.
+	{
+		generator->setPresetState_UI_THREAD(chunk, processorActive);
+	}
+}

@@ -10,8 +10,7 @@
 #elif defined CBUILDER
     #pragma -a8
 #elif defined(WIN32) || defined(__FLAT__)
-	#pragma pack(push)
-	#pragma pack(8)
+	#pragma pack(push,8)
 #endif
 
 #if defined(WIN32) || defined(__FLAT__) || defined CBUILDER

@@ -113,7 +113,7 @@ int32_t RegisterPlugin( int subType, const wchar_t* uniqueId, MP_CreateFunc2 cre
 }
 
 // register plugin's XML with the factory. Deprecated.
-int32_t RegisterPluginXml( const char* xmlFile )
+int32_t RegisterPluginXml( const char* /*xmlFile*/ )
 {
 	// Not supported yet in external plugin. XML read directly from resource by host.
 //	return Factory()->RegisterPluginXml( xmlFile );
@@ -271,7 +271,7 @@ int32_t MpFactory::getSdkInformation( int32_t& returnSdkVersion, int32_t maxChar
 	#endif
 
 #if defined(_MSC_VER )
-	wcscpy_s( returnCompilerInformation, maxChars, oss.str().c_str() );
+	wcscpy_s( returnCompilerInformation, static_cast<rsize_t>(maxChars), oss.str().c_str() );
 #else
 	wcscpy(returnCompilerInformation, oss.str().c_str());
 #endif
@@ -306,12 +306,12 @@ void MpBlob::setValueRaw(size_t size, const void* data)
 
 void MpBlob::resize( int size )
 {
-	if( size_ < (size_t) size )
+	if( size_ < static_cast<size_t>(size) )
 	{
 		delete [] data_;
 		if( size > 0 )
 		{
-			data_ = new char[size];
+			data_ = new char[static_cast<size_t>(size)];
 		}
 		else
 		{
@@ -319,7 +319,7 @@ void MpBlob::resize( int size )
 		}
 	}
 
-	size_ = size;
+	size_ = static_cast<size_t>(size);
 }
 
 int32_t MpBlob::getSize() const
@@ -353,7 +353,7 @@ bool MpBlob::operator==( const MpBlob& other ) const
 
 bool MpBlob::compare( char* data, int size )
 {
-	if( size_ != size )
+	if( size_ != static_cast<size_t>(size) )
 		return false;
 
 	for( size_t i = 0 ; i < size_ ; ++i )

@@ -1,202 +1,187 @@
 #include "./GuitarDechannelizer.h"
 
-#define NOTE_OFF                0x80
-#define NOTE_ON                 0x90
-#define POLY_AFTERTOUCH         0xA0
-#define CONTROL_CHANGE          0xB0
-#define PITCHBEND               0xE0
-#define SYSTEM_MSG				0xF0
-#define SYSTEM_EXCLUSIVE        0xF0
-
-#define UNIVERSAL_REAL_TIME     0x7F
-#define UNIVERSAL_NON_REAL_TIME 0x7E
-#define SUB_ID_TUNING_STANDARD  0x08
-
-#define NRPN_MSB				99
-#define NRPN_LSB				98
-#define RPN_MSB					101
-#define RPN_LSB					100
-#define RPN_CONTROLLER			6
-#define RPN_PITCH_BEND_SENSITIVITY  0x00
+using namespace gmpi;
 
 REGISTER_PLUGIN ( GuitarDechannelizer, L"SE Guitar De-Channelizer" );
 
-void cntrl_update_msb(int& var, int hb)
+GuitarDechannelizer::GuitarDechannelizer( IMpUnknown* host ) : MpBase( host ),
+// init the midi converter
+midiConverter(
+	// provide a lambda to accept converted MIDI 2.0 messages
+	[this](const midi::message_view& msg, int offset)
 {
-	var = (var & 0x7f) + ( hb << 7 );	// mask off high bits and replace
+	onMidi2Message(msg);
 }
-
-void cntrl_update_lsb(int&var, int lb)
-{
-	var = ( var & 0x3F80) + lb;			// mask off low bits and replace
-}
-
-
-GuitarDechannelizer::GuitarDechannelizer( IMpUnknown* host ) : MpBase( host )
+)
 {
 	// Register pins.
 	initializePin( 0, pinMIDIIn );
 	initializePin( 1, pinMIDIOut );
 
-	for( int midiKeyNumber = 0 ; midiKeyNumber < MidiChannelCount ; ++midiKeyNumber )
+	for( int chan = 0 ; chan < MidiChannelCount ; ++chan)
 	{
-		stringKeyNumber[midiKeyNumber] = midiKeyNumber;
-		benderRange[midiKeyNumber] = 2 * 0x80; // +/- 2 semitones default pitch bend.
-		bender[midiKeyNumber] = 0;
+		stringKeyNumber[chan] = chan;
+		benderRange[chan] = 2.0f; // +/- 2 semitones default pitch bend.
+		tuningOut[chan] = -1.0f; // -1 = not sent yet.
+
+		// fill tuning table with default values.
+		for (int midiKeyNumber = 0; midiKeyNumber < MidiKeyCount; ++midiKeyNumber)
+		{
+			tuningTable[chan][midiKeyNumber] = (float) midiKeyNumber;
+		}
 	}
 }
 
-void GuitarDechannelizer::onMidiMessage( int pin, unsigned char* midiMessage, int size )
+// passes all MIDI to the converter.
+void GuitarDechannelizer::onMidiMessage(int pin, unsigned char* midiMessage, int size)
 {
-	int stat,b2,b3,midiChannel;// 3 bytes of MIDI message
+	midi::message_view msg((const uint8_t*)midiMessage, size);
 
-	midiChannel = midiMessage[0] & 0x0f;
+	// convert everything to MIDI 2.0
+	midiConverter.processMidi(msg, -1);
+}
 
-	stat = midiMessage[0] & 0xf0;
-	b2 = midiMessage[1];
-	b3 = midiMessage[2];
+void GuitarDechannelizer::onMidi2Message(const midi::message_view& msg)
+{
+	const auto header = gmpi::midi_2_0::decodeHeader(msg);
 
-	// Note offs can be note_on vel=0
-	if( b3 == 0 && stat == NOTE_ON )
+	// only 8-byte messages supported.
+	if (header.messageType != gmpi::midi_2_0::ChannelVoice64)
+		return;
+
+	switch (header.status)
 	{
-		stat = NOTE_OFF;
+	case gmpi::midi_2_0::PolyControlChange:
+	{
+		const auto polyController = gmpi::midi_2_0::decodePolyController(msg);
+
+		if (polyController.type == gmpi::midi_2_0::PolyPitch)
+		{
+			const auto absolutePitchSemitones = gmpi::midi_2_0::decodeNotePitch(msg);
+			tuningTable[header.channel][polyController.noteNumber] = absolutePitchSemitones;
+
+			for(int string = 0 ; string < MidiChannelCount ; ++string)
+			{
+				if (stringKeyNumber[string] == polyController.noteNumber)
+				{
+					const auto out = gmpi::midi_2_0::makePolyController(
+						string,
+						gmpi::midi_2_0::PolyPitch,
+						absolutePitchSemitones
+					);
+					pinMIDIOut.send(out.m);
+				}
+			}
+		}
+	}
+	break;
+
+	case gmpi::midi_2_0::NoteOn:
+	{
+		const auto note = gmpi::midi_2_0::decodeNote(msg);
+
+		// MIDI chan 1 mapped to key-number 1, chan2 => key 2 etc.
+		const int midiKeyNumber = note.noteNumber;
+		const int guitarString = header.channel;
+
+		if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType)
+		{
+			tuningTable[header.channel][midiKeyNumber] = note.attributeValue;
+		}
+
+//		// need to re-tune?
+//		if (stringKeyNumber[guitarString] != midiKeyNumber)
+//		{
+//			stringKeyNumber[guitarString] = midiKeyNumber;
+////			SendPitch(guitarString);
+//		}
+		stringKeyNumber[guitarString] = midiKeyNumber;
+
+		// send note-on MIDI message with new key number (voice).
+		//midiMessage[0] = NOTE_ON; // Force channel zero.
+		//midiMessage[1] = guitarString;
+		if (tuningOut[guitarString] != tuningTable[header.channel][midiKeyNumber])
+		{
+			tuningOut[guitarString] = tuningTable[header.channel][midiKeyNumber];
+
+			const auto out = gmpi::midi_2_0::makeNoteOnMessageWithPitch(
+				guitarString,
+				note.velocity,
+				tuningOut[guitarString]
+			);
+
+			pinMIDIOut.send(out.m);
+		}
+		else
+		{
+			const auto out = gmpi::midi_2_0::makeNoteOnMessage(
+				guitarString,
+				note.velocity
+			);
+
+			pinMIDIOut.send(out.m);
+		}
+	}
+	break;
+
+	case gmpi::midi_2_0::NoteOff:
+	{
+		const auto note = gmpi::midi_2_0::decodeNote(msg);
+		const int guitarString = header.channel;
+
+		// send note-off MIDI message with assigned key number (string number).
+		//midiMessage[0] = NOTE_OFF; // Force channel zero.
+		//midiMessage[1] = guitarString;
+
+		const auto out = gmpi::midi_2_0::makeNoteOffMessage(
+			guitarString,
+			note.velocity
+		);
+
+		pinMIDIOut.send(out.m);
+	}
+	break;
+
+	case gmpi::midi_2_0::PitchBend:
+	{
+		const int guitarString = header.channel;
+		const auto normalized = gmpi::midi_2_0::decodeController(msg).value;
+		bender[header.channel] = normalized * 2.0f - 1.f;
+
+		const auto out = gmpi::midi_2_0::makePolyBender(
+			guitarString,
+			bender[header.channel]
+		);
+
+		//				_RPTN(0, "MPE: Bender %d: %f\n", keyInfo.MidiKeyNumber, channelBender[header.channel]);
+
+		pinMIDIOut.send(out.m);
+//		SendPitch(header.channel);
+	}
+	break;
+
+	case gmpi::midi_2_0::RPN:
+	{
+		const auto rpn = gmpi::midi_2_0::decodeRpn(msg);
+		const int guitarString = header.channel;
+
+		if (rpn.rpn == gmpi::midi_2_0::RpnTypes::PitchBendSensitivity)
+		{
+			benderRange[guitarString] = rpn.value;
+		}
+
+		pinMIDIOut.send(msg.begin(), msg.size());
 	}
 
-	// Pitch Bend.
-	switch( stat )
-	{
-	case NOTE_ON:
-		{
-			// MIDI chan 1 mapped to key-number 1, chan2 => key 2 etc.
-			int midiKeyNumber = midiMessage[1];
-			int guitarString = midiChannel;
-
-			// need to re-tune?
-			if( stringKeyNumber[guitarString] != midiKeyNumber )
-			{
-				stringKeyNumber[guitarString] = midiKeyNumber;
-				SendPitch(guitarString);
-			}
-
-			// send note-on MIDI message with new key number (voice).
-			midiMessage[0] = NOTE_ON; // Force channel zero.
-			midiMessage[1] = guitarString;
-			pinMIDIOut.send( midiMessage, size, blockPosition() );
-		}
-		break;
-
-	case NOTE_OFF:
-		{
-			int guitarString = midiChannel;
-
-			// send note-off MIDI message with assigned key number (string number).
-			midiMessage[0] = NOTE_OFF; // Force channel zero.
-			midiMessage[1] = guitarString;
-			pinMIDIOut.send( midiMessage, size, blockPosition() );
-		}
-		break;
-
-	case PITCHBEND:
-		{
-			// _RPT0(_CRT_WARN,"pitch bend\n");
-			int benderAmmount = (b3 << 7) + b2 - 0x2000;
-
-			// store bend for this chan, for any note-ons that need it
-			//float bend_amt = (float)bender_pos / (float) 0x2000;
-			//assert( midiChannel >= 0 && midiChannel < 16 );
-
-			bender[midiChannel] = benderAmmount;
-
-			SendPitch(midiChannel);
-		}
-		break;
-		
-		/*
-	case POLY_AFTERTOUCH:
-		{
-			int midiKeyNumber = midiMessage[1];
-			int mappedMidiKeyNumber = keyMap[midiChannel][midiKeyNumber];
-
-			// mapped to a voice both ways?
-			if( stringKeyNumber[mappedMidiKeyNumber] == midiKeyNumber && voiceChannel[mappedMidiKeyNumber] == midiChannel )
-			{
-				// send note-off MIDI message with assigned key number (voice).
-				midiMessage[0] = NOTE_OFF; // Force channel zero.
-				midiMessage[1] = mappedMidiKeyNumber;
-				pinMIDIOut.send( midiMessage, size, blockPosition() );
-			}
-		}
-		break;
-*/
-	case CONTROL_CHANGE:
-		//_RPT0(_CRT_WARN,"control change\n");
-		switch( b2 )
-		{
-		case NRPN_MSB:
-		case NRPN_LSB:
-			incoming_rpn = -1;	// ignore nrpn msgs
-			break;
-
-		case RPN_MSB:
-			cntrl_update_msb( incoming_rpn, b3 );
-			break;
-
-		case RPN_LSB:
-			cntrl_update_lsb( incoming_rpn, b3 );
-			break;
-
-		case RPN_CONTROLLER:	// data entry slider MSB
-			if( incoming_rpn == RPN_PITCH_BEND_SENSITIVITY )
-			{
-				// has to be stored per channel!!!
-				cntrl_update_msb( benderRange[midiChannel], b3 );
-//				chan_info[midiChannel].midi_bend_range = (float) pitch_bend_sensitity_raw / (float) 0x80;
-			}
-			break;
-		case  38:	// data entry slider LSB
-			if( incoming_rpn == RPN_PITCH_BEND_SENSITIVITY )
-			{
-				cntrl_update_lsb( benderRange[midiChannel], b3 );
-//				benderRange[midiChannel] = (float) pitch_bend_sensitity_raw / (float) 0x80;
-			}
-			break;
-		case 64: // Hold Pedal
-		case 69:
-			{
-			}
-			break;
-		case 120:	// All sound off
-		case 123:	// All notes off
-			{
-			}
-			break;
-		};
-
-		pinMIDIOut.send( midiMessage, size );
-
-		break;
-
-	case SYSTEM_MSG:
-		{
-			if( midiMessage[0] == SYSTEM_EXCLUSIVE &&
-			  ( midiMessage[1] == UNIVERSAL_REAL_TIME || midiMessage[1] == UNIVERSAL_NON_REAL_TIME ) &&
-			    midiMessage[3] == SUB_ID_TUNING_STANDARD )
-			{
-				OnMidiTuneMessage( -1, midiMessage );
-			}
-			else
-			{
-				pinMIDIOut.send( midiMessage, size );
-			}
-		}
-		break;
+	break;
 
 	default:
-		pinMIDIOut.send( midiMessage, size );
+		pinMIDIOut.send(msg.begin(), msg.size());
 		break;
-	}
+	};
 }
 
+#if 0
 void GuitarDechannelizer::SendPitch(int guitarString)
 {
 	/*
@@ -214,7 +199,7 @@ void GuitarDechannelizer::SendPitch(int guitarString)
 		[xx yy zz]  frequency data for that key (repeated ‘ll' number of times)  
 		F7  EOX  
 	*/
-
+#if 0
 	int tune = GetIntKeyTune( stringKeyNumber[guitarString] );
 //	tune += (bender[keyNumber] / 0x2000 * benderRange[keyNumber] / 0x80 ) * 0x4000 ;
 	tune += (bender[guitarString] * benderRange[guitarString] ) >> 6;
@@ -231,6 +216,15 @@ void GuitarDechannelizer::SendPitch(int guitarString)
 	tuneMessage[10] = tune & 0x7f; // tuning fine.
 
 	pinMIDIOut.send( tuneMessage, sizeof(tuneMessage) );
+#else
+	float tune = stringKeyNumber[guitarString];
+	tune += bender[guitarString] * benderRange[guitarString];
+
+	const auto out = gmpi::midi_2_0::makeNotePitchMessage(
+		stringKeyNumber[guitarString],
+		tune
+	);
+#endif
 }
 
 void GuitarDechannelizer::OnKeyTuningChanged( int p_clock, int MidiNoteNumber, int tune )
@@ -246,3 +240,4 @@ void GuitarDechannelizer::OnKeyTuningChanged( int p_clock, int MidiNoteNumber, i
 	}
 }
 
+#endif

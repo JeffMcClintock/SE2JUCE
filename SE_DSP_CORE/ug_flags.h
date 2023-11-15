@@ -19,7 +19,7 @@ enum UgFlags
 	,UGF_DELAYED_GATE_NOTESOURCE= (1 << 10)
 	// Module takes advantage of spare samples at end of buffer to make better use of SSE.
 	,UGF_SSE_OVERWRITES_BUFFER_END = (1 << 11)
-	//,UGF_DEBUG_WATCH			= (1 << 12)
+	,UGF_MIDI_REDIRECTOR		= (1 << 12)
 	// Module initiates parameter changes or triggers voices, so needs to be upstream of all other modules using parameters or host-controls.
 	// Any exceptions to this, e.g. controls connected before MIDI-CV need special UGF_UPSTREAM_PARAMETER flag to signify latency on parameter changes. 
 	,UGF_PATCH_AUTO				= (1 << 13)
@@ -38,7 +38,8 @@ enum UgFlags
 	,UGF_UPSTREAM_PARAMETER		= (1 << 23)	// Module processing MIDI input to Patch-Automator.
 //	,UGF_ALWAYS_EXPORT			= (1 << 25)	// e.g. Voice-Mute. moved to CF_ flags
 	,UGF_HAS_HELPER_MODULE		= (1 << 26)	// e.g. Poly-to-Mono.
-	,UGF_NEVER_SUSPEND			= (1 << 27)
+	, UGF_NEVER_SUSPEND = (1 << 27)
+	, UGF_ENSURE_AFTER_PA = (1 << 27)		// This oversampler does not have it's own patch-manager, 
 };
 
 

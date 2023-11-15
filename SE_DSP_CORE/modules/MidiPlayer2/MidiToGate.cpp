@@ -108,7 +108,7 @@ public:
 #endif
 
 	// passes all MIDI to the converter.
-	void onMidiMessage(int pin, unsigned char* midiMessage, int size)
+	void onMidiMessage(int pin, unsigned char* midiMessage, int size) override
 	{
 		midi::message_view msg((const uint8_t*)midiMessage, size);
 
@@ -234,7 +234,7 @@ public:
 	}
 
 	// passes all MIDI to the converter.
-	void onMidiMessage(int pin, unsigned char* midiMessage, int size)
+	void onMidiMessage(int pin, unsigned char* midiMessage, int size) override
 	{
 		midi::message_view msg((const uint8_t*)midiMessage, size);
 

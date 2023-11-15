@@ -4,6 +4,7 @@ project(Waveshapers)
 
 build_gmpi_plugin(
     PROJECT_NAME ${PROJECT_NAME}
+    IS_OFFICIAL_MODULE
     HAS_DSP
     HAS_GUI
     SOURCE_FILES 

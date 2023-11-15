@@ -13,12 +13,12 @@ public:
 	    module_ = module;
     }
 	// IMpPinIterator support.
-	virtual int32_t MP_STDCALL getCount( int32_t &returnCount ) override
+	int32_t MP_STDCALL getCount( int32_t &returnCount ) override
     {
 		returnCount = (int32_t) module_->plugs.size();
 	    return gmpi::MP_OK;
     }
-    virtual int32_t MP_STDCALL first() override
+    int32_t MP_STDCALL first() override
     {
 	    it_ = module_->plugs.begin();
 
@@ -31,7 +31,7 @@ public:
 		    return gmpi::MP_OK;
 	    }
     }
-	virtual int32_t MP_STDCALL next() override
+	int32_t MP_STDCALL next() override
     {
 	    ++it_;
 
@@ -44,17 +44,21 @@ public:
 		    return gmpi::MP_OK;
 	    }
     }
-	virtual int32_t MP_STDCALL getPinId( int32_t& returnValue ) override
+	int32_t MP_STDCALL getPinId( int32_t& returnValue ) override
     {
-	    returnValue = (*it_)->UniqueId();
+		// due to shitty coding, UniqueId() was producing an index.
+		// this has now been fixed, but to spare existing module from crashing, we're gonna return the index.
+
+		//	    returnValue = (*it_)->UniqueId();
+		returnValue = (*it_)->getPlugIndex();
 	    return gmpi::MP_OK;
     }
-	virtual int32_t MP_STDCALL getPinDirection( int32_t& returnValue ) override
+	int32_t MP_STDCALL getPinDirection( int32_t& returnValue ) override
     {
 	    returnValue = (*it_)->Direction;
 	    return gmpi::MP_OK;
     }
-    virtual int32_t MP_STDCALL getPinDatatype( int32_t& returnValue ) override
+    int32_t MP_STDCALL getPinDatatype( int32_t& returnValue ) override
     {
 	    returnValue = (*it_)->DataType;
         return gmpi::MP_OK;

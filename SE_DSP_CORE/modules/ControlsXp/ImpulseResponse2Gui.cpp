@@ -8,13 +8,22 @@ using namespace GmpiDrawing;
 
 class ImpulseResponseGui : public gmpi_gui::MpGuiGfxBase, public FontCacheClient
 {
+	void clearPrecalculatedDimensions()
+	{
+		// Force recalc of text positions etc.
+		labelXCoords.clear();
+		labelText.clear();
+		pixelToBin.clear();
+		responseOptimized.clear();
+	}
+
  	void onSetResults()
 	{
 		if (pinsampleRate.getValue() != currentSampleRate || pinResults.getValue().getSize() != currentCaptureSize)
 		{
 			currentSampleRate = pinsampleRate.getValue();
 			currentCaptureSize = pinResults.getValue().getSize();
-			pixelToBin.clear();
+			clearPrecalculatedDimensions();
 		}
 
 		responseOptimized.clear();
@@ -133,6 +142,12 @@ public:
 	{
 		initializePin( pinResults, static_cast<MpGuiBaseMemberPtr2>(&ImpulseResponseGui::onSetResults) );
 		initializePin( pinsampleRate, static_cast<MpGuiBaseMemberPtr2>(&ImpulseResponseGui::onSetResults) );
+	}
+
+	int32_t MP_STDCALL arrange(GmpiDrawing_API::MP1_RECT finalRect) override
+	{
+		clearPrecalculatedDimensions();
+		return MpGuiGfxBase::arrange(finalRect);
 	}
 
 	int32_t MP_STDCALL OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext ) override

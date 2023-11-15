@@ -49,12 +49,13 @@ public:
 		MidiCvControlsVoices_ = true;
 	}
 	virtual void OnMidi(VoiceControlState* voiceState, timestamp_t timestamp, const unsigned char* midiMessage, int size, bool fromMidiCv) override;
+	void MidiSetMonoMode(timestamp_t timestamp, bool newMonoMode);
 	float InitializeVoiceParameters(ug_container* voiceControlContainer, timestamp_t timestamp, Voice* voice, /*int voiceId, bool hardReset,*/ bool sendTrigger) override;
 	void vst_Automation2(timestamp_t p_clock, int p_controller_id, const void* data, int size ) override;
 
 	class dsp_patch_parameter_base* GetHostControl(int32_t hostControl, int32_t attachedToContainerHandle = -1) override;
 #if defined(SE_TARGET_PLUGIN)
-	virtual	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue ) override; // VST3.
+	virtual	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) override; // VST3.
 #endif
 
     void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;
@@ -78,7 +79,7 @@ private:
 	ug_container* m_container;
 	int midiChannel_;
 	// this just increments each time a voice is reset.
-	int nextVoiceReset_;
+	int nextVoiceReset_ = 1;
 
 	// used only in plugins, but harmless in editor.
 	std::vector<dsp_patch_parameter_base*> parameterIndexes_; // VST-Host's parameter ID's.

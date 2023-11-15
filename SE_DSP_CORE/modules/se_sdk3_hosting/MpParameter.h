@@ -9,8 +9,9 @@
 
 class MpParameter : public TimerClient
 {
-	bool m_grabbed = false;
-	int m_grabbed_by_MIDI_timer = 0;
+	bool m_grabbed = false;				// true = grabbed by user clicking the GUI
+	int m_grabbed_by_MIDI_timer = 0;	// greater than zero = grabbed by internal MIDI automation
+	virtual void onGrabbedChanged() {}
 
 public:
 	class MpController* controller_ = nullptr;
@@ -42,9 +43,9 @@ public:
 		return moduleParamId_;
 	}
 
-	bool isGrabbed()
+	bool isGrabbed() const
 	{
-		return m_grabbed;
+		return m_grabbed || m_grabbed_by_MIDI_timer > 0;
 	}
 
 	virtual RawView getValueRaw(gmpi::FieldType paramField, int32_t voice);
@@ -150,6 +151,8 @@ public:
     
 class MpParameter_native : public MpParameter_base
 {
+	bool dawGrabbed = false; // the grabbed state we last sent to the DAW (logical OR of all grabbers)
+
 public:
 	int hostTag = -1;	// index as set in SE, not nesc sequential.
 	int hostIndex = -1;	// strict sequential index, no gaps.
@@ -163,6 +166,7 @@ public:
 	bool isPolyPhonic() override {
 		return false;
 	}
+	void onGrabbedChanged() override;
 };
 
 // Host controls which are not stateful and are not available on the Processor

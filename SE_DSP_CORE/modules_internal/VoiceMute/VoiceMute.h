@@ -10,7 +10,7 @@ public:
 	VoiceMute(IMpUnknown* host);
 
 	// overrides
-	virtual int32_t MP_STDCALL open();
+	int32_t MP_STDCALL open() override;
 
 	// methods
 	void subProcess3SamplePreGate(int bufferOffset, int sampleFrames);

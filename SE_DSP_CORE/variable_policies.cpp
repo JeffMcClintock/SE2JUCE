@@ -13,7 +13,7 @@ int32_t MetaData_none::GetDatatype( ParameterFieldType field, int* returnValue)
 
 bool MetaData_enum::ValueFromNormalised(float p_normalised, int& returnValue, bool applyDawAjustment)
 {
-	returnValue = normalised_to_enum( std::wstring(getEnumList().c_str()), p_normalised );
+	returnValue = normalised_to_enum( getEnumList(), p_normalised );
 	return true;
 }
 void MetaData_enum::setEnumList(const wchar_t* enumList)

@@ -62,7 +62,8 @@ ug_base* ug_plugin3Base::Clone( CUGLookupList& UGLookupList )
 // set an output pin
 int32_t ug_plugin3Base::setPin( int32_t blockRelativeTimestamp, int32_t id, int32_t size, const void* data )
 {
-	if( GetPlugById(id)->Direction != DR_OUT )
+// now using index	if (GetPlugById(id)->Direction != DR_OUT)
+	if (plugs[id]->Direction != DR_OUT)
 	{
 		std::wostringstream oss;
 		oss << L"Error: " << moduleType->GetName() << L" sending data out INPUT pin.";
@@ -82,13 +83,15 @@ int32_t ug_plugin3Base::setPin( int32_t blockRelativeTimestamp, int32_t id, int3
 	timestamp += localBufferOffset_;
 	assert(timestamp == blockRelativeTimestamp + SampleClock()); // function below uses this alternate caluation. Which is it?
 
-	GetPlugById(id)->Transmit(timestamp, size, data );
+//	GetPlugById(id)->Transmit(timestamp, size, data );
+	plugs[id]->Transmit(timestamp, size, data);
 	return gmpi::MP_OK;
 }
 
 int32_t ug_plugin3Base::setPinStreaming( int32_t blockRelativeTimestamp, int32_t id, int32_t is_streaming)
 {
-	auto pin = GetPlugById(id);
+	//auto pin = GetPlugById(id);
+	auto pin = plugs[id];
 
 	if(pin->Direction != DR_OUT)
 	{
@@ -281,7 +284,7 @@ int32_t ug_plugin3Base::openProtectedFile( const wchar_t* shortFilename, gmpi::I
 	return gmpi::MP_FAIL;
 }
 
-int32_t MP_STDCALL ug_plugin3Base::setLatency(int32_t latency)
+int32_t ug_plugin3Base::setLatency(int32_t latency)
 {
 	AudioMaster()->SetModuleLatency(Handle(), latency);
 	return gmpi::MP_OK;

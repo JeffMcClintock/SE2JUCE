@@ -36,13 +36,12 @@ namespace se_sdk_timers
 class Timer
 {
 public:
-    timer_id_t idleTimer_;
+	timer_id_t idleTimer_ = {};
 	int periodMilliSeconds;
 	clientContainer_t clients_;
 
 	Timer(int pPeriodMilliSeconds = 50) :
 		periodMilliSeconds(pPeriodMilliSeconds)
-		, idleTimer_(0)
 	{}
 	void Start();
 	void Stop();

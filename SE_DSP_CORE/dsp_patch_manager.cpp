@@ -22,6 +22,8 @@
 #include "modules/se_sdk3/mp_midi.h"
 #include "ug_patch_param_setter.h"
 #include "BundleInfo.h"
+#include "PresetReader.h"
+#include "modules/shared/voice_allocation_modes.h"
 
 using namespace std;
 using namespace GmpiMidi;
@@ -125,7 +127,7 @@ void DspPatchManager::vst_Automation(ug_container* voiceControlContainer, timest
 		{
 			dsp_patch_parameter_base* parameter = (*it).second;
 
-			if (parameter->isPolyphonic() && parameter->getVoiceContainerHandle() == voiceContainerHandle )
+			if (parameter->isPolyphonic() && parameter->getModuleHandle() == voiceContainerHandle )
 			{
 				parameter->vst_automate(timestamp, voiceId, p_normalised_value, true);
 			}
@@ -134,35 +136,38 @@ void DspPatchManager::vst_Automation(ug_container* voiceControlContainer, timest
 	}
 
 	// send to monophonic note-specific parameters.
-	dsp_automation_map_type::iterator it = vst_automation_map.find(lookupController);
-
-	while( it != vst_automation_map.end() && (*it).first == lookupController )
+	const auto range = vst_automation_map.equal_range(lookupController);
+	for(auto it = range.first ; it != range.second ; ++it)
 	{
-		dsp_patch_parameter_base* parameter = (*it).second;
+		auto parameter = (*it).second;
 
-		if (parameter->isPolyphonic() == false && (parameter->getVoiceContainerHandle() == voiceContainerHandle || parameter->getVoiceContainerHandle() == -1)) // Bender is monophonic, but still has a voice-container.
+		// monophonic parameters only
+		if (parameter->isPolyphonic())
+			continue;
+
+		// monophonic host-controls that attach to a container need to have the correct voice-container
+		if (AttachesToParentContainer(parameter->getHostControlId()) && parameter->getModuleHandle() != -1 && parameter->getModuleHandle() != voiceContainerHandle)
+			continue;
+
+		// Avoid crash caused by sending controllers from MIDI-CV to other un-related modules.
+		// They should get MIDI only from patch-automator.
+		const bool usedByMidiCv =
+				lookupController == (ControllerType::Bender << 24)     // Bender
+			|| lookupController == ((ControllerType::CC << 24) | 64)  // HoldPedal
+			|| lookupController == ((ControllerType::CC << 24) | 69); // HoldPedal 2
+
+		bool send = true;
+		if(usedByMidiCv)
 		{
-			// Avoid crash caused by sending controllers from MIDI-CV to other un-related modules.
-			// They should get MIDI only from patch-automator.
-			const bool usedByMidiCv =
-				   lookupController == (ControllerType::Bender << 24)     // Bender
-				|| lookupController == ((ControllerType::CC << 24) | 64)  // HoldPedal
-				|| lookupController == ((ControllerType::CC << 24) | 69); // HoldPedal 2
-
-			bool send = true;
-			if(usedByMidiCv)
-			{
-				const bool parameterControlsMidiCv = parameter->getHostControlId() != HC_NONE;
-				send = (!parameterControlsMidiCv && sendToNonMidiCv)
-						|| (parameterControlsMidiCv && sendToMidiCv);
-			}
-
-			if(send)
-			{
-				parameter->vst_automate(timestamp, voiceId, p_normalised_value, true);
-			}
+			const bool parameterControlsMidiCv = parameter->getHostControlId() != HC_NONE;
+			send = (!parameterControlsMidiCv && sendToNonMidiCv)
+					|| (parameterControlsMidiCv && sendToMidiCv);
 		}
-		it++;
+
+		if(send)
+		{
+			parameter->vst_automate(timestamp, voiceId, p_normalised_value, true);
+		}
 	}
 }
 
@@ -243,11 +248,52 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 						if (!fromMidiCv)
 						{
 							highResolutionVelocityPrefix = 0;
+							// CCs
 							memset(two_byte_controler_value, 0, sizeof(two_byte_controler_value));
+
+							int doNotReset[] = {
+								0, 32,				// bank Selec
+								7,					// Volume
+								10,					// Pan
+								70, 71, 72, 73, 74, 75, 76, 77, 78, 79,	// Sound Controllers
+								91, 92, 93, 94, 95,	// Reverb, Chorus, Phaser, Tremolo, Celeste. (Effects Controllers)
+							};
 
 							for (int controller_id = 0; controller_id < CC_AllSoundOff; ++controller_id)
 							{
+								if(std::find(std::begin(doNotReset), std::end(doNotReset), controller_id) != std::end(doNotReset))
+								{
+									continue;
+								}
 								vst_Automation(voiceState->voiceControlContainer_, timestamp, (ControllerType::CC << 24) | controller_id, 0.0f);
+							}
+
+							// Channel Pressure
+							{
+								constexpr int automation_id = ControllerType::ChannelPressure << 24;
+
+								vst_Automation(
+									voiceState->voiceControlContainer_,
+									timestamp,
+									automation_id,
+									0.0f,
+									sendToNoteSource,
+									sendToNonNoteSource
+								);
+							}
+
+							// Pitch Bend
+							{
+								constexpr int automation_id = ControllerType::Bender << 24;
+
+								vst_Automation(
+									voiceState->voiceControlContainer_,
+									timestamp,
+									automation_id,
+									0.5f,						// Bender to middle
+									sendToNoteSource,
+									sendToNonNoteSource
+								);
 							}
 						}
 					}
@@ -259,14 +305,29 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 				case gmpi::midi_2_0::RPN:
 				{
 					const auto rpn = gmpi::midi_2_0::decodeRpn(msg);
+
+					const auto unified_controller_id = (ControllerType::RPN << 24) | rpn.rpn;
+
 					if (rpn.rpn == gmpi::midi_2_0::RpnTypes::PitchBendSensitivity)
 					{
-						// auto unified_controller_id = (ControllerType::RPN << 24) | rpn.rpn;
-
-						// TODO!!! alter bend range
+						if (sendToNoteSource) // Pitch Bend Range
+						{
+							constexpr float convert = 1.0f / (float)MAX_FULL_CNTRL_VAL;
+							const float normalised_value = (float)rpn.value * convert;
+							vst_Automation(voiceState->voiceControlContainer_, timestamp, unified_controller_id, normalised_value, sendToNoteSource, sendToNonNoteSource);
+						}
 					}
 				}
 				break;
+
+				case gmpi::midi_2_0::PitchBend:
+				{
+					const auto pitchBend = gmpi::midi_2_0::decodeController(msg);
+					{
+						constexpr int automation_id = ControllerType::Bender << 24;
+						vst_Automation(voiceState->voiceControlContainer_, timestamp, automation_id, pitchBend.value, sendToNoteSource, sendToNonNoteSource);
+					}
+				}
 			}
 			
 			// Polyphonic messages
@@ -279,7 +340,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 					const auto note = gmpi::midi_2_0::decodeNote(msg);
 
 					_RPTN(0, "PM Note-on %d\n", note.noteNumber);
-					if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType)
+					if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType) // !! this is only for th ecurrent note!!! not apermanet tuning change !!! TODO
 					{
 						const auto timestamp_oversampled = voiceState->voiceControlContainer_->CalculateOversampledTimestamp(Container(), timestamp);
 
@@ -431,6 +492,17 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 						voiceState->voiceControlContainer_->SetHoldPedalState(controller.value >= 0.5f);
 					}
 					break;
+
+					case CC_MonoOn:
+					case CC_PolyOn:
+					{
+						if (sendToNoteSource && header.channel == 0) // Mode messages are recognized only when sent on the Basic Channel
+						{
+							MidiSetMonoMode(timestamp, CC_MonoOn == controller.type);
+						}
+					}
+					break;
+
 					}
 				}
 				break;
@@ -626,7 +698,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 										{
 											dsp_patch_parameter_base* parameter = (*it).second;
 
-											if (parameter->isPolyphonic() && parameter->getVoiceContainerHandle() == voiceContainerHandle)
+											if (parameter->isPolyphonic() && parameter->getModuleHandle() == voiceContainerHandle)
 											{
 												parameter->vst_automate2(timestamp, voiceId, RawData3(realWorld), RawSize(realWorld), true);
 											}
@@ -839,7 +911,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 
 					if (it == m_rpn_memory.end())
 					{
-						pair< map<int, int>::iterator, bool > result = m_rpn_memory.insert(std::pair<int, int>(rpn_key, 0));
+						auto result = m_rpn_memory.insert({ rpn_key, 0 });
 						assert(result.second == true);
 						it = result.first;
 					}
@@ -883,7 +955,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 			int unified_controller_id;
 
 			// handle RPN, NRPN
-			if (base_midi_controller_id/*midi_controller_id*/ == RPN_CONTROLLER)	// data entry slider MSB
+			if (base_midi_controller_id == RPN_CONTROLLER)	// data entry slider MSB
 			{
 				// RPN uses full 14-bit range.
 				normalised_value = (float)combined_controller_val / (float)MAX_FULL_CNTRL_VAL;
@@ -900,7 +972,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 					}
 					else // user is not using RPN/NRPN, just plain old data entry slider
 					{
-						unified_controller_id = (ControllerType::CC << 24) | base_midi_controller_id; //midi_controller_id; // CC
+						unified_controller_id = (ControllerType::CC << 24) | base_midi_controller_id;
 					}
 				}
 			}
@@ -921,6 +993,11 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 			if (!fromMidiCv)
 			{
 				vst_Automation(voiceState->voiceControlContainer_, timestamp, unified_controller_id, normalised_value);
+			}
+
+			if (sendToNoteSource && 0x03000000 == unified_controller_id) // Pitch Bend Range
+			{
+				vst_Automation(voiceState->voiceControlContainer_, timestamp, unified_controller_id, normalised_value, sendToNoteSource, sendToNonNoteSource);
 			}
 
 			// Must be after automation in case MIDI-Learn is active ( don't want to 'learn' the VelocityOff message).
@@ -1004,8 +1081,19 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 				}
 			}
 			break;
+
+			case CC_MonoOn:
+			case CC_PolyOn:
+			{
+				if (sendToNoteSource && midiChannel == 0) // Mode messages are recognized only when sent on the Basic Channel
+				{
+					MidiSetMonoMode(timestamp, CC_MonoOn == midi_controller_id);
+				}
 			}
-		}
+			break;
+
+			} // switch midi_controller_id
+		} // case CONTROL_CHANGE
 		break;
 
 		case POLY_AFTERTOUCH:
@@ -1038,6 +1126,34 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 	}
 }
 
+void DspPatchManager::MidiSetMonoMode(timestamp_t timestamp, bool newMonoMode)
+{
+	for (auto parameter : m_parameters)
+	{
+		// monophonic parameters only
+		if (parameter->getHostControlId() != HC_VOICE_ALLOCATION_MODE)
+			continue;
+
+		auto voiceAllocationMode = (int32_t)parameter->GetValueRaw2();
+		const bool oldIsMonoMode = voice_allocation::isMonoMode(voiceAllocationMode);
+
+		// changin mono mode can be destructive, since we can't specify *which* poly mode we want, so avoid messing with it if possible.
+		if (newMonoMode != oldIsMonoMode)
+		{
+			// set MM_IN_USE and MM_ON
+			voiceAllocationMode = voiceAllocationMode | ((MM_IN_USE | MM_ON) << voice_allocation::bits::MonoModes_startbit);
+
+			if (!newMonoMode)
+			{
+				// clear MM_ON
+				voiceAllocationMode = voiceAllocationMode & ~(MM_ON << voice_allocation::bits::MonoModes_startbit);
+			}
+
+			parameter->vst_automate2(timestamp, 0, &voiceAllocationMode, sizeof(voiceAllocationMode), kIsMidiMappedAutomation);
+		}
+	}
+}
+
 void DspPatchManager::DoNoteOff(timestamp_t timestamp, ug_container* voiceControlContainer, int voiceId, float velocity)
 {
 	int automation_id;
@@ -1054,50 +1170,17 @@ void DspPatchManager::DoNoteOff(timestamp_t timestamp, ug_container* voiceContro
 
 void DspPatchManager::DoNoteOn(timestamp_t timestamp, ug_container* voiceControlContainer, int voiceId, float velocity)
 {
-	int automation_id;
-	float normalised;
-/* test, for poly glide allow pitch to be set first.
-	// Send gate automation.
-	automation_id = ( ControllerType::Gate << 24 ) | voiceId;
-	float normalised = 1.0f;
-	vst_Automation(voiceControlContainer, timestamp, automation_id, normalised);
-*/
-	/* should not have changed
-	// Send pitch automation
-	automation_id = ( ControllerType::Pitch << 24 ) | voiceId;
-	vst_Automation(voiceControlContainer, timestamp, automation_id, pitch);
-	*/
-
 	// Send velocity-on automation
-	automation_id = ( ControllerType::VelocityOn << 24 ) | voiceId;
+	int automation_id = ( ControllerType::VelocityOn << 24 ) | voiceId;
 	vst_Automation(voiceControlContainer, timestamp, automation_id, velocity);
 
 	// Reset poly-aftertouch automation
 	automation_id = ( ControllerType::PolyAftertouch << 24 ) | voiceId;
-	normalised = 0;
-	vst_Automation(voiceControlContainer, timestamp, automation_id, normalised);
+	vst_Automation(voiceControlContainer, timestamp, automation_id, 0.0f);
 
 	// Send gate automation.
 	automation_id = ( ControllerType::Gate << 24 ) | voiceId;
-	normalised = 1.0f;
-	vst_Automation(voiceControlContainer, timestamp, automation_id, normalised);
-
-/*
-	// If auto-glide not triggered, just jump to pitch.
-	if( !glide )
-	{
-		mrnPitch = pitch;
-	}
-
-	// Send glide start-pitch automation
-	automation_id = ( ControllerType::GlideStart Pitch << 24 );// | keyNumber;
-	normalised = mrnPitch * 0.1f;
-	vst_Automation(voiceControlContainer, timestamp, automation_id, normalised);
-
-	// Glide.
-	mrnPitch = pitch;
-	mrnTimeStamp = timestamp;
-*/
+	vst_Automation(voiceControlContainer, timestamp, automation_id, 1.0f);
 }
 
 float DspPatchManager::InitializeVoiceParameters(ug_container* voiceControlContainer, timestamp_t timestamp, Voice* voice, bool sendTrigger)
@@ -1109,7 +1192,7 @@ float DspPatchManager::InitializeVoiceParameters(ug_container* voiceControlConta
 	for( auto parameter : m_poly_parameters_cache )
 	{
 		assert(parameter->isPolyphonic());
-		if (parameter->getVoiceContainerHandle() == voiceContainerHandle )
+		if (parameter->getModuleHandle() == voiceContainerHandle )
 		{
 			auto controllerId = parameter->UnifiedControllerId();
 			switch( controllerId )
@@ -1131,7 +1214,7 @@ float DspPatchManager::InitializeVoiceParameters(ug_container* voiceControlConta
 				int32_t size = 0;
 				pitch = *(float*) parameter->SerialiseForEvent(voiceId, size);
 			}
-				// deliberate fallthru.
+			[[fallthrough]];
 
 			default:
 				// send pin update (forced).
@@ -1183,7 +1266,7 @@ void DspPatchManager::InitializeAllParameters()
 				const float gateValue = 0.0f;
 				for (int32_t voiceId = 0; voiceId < 128; ++voiceId)
 				{
-					parameter->vst_automate2(timestamp, voiceId, &gateValue, static_cast<int>(sizeof(gateValue)), false);
+					parameter->vst_automate2(timestamp, voiceId, &gateValue, static_cast<int>(sizeof(gateValue)), 0);
 				}
 			}
 		}
@@ -1192,8 +1275,7 @@ void DspPatchManager::InitializeAllParameters()
 			if (parameter->isTiming()) // need time/tempo update?
 			{
 				// Patch Automator will send timing controllers to patch manager.
-				ug_patch_automator* automation_sender = Container()->front()->findPatchAutomator();
-				automation_sender->setTempoTransmit();
+				Container()->automation_input_device->setTempoTransmit();
 			}
 
 			parameter->SendValuePt2(timestamp, nullptr, true);
@@ -1299,25 +1381,30 @@ void DspPatchManager::ConnectHostControl2(HostControls hostConnect, UPlug* toPlu
 {
 	assert(hostConnect != HC_SNAP_MODULATION__DEPRECATED); // caller to handle
 
-	auto destinationContainer = toPlug->UG->parent_container;
-	auto parameter = GetParameter(destinationContainer, hostConnect);
+	// If host-control is polyphonic (or related to notes), connect to pp-setter in it's voice-control container,
+	// else just connect to pp-setter in patch-manager's container (which may be at a outer level).
+	// Note: This will also catch HC_OVERSAMPLING_RATE and HC_OVERSAMPLING_FILTER. Which is hopefully harmless.
+	dsp_patch_parameter_base* parameter{};
+	ug_container* container{};
+	if (AttachesToVoiceContainer(hostConnect)) // poly host controls
+	{
+		container = toPlug->UG->parent_container->getVoiceControlContainer();
+		parameter = GetParameter(container, hostConnect);
+	}
+	else if (AttachesToParentContainer((HostControls)hostConnect)) // oversampling
+	{
+		container = toPlug->UG->parent_container;
+		parameter = GetParameter(container, hostConnect);
+	}
+	else
+	{
+		parameter = GetParameter(nullptr, hostConnect);
+		container = Container();
+	}
+
 	if (parameter)
 	{
-		ug_container* hostControlContainer;
-		// If host-control is polyphonic (or related to notes), connect to pp-setter in it's voice-control container,
-		// else just connect to pp-setter in patch-manager's container (which may be at a outer level).
-		// Note: This will also catch HC_OVERSAMPLING_RATE and HC_OVERSAMPLING_FILTER. Which is hopefully harmless.
-		if (HostControlAttachesToParentContainer(hostConnect))
-		{
-			hostControlContainer = destinationContainer->getOutermostPolyContainer();
-		}
-		else
-		{
-			// For most parameters, output pin will be in same container as patch-manager.
-			hostControlContainer = Container();
-		}
-
-		hostControlContainer->GetParameterSetter()->ConnectHostParameter(parameter, toPlug);
+		container->GetParameterSetter()->ConnectHostParameter(parameter, toPlug);
 	}
 	else
 	{
@@ -1339,7 +1426,7 @@ struct FeedbackTrace* DspPatchManager::InitSetDownstream(ug_container* voiceCont
 	// For all poly parameters, set downstream flags on outputs.
 	for (auto parameter : m_parameters)
 	{
-		if (parameter->isPolyphonic() && parameter->getVoiceContainerHandle() == voiceContainerHandle)
+		if (parameter->isPolyphonic() && parameter->getModuleHandle() == voiceContainerHandle)
 		{
 			for (auto p : parameter->outputPins_)
 			{
@@ -1391,7 +1478,7 @@ void DspPatchManager::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 	{
 		int32_t p;
 		p_stream >> p;
-		//_RPT1(_CRT_WARN, "DspPatchManager::OnUiMsg('patc') p=%d\n", program_ );
+		//_RPT1(_CRT_WARN, "DspPatchManager::OnUiMsg('setp') p=%d\n", program_ );
 		UpdateProgram( p );
 	}
 	break;
@@ -1412,12 +1499,12 @@ void DspPatchManager::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 }
 
 #if defined(SE_TARGET_PLUGIN)
-void DspPatchManager::setParameterNormalized( timestamp_t timestamp, int vstParameterIndex, float newValue )
+void DspPatchManager::setParameterNormalized( timestamp_t timestamp, int vstParameterIndex, float newValue, int32_t flags )
 {
 	if( vstParameterIndex >= 0 && vstParameterIndex < (int) parameterIndexes_.size() && parameterIndexes_[vstParameterIndex] != 0 )
 	{
 		const int VoiceId = 0;
-		parameterIndexes_[vstParameterIndex]->vst_automate(timestamp, VoiceId, newValue, false);
+        parameterIndexes_[vstParameterIndex]->vst_automate(timestamp, VoiceId, newValue, flags); //false);
 	}
 }
 #endif
@@ -1427,7 +1514,7 @@ dsp_patch_parameter_base* DspPatchManager::GetHostControl(int32_t hostControl, i
 	for (auto parameter : m_parameters)
 	{
 		// Does not handle polyphonic host-controls.
-		if (parameter->getHostControlId() == hostControl && parameter->getVoiceContainerHandle() == attachedToContainerHandle)
+		if (parameter->getHostControlId() == hostControl && parameter->getModuleHandle() == attachedToContainerHandle)
 		{
 			return parameter;
 		}
@@ -1437,11 +1524,11 @@ dsp_patch_parameter_base* DspPatchManager::GetHostControl(int32_t hostControl, i
 
 dsp_patch_parameter_base* DspPatchManager::GetParameter(ug_container* voiceControlContainer, HostControls hostConnect)
 {
-	int voiceContainerHandle = voiceControlContainer->Handle();
+	const int voiceContainerHandle = voiceControlContainer ? voiceControlContainer->Handle() : -1;
 
 	for (auto parameter : m_parameters)
 	{
-		if (parameter->getHostControlId() == hostConnect && (parameter->getVoiceContainerHandle() == voiceContainerHandle || parameter->getVoiceContainerHandle() == -1))
+		if (parameter->getHostControlId() == hostConnect && (parameter->getModuleHandle() == voiceContainerHandle || parameter->getModuleHandle() == -1))
 		{
 			return parameter;
 		}
@@ -1503,10 +1590,10 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 
 				TiXmlElement* patch_xml = {};
 				const int voiceCount = parameter->isPolyphonic() ? 128 : 1;
+                int repeat_count = 1;
 				for (int voice = 0; voice < voiceCount; ++voice)
 				{
 					std::string prev_patch_value;
-					int repeat_count = 1;
 
 					const auto text = parameter->GetValueAsXml(voice);
 					if (prev_patch_value == text && patch_xml)
@@ -1557,6 +1644,7 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncResta
 		//std::wostringstream oss;
 		//oss << L"Module XML Error: [" << full_path << L"]" << doc.ErrorDesc() << L"." <<  doc.Value();
 		//GetApp()->SeMessageBox( oss.str().c_str(), L"", MB_OK|MB_ICONSTOP );
+        _RPT0(0, "DspPatchManager::setPresetState -  FAIL to parse doc\n");
 		return;
 	}
 
@@ -1639,39 +1727,25 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncResta
 			continue;
 
 		// new style
-		auto patchListE = ParamElement->FirstChildElement("patch-list");
-		if (patchListE)
-		{
-			int voice = 0;
-			const int voiceCount = parameter->isPolyphonic() ? 128 : 1;
-			for (auto valE = patchListE->FirstChildElement("s"); valE; valE = valE->NextSiblingElement("s"))
+		
+		const int voiceCount = parameter->isPolyphonic() ? 128 : 1;
+		
+		ParseXmlPreset2(
+			ParamElement,
+			[parameter, voiceCount, isAsyncRestart](int voiceId, const char* xmlvalue)
 			{
-				const auto xmlvalue = valE->GetText();
-				int repeat = 1;
-				valE->QueryIntAttribute("repeat", &repeat);
+				// plugins have only one preset on the DSP at a time. Editor has many.
+				constexpr int preset = 0;
 
-				for (int i = 0; i < repeat; ++i)
+				if (voiceId < voiceCount)
 				{
-					if (xmlvalue && voice < voiceCount)
+					if (parameter->SetValueFromXml(xmlvalue, voiceId, preset) && !isAsyncRestart)
 					{
-						if (parameter->SetValueFromXml(xmlvalue, voice, 0) && !isAsyncRestart)
-						{
-							parameter->OnValueChangedFromGUI(false, voice);
-						}
+						parameter->OnValueChangedFromGUI(false, voiceId);
 					}
-
-					++voice;
 				}
 			}
-		}
-		else // old way
-		{
-			const string v = ParamElement->Attribute("val");
-			if (parameter->SetValueFromXml(v, 0, 0) && !isAsyncRestart)
-			{
-				parameter->OnValueChangedFromGUI(false, 0);
-			}
-		}
+		);
 	}
 
 	// TODO: for each parameter not set, return it to it's default value. (would require DSP to store default value, or mayby just use init value.)
@@ -1743,7 +1817,7 @@ void DspPatchManager::setupContainerHandles(ug_container* subContainer)
 {
 	for( auto parameter : m_parameters )
 	{
-		if (parameter->getVoiceContainerHandle() == subContainer->Handle())
+		if (parameter->getModuleHandle() == subContainer->Handle())
 		{
 			parameter->setVoiceContainer(subContainer);
 		}

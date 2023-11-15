@@ -291,3 +291,12 @@ ug_base* ug_patch_param_setter::Clone( CUGLookupList& UGLookupList )
 
 	return clone;
 }
+
+void ug_patch_param_setter::ReRoutePlugs()
+{
+	// Ensure ug_patch_param_setter always down-stream of ug_patch_automator by
+	// connecting a dummy MIDI connection.
+	
+	assert(GetPlug(L"MIDI In") == GetPlug(0));
+	parent_container->RouteDummyPinToPatchAutomator(GetPlug(0));
+}

@@ -60,7 +60,8 @@ MidiPlayer2::MidiPlayer2( IMpUnknown* host, bool initializePins ) : MpBase( host
 		initializePin( 3, pinMIDIOut );
 		initializePin( 4, pinHostBpm );
 		initializePin( 5, pinTempoFrom );
-		initializePin( 6, pinLoopMode );
+		initializePin(6, pinLoopMode);
+		initializePin(pinSendClocks);
 	}
 	memset( noteMemory, 0, sizeof(noteMemory) );
 }
@@ -257,35 +258,13 @@ int MidiPlayer2::loadMidiFile()
 		fname += L".mid";
 	}
 
-	gmpi_sdk::mp_shared_ptr<gmpi::IEmbeddedFileSupport> dspHost;
-	getHost()->queryInterface(gmpi::MP_IID_HOST_EMBEDDED_FILE_SUPPORT, dspHost.asIMpUnknownPtr());
-	assert(dspHost); // new way
-	const auto filename = JmUnicodeConversions::WStringToUtf8(fname);
-
-	gmpi_sdk::MpString fullFilename;
-	dspHost->resolveFilename(filename.c_str(), &fullFilename );
-
-	gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> obj;
-	dspHost->openUri(fullFilename.c_str(), &obj.get());
-
-	if (!obj)
-		return 1;
-
-	gmpi_sdk::mp_shared_ptr<gmpi::IProtectedFile2> file;
-
-	obj->queryInterface(gmpi::MP_IID_PROTECTED_FILE2, file.asIMpUnknownPtr());
-
-	if (!file)
-	{
-		message( ERROR_MESSAGE_1 );
-		return 1;
-	}
-
-	int64_t file_size;
-	file->getSize(&file_size);
+	const auto fullFilename = host.resolveFilename(fname);
+	auto file = host.openUri(fullFilename);
+	const int64_t file_size = file.size();
+	
 	delete [] buffer;
 	buffer = new unsigned char[file_size + 2];
-	file->read( (char*) buffer, file_size );
+	file.read( (char*) buffer, file_size );
 
 	// first check that the file loaded is actually a MIDI File
 	unsigned char* g_pointer = buffer;
@@ -378,8 +357,11 @@ void MidiPlayer2::NextMidiEvent(int bufferOffset)
 
 	if( next_midi_clock == pulse_count )
 	{
-		midiMessage[0] = MIDI_CLOCK;
-		pinMIDIOut.send( midiMessage, 1, bufferOffset );
+		if (pinSendClocks)
+		{
+			midiMessage[0] = MIDI_CLOCK;
+			pinMIDIOut.send(midiMessage, 1, bufferOffset);
+		}
 		next_midi_clock += pulses_per_clock;
 	}
 
@@ -625,7 +607,7 @@ void MidiPlayer2::Setbpm(double bpm)
 
 	bpm = (std::max)(bpm,10.);
 	bpm = (std::min)(bpm, 1000.);
-	double pp_sec = bpm / 60.0 * (double) ppqn;
+	double pp_sec = bpm / 60.0 * ppqn;
 	samp_per_pulse = getSampleRate() / pp_sec;
 //	_RPT1(_CRT_WARN, "samp_per_pulse %f.\n", samp_per_pulse );
 
@@ -638,14 +620,20 @@ void MidiPlayer2::Setbpm(double bpm)
 
 void MidiPlayer2::MidiClockStart( int bufferOffset )
 {
-	unsigned char msg = MIDI_CLOCK_START;
-	pinMIDIOut.send( &msg, 1, bufferOffset );
+	if (pinSendClocks)
+	{
+		unsigned char msg = MIDI_CLOCK_START;
+		pinMIDIOut.send(&msg, 1, bufferOffset);
+	}
 }
 
 void MidiPlayer2::MidiClockStop( int bufferOffset )
 {
-	unsigned char msg = MIDI_CLOCK_STOP;
-	pinMIDIOut.send( &msg, 1, bufferOffset );
+	if (pinSendClocks)
+	{
+		unsigned char msg = MIDI_CLOCK_STOP;
+		pinMIDIOut.send(&msg, 1, bufferOffset);
+	}
 }
 
 void MidiPlayer2::Done()

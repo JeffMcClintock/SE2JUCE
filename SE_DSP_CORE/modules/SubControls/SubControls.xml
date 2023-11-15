@@ -1,5 +1,16 @@
 <?xml version="1.0" ?>
 <PluginList>
+  <Plugin id="SE Pitch Bender" name="Pitch Bender" category="Special">
+    <Audio>
+      <Pin name="Value In" datatype="float" private="true" hostConnect="Bender"/>
+      <Pin name="Bender Out" datatype="float" direction="out" />
+    </Audio>
+    <GUI>
+      <Pin name="Value In" datatype="float" private="true" hostConnect="Bender"/>
+      <Pin name="Bender" datatype="float" direction="out"/>
+    </GUI>
+  </Plugin>
+
 <Plugin id="SE CPU Family" name="CPU Family" category="Diagnostic">
 	<GUI graphicsApi="GmpiGui"/>
 </Plugin>

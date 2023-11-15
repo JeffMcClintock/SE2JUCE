@@ -129,7 +129,7 @@ bool enums_are_compatible( const std::wstring& enum1, const std::wstring& enum2 
 float enum_to_normalised( const std::wstring& p_enum_list, int p_value );
 int normalised_to_enum( const std::wstring& p_enum_list, float p_normalised );
 
-bool is_denormal( float f );
+//bool is_denormal( float f );
 
 void reverse(void* p_ptr,int count );
 

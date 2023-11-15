@@ -4,11 +4,15 @@ project(SubControls)
 
 build_gmpi_plugin(
     PROJECT_NAME ${PROJECT_NAME}
+    IS_OFFICIAL_MODULE
     HAS_GUI
+    HAS_DSP
     SOURCE_FILES 
         CPUFamilyGui.cpp
         FileDialogGui.h
         FileDialogGui.cpp
+        PitchBender.cpp
+        PitchBenderGui.cpp
         OkCancelDialogGui.cpp
         ${se_sdk_folder}/it_enum_list.h
         ${se_sdk_folder}/it_enum_list.cpp

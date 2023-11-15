@@ -4,6 +4,7 @@
 #include "./MyTypeTraits.h"
 #include "./RawConversions.h"
 #include "./PatchStorage.h"
+#include "IDspPatchManager.h"
 
 using namespace std;
 
@@ -41,20 +42,21 @@ public:
 		MetaDataPolicy::SerialiseMetaData( p_stream );
 	}
 	virtual void CopyPlugValue( int voice, UPlug* p_plug);
-	virtual void vst_automate(timestamp_t p_timestamp, int voice, float p_normalised_val, bool isMidiMappedAutomation)
+	void vst_automate(timestamp_t p_timestamp, int voice, float p_normalised_val, int32_t flags) override
 	{
 //#if defined( SE_EDIT _SUPPORT )
 		// If user holding knob, don't MIDI automate.
 		// Not sure how VST3 handles this, maybe host handles it.
-		if (m_grabbed && isMidiMappedAutomation)
+		if (m_grabbed && 0 != (flags & kIsMidiMappedAutomation))
 			return;
 //#endif
+        const bool applyDawAjustment = 0 == (flags & kIsMidiMappedAutomation);
 
 		T newValue;
 
-		if( this->ValueFromNormalised(p_normalised_val, newValue, !isMidiMappedAutomation) )
+		if( this->ValueFromNormalised(p_normalised_val, newValue, applyDawAjustment))
 		{
-			vst_automate2(p_timestamp, voice, RawData3(newValue), RawSize(newValue), isMidiMappedAutomation);
+			vst_automate2(p_timestamp, voice, RawData3(newValue), RawSize(newValue), flags);
 		}
 	}
 	virtual float GetValueNormalised( int voiceId = 0 )
@@ -107,7 +109,7 @@ public:
 		// assert( !typeIsVariableSize() && " specialize this for variable-size types like strings");
 		return patchMemory[voice]->SetValue( RawData3(value), RawSize(value), patch );
 	}
-	virtual std::string GetValueAsXml(int voice )
+	std::string GetValueAsXml(int voice) override
 	{
 		constexpr int patch = 0;
 		auto data = patchMemory[voice]->GetValue( patch );

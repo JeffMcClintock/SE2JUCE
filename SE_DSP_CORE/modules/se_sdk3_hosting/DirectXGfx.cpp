@@ -2,10 +2,11 @@
 
 #include <sstream>
 #include "./DirectXGfx.h"
-#include "../shared\xplatform.h"
+#include "../shared/xplatform.h"
 #include "../shared/xp_simd.h"
-#include "../se_sdk3_hosting/gmpi_gui_hosting.h"
 #include "../shared/fast_gamma.h"
+#include "../shared/unicode_conversion.h"
+#include "../se_sdk3_hosting/gmpi_gui_hosting.h"
 #include "BundleInfo.h"
 #include "d2d1helper.h"
 
@@ -104,7 +105,7 @@ namespace gmpi
 
 		void TextFormat::GetTextExtentU(const char* utf8String, int32_t stringLength, GmpiDrawing_API::MP1_SIZE* returnSize)
 		{
-			auto widestring = stringConverter->from_bytes(utf8String, utf8String + stringLength);
+			const auto widestring = JmUnicodeConversions::Utf8ToWstring(utf8String, stringLength);
 
 			IDWriteFactory* writeFactory = 0;
 			auto hr = DWriteCreateFactory(
@@ -295,7 +296,8 @@ namespace gmpi
 		{
 			*TextFormat = nullptr;
 
-			auto fontFamilyNameW = stringConverter.from_bytes(fontFamilyName);
+			//auto fontFamilyNameW = stringConverter.from_bytes(fontFamilyName);
+			auto fontFamilyNameW = JmUnicodeConversions::Utf8ToWstring(fontFamilyName);
 			std::wstring lowercaseName(fontFamilyNameW);
 			std::transform(lowercaseName.begin(), lowercaseName.end(), lowercaseName.begin(), ::tolower);
 
@@ -582,7 +584,8 @@ If so that'd be far more efficient so do that.)
 			}
 			else
 			{
-				auto uriW = stringConverter.from_bytes(utf8Uri);
+				// auto uriW = stringConverter.from_bytes(utf8Uri);
+				const auto uriW = JmUnicodeConversions::Utf8ToWstring(utf8Uri);
 
 				// To load a bitmap from a file, first use WIC objects to load the image and to convert it to a Direct2D-compatible format.
 				hr = pIWICFactory->CreateDecoderFromFilename(
@@ -609,9 +612,6 @@ If so that'd be far more efficient so do that.)
 			}
 			if (hr == 0)
 			{
-				//WICPixelFormatGUID Guid;
-				//pSource->GetPixelFormat(&Guid);
-
 				hr = pConverter->Initialize(
 					pSource,
 					GUID_WICPixelFormat32bppPBGRA, //Premultiplied
@@ -635,6 +635,10 @@ D3D11 ERROR: ID3D11Device::CreateTexture2D: The Dimensions are invalid. For feat
 			*/
 			if (hr == 0)
 			{
+				// I've removed this as the max size can vary depending on hardware.
+				// So we need to have a robust check elsewhere anyhow.
+
+#if 0
 				UINT width, height;
 
 				wicBitmap->GetSize(&width, &height);
@@ -642,20 +646,10 @@ D3D11 ERROR: ID3D11Device::CreateTexture2D: The Dimensions are invalid. For feat
 				const int maxDirectXImageSize = 16384; // TODO can be smaller. Query hardware.
 				if (width > maxDirectXImageSize || height > maxDirectXImageSize)
 				{
-					hr = -1; // fail, too big for DirectX.
-
-/* weird for graphics to have dependancy on bundle
-#if defined( _WIN32 )
-					if (BundleInfo::instance()->isEditor)
-					{
-						std::ostringstream oss;
-						oss << L"Sorry, Image too large:" << utf8Uri << L"\nMaximum dimensions is " << maxDirectXImageSize << " pixels.\n";
-						MessageBoxA(0, oss.str().c_str(), "Error", MB_OK | MB_ICONSTOP);
-					}
-#endif
-*/
+					hr = E_FAIL; // fail, too big for DirectX.
 				}
 				else
+#endif
 				{
 					auto bitmap = new Bitmap(this, wicBitmap);
 #ifdef _DEBUG
@@ -688,7 +682,9 @@ D3D11 ERROR: ID3D11Device::CreateTexture2D: The Dimensions are invalid. For feat
 
 		void GraphicsContext::DrawTextU(const char* utf8String, int32_t stringLength, const GmpiDrawing_API::IMpTextFormat* textFormat, const GmpiDrawing_API::MP1_RECT* layoutRect, const GmpiDrawing_API::IMpBrush* brush, int32_t flags)
 		{
-			auto widestring = stringConverter->from_bytes(utf8String, utf8String + stringLength);
+			// auto widestring = stringConverter->from_bytes(utf8String, utf8String + stringLength);
+			const auto widestring = JmUnicodeConversions::Utf8ToWstring(utf8String, stringLength);
+			
 			auto DxTextFormat = reinterpret_cast<const TextFormat*>(textFormat);
 			auto b = ((Brush*)brush)->nativeBrush();
 			auto tf = DxTextFormat->native();
@@ -779,7 +775,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 					D2D1_MAPPED_RECT map;
 					tempBitmap->Map(D2D1_MAP_OPTIONS_READ, &map);
 
-// move to factory					res = pIWICFactory->CreateBitmap(size.width, size.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnLoad, &diBitmap_); // pre-muliplied alpha
+// move to factory				res = pIWICFactory->CreateBitmap(size.width, size.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnLoad, &diBitmap_); // pre-muliplied alpha
 
 //					diBitmap_->CopyPixels()
 
@@ -803,7 +799,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 			}
 */
 			gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
-			b2.Attach(new bitmapPixels(nativeBitmap_, diBitmap_, true, flags, factory->getPlatformPixelFormat()));
+			b2.Attach(new bitmapPixels(nativeBitmap_, diBitmap_, true, flags));
 
 			return b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_PIXELS_MPGUI, (void**)(returnInterface));
 		}
@@ -820,7 +816,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 				}
 
 				nativeContext_ = nativeContext;
-#if defined(_DEBUG)
+#if 0 //defined(_DEBUG)
 				// moved failure to cheCking error code on CreateBitmapFromWicBitmap()
 				{
 					auto maxSize = nativeContext_->GetMaximumBitmapSize();
@@ -846,14 +842,21 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 				}
 				props.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
 
-				// Convert to D2D format and cache.
-				auto hr = nativeContext_->CreateBitmapFromWicBitmap(
-					diBitmap_,
-					&props, //NULL,
-					&nativeBitmap_
-				);
+				try
+				{
+					// Convert to D2D format and cache.
+					auto hr = nativeContext_->CreateBitmapFromWicBitmap(
+						diBitmap_,
+						&props, //NULL,
+						&nativeBitmap_
+					);
 
-				if (hr != 0) // Common failure is bitmap too big for D2D.
+					if (hr) // Common failure is bitmap too big for D2D.
+					{
+						return nullptr;
+					}
+				}
+				catch (...)
 				{
 					return nullptr;
 				}
@@ -885,18 +888,18 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 
 			auto pixelsSource = bitmap.lockPixels(true);
 			auto imageSize = bitmap.GetSize();
-			int totalPixels = (int)imageSize.height * pixelsSource.getBytesPerRow() / sizeof(uint32_t);
+			size_t totalPixels = imageSize.height * pixelsSource.getBytesPerRow() / sizeof(uint32_t);
 			uint8_t* sourcePixels = pixelsSource.getAddress();
 
 			// WIX currently not premultiplying correctly, so redo it respecting gamma.
-			const double over255 = 1.0 / 255.0;
-			for (int i = 0; i < totalPixels; ++i)
+			const float over255 = 1.0f / 255.0f;
+			for (size_t i = 0; i < totalPixels; ++i)
 			{
 				int alpha = sourcePixels[3];
 
 				if (alpha != 255 && alpha != 0)
 				{
-					float AlphaNorm = alpha / 255.f;
+					float AlphaNorm = alpha * over255;
 					float overAlphaNorm = 1.f / AlphaNorm;
 
 					for (int j = 0; j < 3; ++j)
@@ -907,7 +910,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 							float originalPixel = p * overAlphaNorm; // un-premultiply.
 
 							// To linear
-							auto cf = se_sdk::FastGamma::sRGB_to_float(FastRealToIntTruncateTowardZero(originalPixel + 0.5f));
+							auto cf = se_sdk::FastGamma::sRGB_to_float(static_cast<unsigned char>(FastRealToIntTruncateTowardZero(originalPixel + 0.5f)));
 
 							cf *= AlphaNorm;						// pre-multiply (correctly).
 

@@ -23,3 +23,47 @@ void Spring2Gui::onChanged()
 
 	prevMouseDown = mouseDown;
 }
+
+// uses a pass-though for mouse-down, to avoid wheel springing back while animating from MIDI side
+class Spring3Gui final : public SeGuiInvisibleBase
+{
+	void onSetMouseDownIn()
+	{
+		pinMouseDownOut = pinMouseDownIn;
+	}
+
+	void onSetMouseDownOut()
+	{
+		pinMouseDownIn = pinMouseDownOut;
+		onChanged();
+	}
+
+	void onChanged()
+	{
+		if (pinOnOff && pinMouseDownOut == false)
+		{
+			pinNormalisedValue = pinResetValue;
+		}
+	}
+
+	FloatGuiPin pinNormalisedValue;
+	BoolGuiPin pinMouseDownIn;
+	BoolGuiPin pinMouseDownOut;
+	FloatGuiPin pinResetValue;
+	BoolGuiPin pinOnOff;
+
+public:
+	Spring3Gui()
+	{
+		initializePin(pinNormalisedValue);
+		initializePin(pinMouseDownIn, static_cast<MpGuiBaseMemberPtr2>(&Spring3Gui::onSetMouseDownIn));
+		initializePin(pinMouseDownOut, static_cast<MpGuiBaseMemberPtr2>(&Spring3Gui::onSetMouseDownOut));
+		initializePin(pinResetValue);
+		initializePin(pinOnOff, static_cast<MpGuiBaseMemberPtr2>(&Spring3Gui::onChanged));
+	}
+};
+
+namespace
+{
+	auto r = gmpi::Register<Spring3Gui>::withId(L"SE Spring3");
+}

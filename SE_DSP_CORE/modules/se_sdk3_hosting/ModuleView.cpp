@@ -46,7 +46,6 @@ namespace SynthEdit2
 
 	ModuleView::ModuleView(Json::Value* context, ViewBase* pParent) : ViewChild(context, pParent)
 		, recursionStopper_(0)
-		, mouseCaptured(false)
 		, initialised_(false)
 		, ignoreMouse(false)
 	{
@@ -900,6 +899,22 @@ namespace SynthEdit2
 	}
 #endif
 
+	// give the disired color, the opacity and the background color. Cacl the brighter original color.
+	Color calcColor(Color original, Color background, float opacity)
+	{
+		Color ret;
+		ret.a = opacity;
+		// original = x * opacity + (1-opacity) * background
+		// (original -(1-opacity) * background) / opacity = x 
+		// => x = (original - (1-opacity) * background) / opacity
+		
+		ret.r = (original.r - (1.0f - opacity) * background.r) / opacity;
+		ret.g = (original.g - (1.0f - opacity) * background.g) / opacity;
+		ret.b = (original.b - (1.0f - opacity) * background.b) / opacity;
+
+		return ret;
+	}
+	
 	void ModuleViewStruct::OnRender(GmpiDrawing::Graphics& g)
 	{
 		constexpr auto plugDiameter = sharedGraphicResources_struct::plugDiameter;
@@ -938,22 +953,24 @@ namespace SynthEdit2
 				// SE 1.4
 				//const auto GuiTopColor = Color::FromArgb(0xFFD2EFF2); // H185 S13 V94
 				//const auto GuiBotColor = Color::FromArgb(0xFFB1C9CC); // V80
+				constexpr float opacity = 0.85f;
+#if 0 // slowish calculation
+				// use original SE colors, but with some transparancy
+				const Color greyBack{ 0xACACACu };
+				const auto GuiTopColor = calcColor({ 0xDDEEFFu }, greyBack, opacity);//  Color::FromArgb(0xFFDDEEFF);
+				const auto GuiBotColor = calcColor({ 0xAABBCCu }, greyBack, opacity);// Color::FromArgb(0xFFAABBCC);
 
-				const auto GuiTopColor = Color::FromArgb(0xFFDDEEFF);
-				const auto GuiBotColor = Color::FromArgb(0xFFAABBCC);
-
-				const auto DspTopColor = Color::FromArgb(0xFFEFEFEF); // S0
-				const auto DspBotColor = Color::FromArgb(0xFFCCCCCC); // V80 S0
-
+				const auto DspTopColor = calcColor({ 0xEFEFEFu }, greyBack, opacity);// Color::FromArgb(0xFFEFEFEF); // S0
+				const auto DspBotColor = calcColor({ 0xCCCCCCu }, greyBack, opacity);// Color::FromArgb(0xFFCCCCCC); // V80 S0
+#else
+				// calculated in advance (same formula)
+				const Color GuiTopColor(0.777851462f, 0.933072031f, 1.103668900f, opacity);
+				const Color GuiBotColor(0.400113374f, 0.511825383f, 0.637583494f, opacity);
+				const Color DspTopColor(0.942677438f, 0.942677438f, 0.942677430f, opacity);
+				const Color DspBotColor(0.637583494f, 0.637583494f, 0.637583494f, opacity);
+#endif
 				std::vector<GradientStop> gradientStops;
-/*
-				auto totalVisiblePlugs = std::count_if(plugs_.begin(), plugs_.end(),
-					[](const pinViewInfo& p) -> bool
-					{
-						return p.isVisible;
-					}
-				);
-*/
+
 				auto totalHeight = getLayoutRect().getHeight();
 
 				int plugCount = 0;
@@ -1030,14 +1047,16 @@ namespace SynthEdit2
 		if (zoomFactor > 0.5f)
 		{
 			const float pinRadius = 3.0f;
+			const auto adjustedPinRadius = pinRadius + 0.1f; // nicer pixelation, more even outline circle.
 			auto outlineBrush = g.CreateSolidColorBrush(Color::Gray);
 			auto fillBrush = g.CreateSolidColorBrush(0x000000u);
+			auto whiteBrush = g.CreateSolidColorBrush(Color::White);
 
-			// Pins
-			const float left = /*getLayoutRect().left +*/ plugDiameter * 0.5f;
-			const float right = /*getLayoutRect().right*/getLayoutRect().getWidth() - plugDiameter * 0.5f;
+			// Pins (see also drawoutline for snapping)
+			const float left = plugDiameter * 0.5f - 0.5f;
+			const float right = getLayoutRect().getWidth() - plugDiameter * 0.5f + 0.5f;
 
-			Point p(0, /*getLayoutRect().top +*/ plugDiameter * 0.5f - 0.5f);
+			Point p(0, plugDiameter * 0.5f - 0.5f);
 			Color c;
 			int prevDatatype = -1;
 
@@ -1088,8 +1107,9 @@ namespace SynthEdit2
 						Color::FromRgb(0xC4C4C4),	// Spare - white
 					};
 #else
+/*
 					// Classic SE colors
-					static const Color pinColors[] = {
+					static const Color pinColors_old[] = {
 						Color::FromBytes(0, 255, 0),        // ENUM green
 						Color::FromBytes(255, 0, 0),        // TEXT red
 						Color::FromBytes(0xFF, 0xFF, 0),	// MIDI2 yellow
@@ -1105,33 +1125,50 @@ namespace SynthEdit2
 						Color::FromBytes(255, 0, 0),		// string (utf8)
 						Color::FromBytes(255, 255, 255),	// Spare - white.
 					};
+*/
+					static const Color pinColors[][2] = {
+					//     inner      outline
+						{{0x00BB00u},{0x008C00u}}, // ENUM green
+						{{0xFF0000u},{0xBF0000u}}, // TEXT red
+						{{0xFFCC00u},{0xBF9900u}}, // MIDI2 yellow
+						{{0x00bcbcu},{0x00bcbcu}}, // DOUBLE
+						{{0x555555u},{0x404040u}}, // BOOL - grey.
+						{{0x0044FFu},{0x0033BFu}}, // float-audio blue
+						{{0x00CCEEu},{0x0099B3u}}, // FLOAT green-blue
+						{{0x008989u},{0x008989u}}, // unused
+						{{0xFF8800u},{0xBF6600u}}, // INT orange
+						{{0xFF8800u},{0xBF6600u}}, // INT64 orange
+						{{0xFF55FFu},{0xBF40BFu}}, // BLOB -purple
+						{{0xFF55FFu},{0xBF40BFu}}, // Class -purple
+						{{0xFF0000u},{0xBF0000u}}, // string (utf8) red
+						{{0xFF55FFu},{0xBF40BFu}}, // BLOB2 -purple
+						{{0xffffffu},{0x808080u}}, // Spare - white.
+				};
 #endif
 
 					// Spare container pins white.
 					const int datatype = (pin.isAutoduplicatePlug && pin.isIoPlug) ? static_cast<int>(std::size(pinColors)) - 1 : pin.datatype;
 					if (prevDatatype != datatype)
 					{
-						fillBrush.SetColor(pinColors[datatype]);
+						fillBrush.SetColor(pinColors[datatype][0]);
+						outlineBrush.SetColor(pinColors[datatype][1]);
 						prevDatatype = datatype;
 					}
 #if 0
 					g.FillCircle(p, pinRadius + 0.5f, fillBrush);
 #else
-					// Grey outline on plug circle
 					g.FillCircle(p, pinRadius, fillBrush);
 
-					// Unconected conatiner pins highlighted
+					// outline on plug circle
+					// Unconected container pins highlighted white
 					if (pin.isTiedToUnconnected)
 					{
-						outlineBrush.SetColor(Color::White);
+						g.DrawCircle(p, adjustedPinRadius, whiteBrush);
 					}
-
-					g.DrawCircle(p, pinRadius, outlineBrush);
-
-					if (pin.isTiedToUnconnected)
+					else
 					{
-						outlineBrush.SetColor(Color::Gray); // back
-					}					
+						g.DrawCircle(p, adjustedPinRadius, outlineBrush);
+					}
 #endif
 					p.y += plugDiameter;
 				}
@@ -1298,12 +1335,12 @@ namespace SynthEdit2
 		auto geometry = factory.CreatePathGeometry();
 		auto sink = geometry.Open();
 
-		const float outlineThickness = 1;
+//		const float outlineThickness = 1;
 		const float radius = plugDiameter * 0.5f;
 
-		const float leftX = radius + 0.5f;
+		const float leftX = radius - 0.5f; //XX
 		// we can't draw past right outline.
-		float rightX = (bounds_.right - bounds_.left) - radius - outlineThickness +0.5f;
+		const float rightX = (bounds_.right - bounds_.left) - radius /*- outlineThickness*/ +0.5f;
 
 		// Half-circles. The BEST 2-spline magic number is 1.333333
 		const float controlPointDistance = radius * 1.333f;
@@ -2241,14 +2278,14 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 			return ModuleView::getConnectionPoint(cableType, pinIndex);
 
 		int i = 0;
-		float y = bounds_.top + plugDiameter * 0.5f;
+		float y = bounds_.top + plugDiameter * 0.5f - 0.5f;
 		for (auto& p : plugs_)
 		{
 			if (p.isVisible)
 			{
 				if (i == pinIndex)
 				{
-					float x = p.direction == DR_OUT ? bounds_.right - plugDiameter * 0.5f : bounds_.left + plugDiameter * 0.5f;
+					float x = p.direction == DR_OUT ? bounds_.right - plugDiameter * 0.5f + 0.5f : bounds_.left + plugDiameter * 0.5f - 0.5f;
 					//				_RPT2(_CRT_WARN, "getConnectionPoint [%.3f,%.3f]\n", x, y);
 					return Point(x, y);
 				}
@@ -2746,7 +2783,8 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 			return gmpi::MP_HANDLED; // Indicate menu already shown.
 		}
 
-		return parent->getViewType() == CF_STRUCTURE_VIEW || clientHit ? gmpi::MP_OK : gmpi::MP_UNHANDLED;
+//?		return parent->getViewType() == CF_STRUCTURE_VIEW || clientHit ? gmpi::MP_OK : gmpi::MP_UNHANDLED;
+		return clientHit ? gmpi::MP_OK : gmpi::MP_UNHANDLED;
 	}
 
 	int32_t ModuleViewStruct::OnDoubleClicked(int32_t flags, GmpiDrawing_API::MP1_POINT point)
@@ -2756,7 +2794,12 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 
 	int32_t ModuleViewStruct::onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 	{
-		// Handle double-click on module.
+		auto res = ModuleView::onPointerDown(flags, point);
+		
+		if (MP_OK == res || MP_HANDLED == res) // Client was hit (and cared).
+			return res;
+
+		// Handle double-click on module. (only if didn't click on a child control)
 		if ((flags & gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON) != 0)
 		{
 			auto now = std::chrono::steady_clock::now();
@@ -2771,17 +2814,13 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 #endif
 			if (timeSincePreviousClick_ms < doubleClickThreshold_ms)
 			{
-				auto res = OnDoubleClicked(flags, point);
+				auto res2 = OnDoubleClicked(flags, point);
 
-				if (MP_HANDLED == res)
-					return res;
+				if (MP_HANDLED == res2)
+					return res2;
 			}
 		}
-
-		auto res = ModuleView::onPointerDown(flags, point);
-		if (MP_HANDLED == res) // Client indicates no further processing needed.
-			return res;
-
+		
 		// Mouse not over client graphics, check pins.
 		if ((flags & gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON) != 0)
 		{
@@ -2913,6 +2952,7 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 			if (toPin.first >= 0 && toPin.second == 0)
 			{
 				Presenter()->AddConnector(dragline->fromModuleHandle(), dragline->fromPin(), getModuleHandle(), toPin.first, false);
+				return true;
 			}
 		}
 		return false;
@@ -2920,31 +2960,31 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 
 	bool ModuleViewPanel::EndCableDrag(GmpiDrawing_API::MP1_POINT point, ConnectorViewBase* dragline)
 	{
-		if (hitTest(0, point))
+		if (!hitTest(0, point))
+			return false;
+
+		GmpiDrawing::Point local(point);
+		auto modulePosition = getLayoutRect();
+		local.x -= modulePosition.left;
+		local.y -= modulePosition.top;
+
+		for (auto& patchpoint : getModuleType()->patchPoints)
 		{
-			GmpiDrawing::Point local(point);
-			auto modulePosition = getLayoutRect();
-			local.x -= modulePosition.left;
-			local.y -= modulePosition.top;
-
-			for (auto& patchpoint : getModuleType()->patchPoints)
+			float distanceSquared = (local.x - patchpoint.x) * (local.x - patchpoint.x) + (local.y - patchpoint.y) * (local.y - patchpoint.y);
+			if (distanceSquared <= patchpoint.radius * patchpoint.radius)
 			{
-				float distanceSquared = (local.x - patchpoint.x) * (local.x - patchpoint.x) + (local.y - patchpoint.y) * (local.y - patchpoint.y);
-				if (distanceSquared <= patchpoint.radius * patchpoint.radius)
+				auto toPin = patchpoint.dspPin;
+
+				int colorIndex = 0;
+				if (auto patchcable = dynamic_cast<PatchCableView*>(dragline); patchcable)
 				{
-					auto toPin = patchpoint.dspPin;
-
-					int colorIndex = 0;
-					if (auto patchcable = dynamic_cast<PatchCableView*>(dragline); patchcable)
-					{
-						colorIndex = patchcable->getColorIndex();
-					}
-
-					Presenter()->AddPatchCable(dragline->fromModuleHandle(), dragline->fromPin(), getModuleHandle(), toPin, colorIndex);
-					break;
+					colorIndex = patchcable->getColorIndex();
 				}
+
+				Presenter()->AddPatchCable(dragline->fromModuleHandle(), dragline->fromPin(), getModuleHandle(), toPin, colorIndex);
+				return true;
+				break;
 			}
-			return true;
 		}
 
 		return false;

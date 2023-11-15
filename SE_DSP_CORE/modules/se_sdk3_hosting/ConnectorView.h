@@ -201,7 +201,7 @@ namespace SynthEdit2
 
 	struct sharedGraphicResources_connectors
 	{
-		GmpiDrawing::SolidColorBrush brushes[13];
+		GmpiDrawing::SolidColorBrush brushes[15];
 		GmpiDrawing::SolidColorBrush errorBrush;
 		GmpiDrawing::SolidColorBrush emphasiseBrush;
 		GmpiDrawing::SolidColorBrush selectedBrush;
@@ -230,6 +230,8 @@ namespace SynthEdit2
 				0xb45e00, // INT64 orange
 				0xbc00bc, // BLOB -purple
 				0xbc00bc, // Class -purple
+				0xbc0000, // DT_STRING_UTF8 - red
+				0xbc00bc, // BLOB2 -purple
 				0xbcbcbc, // Spare - white.
 			};
 
@@ -266,7 +268,8 @@ namespace SynthEdit2
 		std::shared_ptr<sharedGraphicResources_connectors> drawingResources;
 		sharedGraphicResources_connectors* getDrawingResources(GmpiDrawing::Graphics& g);
 		bool mouseHover = {};
-
+		static GmpiDrawing::Point pointPrev; // for dragging nodes
+		
 	public:
 		// Dynamic patch-cables.
 		ConnectorView2(Json::Value* pDatacontext, ViewBase* pParent) :

@@ -6,7 +6,6 @@
 
 SE_DECLARE_INIT_STATIC_FILE(ug_volts_to_float)
 
-
 #define PN_INPUT		0
 #define PN_MODE			1
 #define PN_UPDATE_RATE	2
@@ -196,16 +195,25 @@ void ug_volts_to_float::onSetPin(timestamp_t /*p_clock*/, UPlug* p_to_plug, stat
 		//		_RPT2(_CRT_WARN, "ug_volts_to_float::on_input_stat_change STAT = %s, %.2f\n",  GetStatString(p_state), 10.0 * GetPlug(0)->getValue() );
 		if( p_state > ST_STOP )
 		{
-			SET_CUR_FUNC( audio_routine );
-
-			if( !monitor_routine_running )
+			// avoid delay when in fast-mode and it's a simple one-off update
+			if (mode == Fast_DC && p_state == ST_ONE_OFF)
 			{
-				max_input = 0.f;
-				monitor_routine_running = true;
-				RUN_AT( SampleClock() + delay, monitor_routine );
+				output_val = 10.f * GetPlug(PN_INPUT)->getValue();
+				SendPinsCurrentValue(SampleClock(), GetPlug(PN_OUTPUT));
 			}
+			else
+			{
+				SET_CUR_FUNC(audio_routine);
 
-			monitor_done = false;
+				if (!monitor_routine_running)
+				{
+					max_input = 0.f;
+					monitor_routine_running = true;
+					RUN_AT(SampleClock() + delay, monitor_routine);
+				}
+
+				monitor_done = false;
+			}
 		}
 	}
 }

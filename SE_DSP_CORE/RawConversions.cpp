@@ -173,6 +173,7 @@ std::string ParseToRaw( int datatype, const std::wstring& s )
 		break;
 
 	case DT_BLOB:
+	case DT_BLOB2:
 		result = Base64::decode(WStringToUtf8(s));
 		break;
 
@@ -232,6 +233,7 @@ std::string ParseToRaw( int datatype, const std::string& s )
 		break;
 
 	case DT_BLOB:
+	case DT_BLOB2:
 		result = Base64::decode(s);
 		break;
 
@@ -303,6 +305,7 @@ std::string RawToUtf8B(int datatype, const void* data, size_t size)
 		break;
 
 	case DT_BLOB:
+	case DT_BLOB2:
 		{
 			std::string s((char*)data, size);
 			result = Base64::encode(s);

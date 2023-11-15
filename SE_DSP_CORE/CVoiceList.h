@@ -7,10 +7,16 @@
 #include <array>
 #include <functional>
 #include <list>
+#include <fstream>
 #include "se_types.h"
 #include "modules/se_sdk3/hasMidiTuning.h"
 #include "HostControls.h"
 #include "HostVoiceControl.h"
+
+#ifdef _DEBUG
+// See also DEBUG_VOICEWATCHER & VM_DEBUG_OUTPUT
+//#define DEBUG_VOICE_ALLOCATION
+#endif
 
 class SeAudioMaster;
 
@@ -25,7 +31,7 @@ public:
 
 class ug_container;
 
-enum EVoiceState { VS_SUSPENDED, VS_HOT_STANDBY, VS_ACTIVE, VS_MUTING };
+enum EVoiceState { VS_SUSPENDED, VS_ACTIVE, VS_MUTING };
 
 // Hard to see any improvement, but seems a bit faster.
 // needs fairly thorough testing #define VOICE_USE_VECTOR
@@ -40,10 +46,14 @@ public:
 	void CheckSortOrder();
 	void Open(class ISeAudioMaster* p_audiomaster, bool setVoiceNumbers);
 	void Resume();
-	inline bool IsSuspended()
+	bool IsSuspended()
 	{
 		assert(suspend_flag == ( voiceState_ == VS_SUSPENDED ));
 		return voiceState_ == VS_SUSPENDED;
+	}
+	bool IsRefreshing() const
+	{
+		return NoteNum == -1 && voiceState_ == VS_ACTIVE;/*&& voiceActive_ == 1.0f*/;
 	}
 	inline bool isHeld()
 	{
@@ -58,7 +68,7 @@ public:
 	void SetUpVoiceAdders();
 	void SetUpNoteMonitor( bool secondPass = false );
 	void RemoveUG( ug_base* ug );
-	class ug_patch_automator* findPatchAutomator();
+	void DoneCheck(timestamp_t timeStamp);
 	ug_base* findIoMod();
 	void SendProgChange( ug_container* p_patch_control_container, int patch);
 	void NoteOff( timestamp_t p_clock );
@@ -88,10 +98,11 @@ public:
 	timestamp_t NoteOffTime;
 	timestamp_t NoteOnTime;
 	//short Channel;
-	short NoteNum;  // what note is this playing
+	short NoteNum;  // what note is this playing. -1 for refreshing voice
 	EVoiceState voiceState_;
 	int m_voice_number;
 	float peakOutputLevel; // usefull for voice stealing.
+	timestamp_t outputSilentSince = std::numeric_limits<timestamp_t>::max();
 	float voiceActive_;
 
 private:
@@ -224,7 +235,6 @@ public:
 	// NEW...
 	void VoiceAllocationNoteOn(timestamp_t timestamp, /* int midiChannel ,*/ int MidiKeyNumber/*, int velocity*/, int usePhysicalVoice = -1);
 	void PlayWaitingNotes(timestamp_t timestamp);
-	void UpdateVoiceOutputStatus(struct SynthEditEvent* e);
 	void VoiceAllocationNoteOff(timestamp_t timestamp, /*int channel,*/ int voiceId);// , int voiceAllocationMode );
 	Voice* allocateVoice( timestamp_t timestamp/*, int channel*/, int voiceId, int voiceAllocationMode );
 
@@ -296,4 +306,8 @@ protected:
 	float portamentoTarget;
 	timestamp_t mrnTimeStamp;
 	int maxNoteHoldBackPeriodSamples;
+
+#ifdef DEBUG_VOICE_ALLOCATION
+	std::ofstream loggingFile;
+#endif
 };

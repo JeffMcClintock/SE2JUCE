@@ -19,6 +19,7 @@
 // 130040 : 02/02/2018 Parameter metadata now saved in module scan database.
 // 130041 : Project has been saved from at least most recent SE V1.4 to ensure all obsolete unsupported modules are removed.
 #define FILE_FORMAT_VERSION_NUM 130041
+#define XML_FILE_FORMAT_VERSION_NUM 150000
 
 //#define COMPILE_DEMO_VERSION
 #define SYNTHEDIT_REGISTRY_KEY L"SYNTHEDIT_X64_12"

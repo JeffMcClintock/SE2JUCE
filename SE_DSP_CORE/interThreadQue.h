@@ -153,13 +153,14 @@ public:
 				auto waiter = waitingClientsHead;
 
 				// remove it.
-				waitingClientsHead->inQue_ = false;
+				waiter->inQue_ = false;
 				waitingClientsHead = waitingClientsHead->next_;
 
+				// if we processed them all, null the tail. List must be consistent before we try to add it back again below.
 				if (waitingClientsHead == nullptr)
 					waitingClientsTail = nullptr;
 
-				// if it was updated after being serviced but before being removed, re-add it.
+				// if it was updated after being serviced but before being removed, re-add it, except at the back.
 				if (waiter->dirty_)
 				{
 					AddWaiter(waiter);
@@ -168,6 +169,7 @@ public:
 				++size;
 				--servicedCount;
 			}
+
 			// count remainder.
 			auto client = waitingClientsHead;
 			while (client)

@@ -67,6 +67,7 @@ enum HostControls { HC_NONE=-1, HC_PATCH_COMMANDS, HC_MIDI_CHANNEL, HC_PROGRAM_N
 					HC_CAN_UNDO,
 					HC_CAN_REDO,
 
+					HC_CLEAR_TAILS,	// effect has restarted after being disabled for a while, try to clear tails.
 					// leave last
 					HC_NUM_HOST_CONTROLS,
 };
@@ -85,7 +86,8 @@ int GetHostControlDatatype( HostControls hc );
 const wchar_t* GetHostControlName( HostControls hc );
 const wchar_t* GetHostControlNameByAutomation(int automation);
 int GetHostControlAutomation(HostControls hostControlId);
-bool HostControlAttachesToParentContainer( HostControls hostControlId );
+bool AttachesToParentContainer(HostControls hostControlId);
+bool AttachesToVoiceContainer( HostControls hostControlId );
 bool HostControlisPolyphonic(HostControls hostControlId);
 bool AffectsVoiceAllocation(HostControls hostControlId);
 

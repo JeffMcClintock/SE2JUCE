@@ -31,6 +31,11 @@ public:
 	    m_que->Send();
     }
 
+	static bool hasSpaceForMessage(IWriteableQue* p_que, int sizeofPayload)
+	{
+		return sizeofPayload + sizeof(int) * 2 < p_que->freeSpace();
+	}
+
 private:
 	IWriteableQue* m_que;
 };

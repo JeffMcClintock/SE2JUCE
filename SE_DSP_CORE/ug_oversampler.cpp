@@ -194,6 +194,18 @@ void ug_oversampler::Setup1b( int factor, int filterType, bool copyStandardPlugs
 	//	SetupDynamicPlugs();
 }
 
+void ug_oversampler::ReRoutePlugs()
+{
+	if (GetFlag(UGF_ENSURE_AFTER_PA))
+	{
+		// add a dummy MIDI pin
+		auto dummyPin = new UPlug(this, DR_IN, DT_MIDI);
+		AddPlug(dummyPin);
+
+		parent_container->RouteDummyPinToPatchAutomator(dummyPin);
+	}
+}
+
 UPlug* ug_oversampler::routePatchCableOut(UPlug* plug)
 {
 	auto outsidePlug = new UPlug(this, plug);

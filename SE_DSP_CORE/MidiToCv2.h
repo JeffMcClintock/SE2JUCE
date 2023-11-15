@@ -10,7 +10,7 @@ class MidiToCv2 : public MpBase2
 {
 public:
 	MidiToCv2( );
-	virtual int32_t MP_STDCALL open();
+	int32_t MP_STDCALL open() override;
 	void subProcess(int sampleFrames);
 	void onSetPins() override;
 
@@ -53,7 +53,8 @@ private:
 	{
 		return polyAftertouchDetected || !monoAftertouchDetected;
 	}
-
+	bool isFirstSample = true;
+	
 #ifdef _DEBUG
 	int debugVoice;
 #endif

@@ -107,8 +107,10 @@ public:
 
 	void ObjectClicked(int handle, int heldKeys) override
 	{}
-	void AddPatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin, int colorIndex, bool placeAtBack) override
-	{}
+	bool AddPatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin, int colorIndex, bool placeAtBack) override
+	{
+		return false;
+	}
 	void RemovePatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin) override
 	{}
 	void DragSelection(GmpiDrawing_API::MP1_SIZE offset) override
@@ -156,11 +158,13 @@ public:
 	{
 		parent->populateContextMenu(contextMenu, moduleHandle, nodeIndex);
 
-//		if (container->isRackModule())
+#ifdef _DEBUG // for now
+		//		if (container->isRackModule())
 		{
 			contextMenu->currentCallback = [=](int32_t idx, GmpiDrawing_API::MP1_POINT point) { return onContextMenu(idx, point); };
 			contextMenu->AddItem("Remove Rack Module", 0);
 		}
+#endif
 	}
 
 	int32_t onContextMenu(int32_t idx, GmpiDrawing::Point point)
@@ -238,13 +242,13 @@ public:
 		return fromPinDirection != toPinDirection;
 	}
 
-	void AddPatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin, int colorIndex, bool placeAtBack) override
+	bool AddPatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin, int colorIndex, bool placeAtBack) override
 	{
 		auto fromUg = HandleToObject(fromModule);
 		auto toUg = HandleToObject(toModule);
 
 		if (fromUg == nullptr || toUg == nullptr)
-			return;
+			return false;
 
 		auto fromType = fromUg->getModuleType();
 		auto toType = toUg->getModuleType();
@@ -253,22 +257,14 @@ public:
 		int fromPinDirection = fromType->plugs[fromPin]->GetDirection();
 
 		if (fromPinDirection == toPinDirection)
-			return;
+			return false;
 
 		if (fromPinDirection == DR_IN)
 		{
 			// Swap them round.
-			auto temp = fromUg;
-			fromUg = toUg;
-			toUg = temp;
-
-			auto temp2 = fromModule;
-			fromModule = toModule;
-			toModule = temp2;
-
-			auto temp3 = fromPin;
-			fromPin = toPin;
-			toPin = temp3;
+			std::swap(fromUg, toUg);
+			std::swap(fromModule, toModule);
+			std::swap(fromPin, toPin);
 		}
 
 		// get current cable list.
@@ -276,6 +272,13 @@ public:
 		auto parameterHandle = getPatchManager()->getParameterHandle(-1, parameterIdx);
 
 		SynthEdit2::PatchCables cableList(getPatchManager()->getParameterValue(parameterHandle));
+
+		// Check for existing identical cable. If so exit.
+		for (auto& c : cableList.cables)
+		{
+			if (c.fromUgHandle == fromModule && c.fromUgPin == fromPin && c.toUgHandle == toModule && c.toUgPin == toPin)
+				return false;
+		}
 
 		if (placeAtBack)
 			cableList.insert(fromModule, fromPin, toModule, toPin, colorIndex);
@@ -285,6 +288,8 @@ public:
 		// update module parameter holding cable list.
 		auto localToPreventTrashedReturnValue = cableList.Serialise();
 		getPatchManager()->setParameterValue(localToPreventTrashedReturnValue, parameterHandle);
+  
+        return true;
 	}
 
 	void RemovePatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin) override

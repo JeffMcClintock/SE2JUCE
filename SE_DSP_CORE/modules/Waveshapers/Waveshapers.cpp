@@ -3,12 +3,14 @@
 #pragma warning(disable : 4996)
 
 // Prevent stupid 'min' macro overriding std::min
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 
 #include <algorithm>
 #include <limits>
 #include <cmath>
-#include "./waveshapers.h"
+#include "./Waveshapers.h"
 #include "../shared/expression_evaluate.h"
 #include "../shared/unicode_conversion.h"
 #include "../shared/xp_simd.h"

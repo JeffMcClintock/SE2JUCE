@@ -2,7 +2,7 @@
 
 /*
   GMPI - Generalized Music Plugin Interface specification.
-  Copyright 2007-2022 Jeff McClintock.
+  Copyright 2023 Jeff McClintock.
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -20,19 +20,7 @@
 #include "GmpiApiCommon.h"
 
 // Platform specific definitions.
-#if defined __BORLANDC__
-#pragma -a8
-#elif defined(_WIN32) || defined(__FLAT__) || defined (CBUILDER)
 #pragma pack(push,8)
-#endif
-
-#ifndef DECLSPEC_NOVTABLE
-#if defined(__cplusplus)
-#define DECLSPEC_NOVTABLE   __declspec(novtable)
-#else
-#define DECLSPEC_NOVTABLE
-#endif
-#endif
 
 namespace gmpi
 {
@@ -41,30 +29,45 @@ namespace api
 
 enum class EventType : int32_t
 {
-    PinSet            = 100, // A parameter has changed value.
-    PinStreamingStart = 101, // An input is not silent.
-    PinStreamingStop  = 102, // An input is silent.
-    Midi              = 103, // A MIDI message.
-    GraphStart        = 104, // Plugin is about to process the very first sample.
+    PinSet            = 0, // A parameter has changed value.
+    PinStreamingStart = 1, // An input is not silent.
+    PinStreamingStop  = 2, // An input is silent.
+    Midi              = 3, // A MIDI message.
+    GraphStart        = 4, // Plugin is about to process the very first sample.
 };
+
+#pragma pack(push,4)
 
 struct Event
 {
-    int32_t timeDelta;
-    EventType eventType;
-    int32_t parm1;
-    int32_t parm2;
-    int32_t parm3;
-    int32_t parm4;
-    char* extraData;
-    Event* next;
+	Event* next;
+	int32_t timeDelta;
+	EventType eventType;
+	int32_t pinIdx;
+	int32_t size_;
+	union
+	{
+		uint8_t data_[8];
+		const uint8_t* oversizeData_;
+	};
+
+	int32_t size() const
+	{
+		return size_;
+	}
+	const uint8_t* data() const
+	{
+		return size_ > 8 ? oversizeData_ : data_;
+	}
 };
+
+#pragma pack(pop)
 
 // INTERFACE 'IAudioPlugin'
 struct DECLSPEC_NOVTABLE IAudioPlugin : public IUnknown
 {
-    virtual gmpi::ReturnCode open(IUnknown* host) = 0;
-    virtual gmpi::ReturnCode setBuffer(int32_t pinId, float* buffer) = 0;
+    virtual ReturnCode open(IUnknown* host) = 0;
+    virtual ReturnCode setBuffer(int32_t pinId, float* buffer) = 0;
     virtual void process(int32_t count, const Event* events) = 0;
 
     // {23835D7E-DCEB-4B08-A9E7-B43F8465939E}
@@ -75,12 +78,12 @@ struct DECLSPEC_NOVTABLE IAudioPlugin : public IUnknown
 // INTERFACE 'IAudioPluginHost'
 struct DECLSPEC_NOVTABLE IAudioPluginHost : public IUnknown
 {
-    virtual gmpi::ReturnCode setPin(int32_t timestamp, int32_t pinId, int32_t size, const void* data) = 0;
-    virtual gmpi::ReturnCode setPinStreaming(int32_t timestamp, int32_t pinId, bool isStreaming) = 0;
-    virtual gmpi::ReturnCode setLatency(int32_t latency) = 0;
-    virtual gmpi::ReturnCode sleep() = 0;
+    virtual ReturnCode setPin(int32_t timestamp, int32_t pinId, int32_t size, const void* data) = 0;
+    virtual ReturnCode setPinStreaming(int32_t timestamp, int32_t pinId, bool isStreaming) = 0;
+    virtual ReturnCode setLatency(int32_t latency) = 0;
+    virtual ReturnCode sleep() = 0;
     virtual int32_t getBlockSize() = 0;
-    virtual int32_t getSampleRate() = 0;
+    virtual float getSampleRate() = 0;
     virtual int32_t getHandle() = 0;
 
     // {87CCD426-71D7-414E-A9A6-5ADCA81C7420}
@@ -89,11 +92,7 @@ struct DECLSPEC_NOVTABLE IAudioPluginHost : public IUnknown
 };
 
 // Platform specific definitions.
-#if defined __BORLANDC__
-#pragma -a-
-#elif defined(_WIN32) || defined(__FLAT__) || defined (CBUILDER)
 #pragma pack(pop)
-#endif
 
 } // namespace api
 } // namespace gmpi

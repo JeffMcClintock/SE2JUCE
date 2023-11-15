@@ -247,7 +247,7 @@ public:
 	{
 		return (int) plugs.size();
 	}
-	UPlug* GetPlugById(int id);
+//	UPlug* GetPlugById(int id);
 #if defined( _DEBUG )
 	UPlug* GetPlug(int p_index);
 #else
@@ -329,6 +329,7 @@ public:
 
 	virtual void BypassRedundentModules(int /*voice*/) {}
 	virtual void OnBufferReassigned() {}
+	virtual void ReRoutePlugs() {}
 
 	int latencySamples;
 

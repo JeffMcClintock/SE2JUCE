@@ -207,38 +207,35 @@ void UpdateRegionWinGdi::copyDirtyRects(HWND window, GmpiDrawing::SizeL swapChai
 
 void UpdateRegionWinGdi::optimizeRects()
 {
-	for (int i1 = 0; i1 < rects.size(); ++i1)
-	{
-		auto area1 = rects[i1].getWidth() * rects[i1].getHeight();
+    for (int i1 = 0; i1 < rects.size(); ++i1)
+    {
+        auto area1 = rects[i1].getWidth() * rects[i1].getHeight();
 
-		for (int i2 = i1 + 1; i2 < rects.size(); )
-		{
-			auto area2 = rects[i2].getWidth() * rects[i2].getHeight();
+        for (int i2 = i1 + 1; i2 < rects.size(); )
+        {
+            auto area2 = rects[i2].getWidth() * rects[i2].getHeight();
 
-			GmpiDrawing::RectL unionrect(rects[i1]);
+            GmpiDrawing::RectL unionrect(rects[i1]);
 
-			unionrect.top = (std::min)(unionrect.top, rects[i2].top);
-			unionrect.bottom = (std::max)(unionrect.bottom, rects[i2].bottom);
-			unionrect.left = (std::min)(unionrect.left, rects[i2].left);
-			unionrect.right = (std::max)(unionrect.right, rects[i2].right);
+            unionrect.top = (std::min)(unionrect.top, rects[i2].top);
+            unionrect.bottom = (std::max)(unionrect.bottom, rects[i2].bottom);
+            unionrect.left = (std::min)(unionrect.left, rects[i2].left);
+            unionrect.right = (std::max)(unionrect.right, rects[i2].right);
 
-			auto unionarea = unionrect.getWidth() * unionrect.getHeight();
+            auto unionarea = unionrect.getWidth() * unionrect.getHeight();
 
-			if (unionarea <= area1 + area2)
-			{
-				rects[i1] = unionrect;
-				area1 = unionarea;
-				rects.erase(rects.begin() + i2);
-//				++overlaps;
-			}
-			else
-			{
-				++i2;
-			}
-		}
-	}
-
-//	_RPTW1(_CRT_WARN, L"overlaps %d\n", overlaps);
+            if (unionarea <= area1 + area2)
+            {
+                rects[i1] = unionrect;
+                area1 = unionarea;
+                rects.erase(rects.begin() + i2);
+            }
+            else
+            {
+                ++i2;
+            }
+        }
+    }
 }
 
 UpdateRegionWinGdi::UpdateRegionWinGdi()
@@ -656,6 +653,41 @@ int32_t Gmpi_Win_OkCancelDialog::ShowAsync(gmpi_gui::ICompletionCallback* return
 	returnCompletionHandler->OnComplete(result);
 
 	return gmpi::MP_OK;
+}
+
+#else // mac
+
+void UpdateRegionMac::optimizeRects()
+{
+	for (int i1 = 0; i1 < rects.size(); ++i1)
+	{
+		auto area1 = rects[i1].getWidth() * rects[i1].getHeight();
+
+		for (int i2 = i1 + 1; i2 < rects.size(); )
+		{
+			auto area2 = rects[i2].getWidth() * rects[i2].getHeight();
+
+			GmpiDrawing::Rect unionrect(rects[i1]);
+
+			unionrect.top = (std::min)(unionrect.top, rects[i2].top);
+			unionrect.bottom = (std::max)(unionrect.bottom, rects[i2].bottom);
+			unionrect.left = (std::min)(unionrect.left, rects[i2].left);
+			unionrect.right = (std::max)(unionrect.right, rects[i2].right);
+
+			auto unionarea = unionrect.getWidth() * unionrect.getHeight();
+
+			if (unionarea <= area1 + area2)
+			{
+				rects[i1] = unionrect;
+				area1 = unionarea;
+				rects.erase(rects.begin() + i2);
+			}
+			else
+			{
+				++i2;
+			}
+		}
+	}
 }
 
 #endif // desktop

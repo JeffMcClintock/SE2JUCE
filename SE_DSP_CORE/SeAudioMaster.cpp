@@ -404,6 +404,11 @@ void SeAudioMaster::BuildDspGraph(
 		if (!pElem)
 			return;
 	}
+
+#if 0 //def _DEBUG
+	doc->SaveFile("C:\\temp\\DSP_EDITOR.xml");
+#endif
+
 #ifndef SE_EDIT_SUPPORT
 	// Load module database.
 	{
@@ -425,7 +430,30 @@ void SeAudioMaster::BuildDspGraph(
 		assert( main_container == 0 );
 		main_container = dynamic_cast<ug_container*>( moduleType->BuildSynthOb() );
 		main_container->Setup(this, pElem);
+
 		main_container->SetupPatchManager(pElem->FirstChildElement("PatchManager"), pendingPresets);
+		auto mc_patch_manager = main_container->get_patch_manager();
+
+		if (main_container->isContainerPolyphonic())
+		{
+			int32_t VoiceCount = 6;
+			int32_t VoiceReserveCount = 3;
+			if (auto param = mc_patch_manager->GetHostControl(HC_POLYPHONY, main_container->Handle()); param)
+			{
+				VoiceCount = (int32_t)param->GetValueRaw2();
+			}
+			if (auto param = mc_patch_manager->GetHostControl(HC_POLYPHONY_VOICE_RESERVE, main_container->Handle()); param)
+			{
+				VoiceReserveCount = (int32_t)param->GetValueRaw2();
+			}
+
+			main_container->setVoiceReserveCount(VoiceReserveCount);
+			main_container->setVoiceCount(VoiceCount);
+		}
+
+		// For polyphonic containers, help the patch manager (which may be in a higher container)
+		// associate it's polyphonic parameter (gate etc) with the container* that is controlling the voices.
+		mc_patch_manager->setupContainerHandles(main_container);
 
 #if defined( _DEBUG )
 		main_container->debug_name = L"Main";
@@ -438,9 +466,6 @@ void SeAudioMaster::BuildDspGraph(
 			pendingPresets,
 			mutedContainers
 		);
-
-		// Lastly add the ug_patch_automator, ug_patch_automator_out.
-		// Done after adding modules so if user already had a ug_patch_automator, we skip adding a second.
 		main_container->BuildAutomationModules();
 
 #if defined( _DEBUG )
@@ -467,9 +492,6 @@ void SeAudioMaster::BuildDspGraph(
 #endif
 		}
 #endif
-
-		// Set plugs without lines to default value.
-// moved		main_container->SetUnusedPlugs2();
 	}
 #if !defined( SE_EDIT_SUPPORT )
 	// the loaded Container need input and output modules connected
@@ -534,11 +556,11 @@ void SeAudioMaster::MidiIn( int delta, const unsigned char* MidiMsg, int length 
 }
 
 #if defined(SE_TARGET_PLUGIN)
-void SeAudioMaster::setParameterNormalizedDsp( int delta, int paramIndex, float value )
+void SeAudioMaster::setParameterNormalizedDsp( int delta, int paramIndex, float value, int32_t flags )
 {
 	timestamp_t timestamp = Patchmanager_->Container()->CalculateOversampledTimestamp( main_container, SampleClock() + delta );
 
-	Patchmanager_->setParameterNormalized( timestamp, paramIndex, value );
+	Patchmanager_->setParameterNormalized( timestamp, paramIndex, value, flags );
 }
 #endif
 
@@ -694,29 +716,6 @@ void AudioMasterBase::BuildModules(
 	std::vector<int32_t>& mutedContainers
 )
 {
-#if 0 // moved
-	// Look for PatchManager.
-	auto patchManager_xml = xml->FirstChildElement("PatchManager");
-	if( patchManager_xml )
-	{
-		const std::string* presetXml{};
-
-		// check for any preset that was saved suring an async restart.
-		for (const auto& preset : pendingPresets)
-		{
-			if (preset.first != container->Handle())
-				continue;
-
-			presetXml = &preset.second;
-		}
-
-		// ensure child modules know this container holds their patchdata.
-		container->patch_control_container = patch_control_container = container;
-		container->BuildPatchManager( patchManager_xml, presetXml);
-		container->get_patch_manager()->setupContainerHandles(container);
-	}
-#endif
-
 	// Look for "Modules" list.
 	TiXmlElement* modules_xml = xml->FirstChildElement("Modules");
 
@@ -775,6 +774,9 @@ void AudioMasterBase::BuildModules(
 					}
 				}
 
+				assert((child_container == child_patch_control_container) == (child_patchManager_xml != nullptr));
+				
+				
 #if SE_RUNTIME_MUTABLE_CONTAINERS
 				{
 					int handle = -1;
@@ -896,7 +898,7 @@ pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
 					// possible should be oversampler->BuildModules() because oversampler is the "AudioMaster"  LOOK DOWN to generator->Setup(this, pElem);
 
 					// re-route from container to oversampler in/out modules.
-					if( oversampleFactor != 0 )
+					if( oversampleFactor )
 					{
 						oversampler->BuildModules( child_container, child_patch_control_container, pElem, oversampler, pendingPresets, mutedContainers);
 						oversampler->Setup2(true);
@@ -906,13 +908,11 @@ pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
 						BuildModules(child_container, child_patch_control_container, pElem, child_container, pendingPresets, mutedContainers);
 						child_container->PostBuildStuff(true);
 					}
-				}
 
-				// Lastly add the ug_patch_automator, ug_patch_automator_out.
-				// Done after adding modules so if user already had a ug_patch_automator, we skip adding a second.
-				if (child_patchManager_xml) // this indicates that it has a real patchmanager, not merely a proxy
-				{
-					child_container->BuildAutomationModules();
+					if (child_container == child_patch_control_container)
+					{
+						child_container->BuildAutomationModules();
+					}
 				}
 			}
 			else
@@ -949,6 +949,7 @@ pElem->QueryIntAttribute("OversampleFilter", &oversamplerFilterPoles_);
 			}
 		}
 	}
+	
 }
 
 void SeAudioMaster::end_run()
@@ -976,7 +977,12 @@ void SeAudioMaster::UpdateCpu(int64_t nanosecondsElapsed)
 	{
 		cpuConsumptionIndex = 0;
 
-		my_msg_que_output_stream strm( getShell()->MessageQueToGui(), Handle(), "cput"); // total CPU.
+		auto queue = getShell()->MessageQueToGui();
+
+		if (!my_msg_que_output_stream::hasSpaceForMessage(queue, sizeof(cpuConsumption) + sizeof(int32_t) ))
+			return; // no space in queue.
+
+		my_msg_que_output_stream strm(queue, Handle(), "cput"); // total CPU.
 		strm << static_cast<int32_t>(sizeof(cpuConsumption)); // message length.
 
 		strm.Write(cpuConsumption, sizeof(cpuConsumption));
@@ -1148,6 +1154,12 @@ void SeAudioMaster::TriggerRestart()
 	TriggerInterrupt();
 }
 
+void SeAudioMaster::ClearDelaysUnsafe()
+{
+	interrupt_clear_delays = true;
+	TriggerInterrupt();
+}
+
 void SeAudioMaster::TriggerShutdown()
 {
 	if (state == audioMasterState::Stopped)
@@ -1242,6 +1254,25 @@ void SeAudioMaster::HandleInterrupt()
 		if(latencyNeedsCalculating)
 		{
 			m_shell->DoAsyncRestart();
+		}
+	}
+
+	if(interrupt_clear_delays)
+	{
+		interrupt_clear_delays = false;
+		if (SampleClock() != 0) // no need to clear tails on a complete reset.
+		{
+			_RPT0(0, "interrupt_clear_delays\n");
+/* not needed at present
+#ifndef SE_EDIT_SUPPORT
+			vst_out->MuteUntilTailReset();
+#endif
+*/
+			SetHostControl(HC_CLEAR_TAILS, hCClearTailsNextValue++);
+		}
+		else
+		{
+			_RPT0(0, "interrupt_clear_delays - ignored (sampleclock == 0)\n");
 		}
 	}
 }
@@ -1694,7 +1725,12 @@ bool AudioMasterBase::GetDebugFlag(int flag)
 #if defined( SE_EDIT_SUPPORT )
 	return CSynthEditAppBase::GetDebugFlag(flag);
 #else
+	// add debug flags here like DBF_BLOCK_CHECK (SeAudioMaster.h)
+#ifdef _DEBUG
+	int debug_flags = 0;//DBF_OUT_VAL_CHECK;
+#else
 	int debug_flags = 0;
+#endif
 	return (debug_flags & flag ) != 0;
 #endif
 }
@@ -1935,74 +1971,58 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 
 void AudioMasterBase::check_out_values(ug_base* ug, int start_pos, int sampleframes)
 {
-#if 0 // !!! TODO
 	bool block_ok = true;
-//	int end_pos = BlockSize();
 	float bad_val = 0.f;
 	int bad_out_number = 0;
 
-	//for( int p = ug->plugs.GetUpperBound() ; p >= 0 ; p-- )
-	//{
-	//	UPlug *plg = ug->plugs[p];
-	for( vector<UPlug*>::iterator it = ug->plugs.begin() ; it != ug->plugs.end() ; ++it )
+	for( auto plg : ug->plugs)
 	{
-		UPlug* plg = *it;
+		if (plg->DataType != DT_FSAMPLE || plg->Direction != DR_OUT)
+			continue;
 
-		if( plg->DataType == DT_FSAMPLE)
+		const float* o = plg->GetSamplePtr() + start_pos;
+		int denormal_count = 0;
+		for( int s = sampleframes ; s > 0 ; s-- )
 		{
-			if( plg->Direction == DR_OUT )
+			// this logic returns false if out of range OR if o is infinite
+			bool in_range = *o < 10000.f && *o > -10000.f;
+			/*
+							float test = FLT_MIN;
+			//				test = test / 10000000.f; // very small denormal
+							test = test / 10.f; // 'big' denormal
+			*/
+			unsigned int l = *((unsigned int*)(o));
+
+			if( *o != 0.f && ((l & 0x7FF00000) == 0) )
 			{
-				USampBlock* block_ptr = plg->GetSampleBlock();
-				int denormal_count = 0;
-				float* o = block_ptr->GetBlock() + start_pos;
-
-				for( int s = sampleframes ; s > 0 ; s-- )
-				{
-					// this logic returns false if out of range OR if o is infinite
-					bool in_range = *o < 10000.f && *o > -10000.f;
-					/*
-									float test = FLT_MIN;
-					//				test = test / 10000000.f; // very small denormal
-									test = test / 10.f; // 'big' denormal
-					*/
-					unsigned int l = *((unsigned int*)(o));
-
-					if( *o != 0.f && ((l & 0x7FF00000) == 0) )
-					{
-						denormal_count++;
-					}
-
-					if( !in_range || denormal_count > 5 )
-					{
-						block_ok = false;
-						bad_val = *o;
-						bad_out_number = plg->getPlugIndex();
-						break;
-					}
-
-					o++;
-				}
+				denormal_count++;
 			}
+
+			if( !in_range || denormal_count > 5 )
+			{
+				block_ok = false;
+				bad_val = *o;
+				bad_out_number = plg->getPlugIndex();
+				break;
+			}
+
+			o++;
 		}
 	}
 
-	if( block_ok == false )
+	if( !block_ok && error_msg_count++ < 30)
 	{
-		if( error_msg_count++ < 30 )
-		{
-			_RPT3(_CRT_WARN, "Module %d Writing pos %d -> %d\n", ug->Handle(), start_pos, start_pos + sampleframes );
+		_RPT3(_CRT_WARN, "Module %d Writing pos %d -> %d\n", ug->Handle(), start_pos, start_pos + sampleframes );
 
-			if( !( bad_val > -1.f && bad_val < 1.f ) ) // weird logic to handle infinite
-			{
-				_RPTW3(_CRT_WARN, L"******** '%s' output %d value out of range (%f)****** !!!\n", ug->DebugModuleName().c_str(), bad_out_number, bad_val );
-			}
-			else
-			{
-				_RPTW2(_CRT_WARN, L"******** '%s' output %d value DENORMAL )****** !!!\n", ug->DebugModuleName().c_str(), bad_out_number);
-			}
+		if( !( bad_val > -1.f && bad_val < 1.f ) ) // weird logic to handle infinite
+		{
+			_RPTW3(_CRT_WARN, L"******** '%s' output %d value out of range (%f)****** !!!\n", ug->DebugModuleName().c_str(), bad_out_number, bad_val );
+		}
+		else
+		{
+			_RPTW2(_CRT_WARN, L"******** '%s' output %d value DENORMAL )****** !!!\n", ug->DebugModuleName().c_str(), bad_out_number);
 		}
 	}
-#endif
 }
 #endif
 /*-----------------------------------------------------------------------------
@@ -2256,6 +2276,7 @@ void SeAudioMaster::CpuFunc()
 {
 	AudioMasterBase::CpuFunc();
 
+	// TODO:: eliminate RunDelayed, just use a dedicated event for CPU metering.
 	RunDelayed(SampleClock() + BlockSize() * cpu_block_rate, static_cast <ug_func> (&SeAudioMaster::CpuFunc));
 }
 
@@ -2462,8 +2483,8 @@ void SeAudioMaster::getPresetState_UI_THREAD( std::string& chunk, bool processor
         else
         {
             audioMasterLock_.Enter();
-            chunk = presetChunk_;             
-            presetChunk_.clear();
+            chunk = presetChunkOut_;
+            presetChunkOut_.clear();
             audioMasterLock_.Leave();
         }
     }
@@ -2478,7 +2499,7 @@ void SeAudioMaster::setPresetState_UI_THREAD( const std::string& chunk, bool pro
     if( processorActive )
     {
         audioMasterLock_.Enter();
-        presetChunk_ = chunk;
+        presetChunkIn_ = chunk;
         audioMasterLock_.Leave();
         interrupt_setchunk_ = true;
         TriggerInterrupt();
@@ -2493,8 +2514,8 @@ void SeAudioMaster::setPresetStateDspHelper()
 {
     audioMasterLock_.Enter();
 	const bool saveRestartState = false;
-	Patchmanager_->setPresetState( presetChunk_);
-    presetChunk_.clear();
+	Patchmanager_->setPresetState( presetChunkIn_);
+    presetChunkIn_.clear();
     audioMasterLock_.Leave();
 }
     
@@ -2502,7 +2523,7 @@ void SeAudioMaster::getPresetStateDspHelper()
 {
     audioMasterLock_.Enter();
 	const bool saveRestartState = false;
-	Patchmanager_->getPresetState( presetChunk_, saveRestartState);
+	Patchmanager_->getPresetState( presetChunkOut_, saveRestartState);
     audioMasterLock_.Leave();
     dsp_getchunk_completed_ = true;
 }
@@ -2516,7 +2537,7 @@ int SeAudioMaster::getNumInputs()
 
 int SeAudioMaster::getNumOutputs()
 {
-	return (int) vst_out->plugs.size() - 1;
+	return (int) vst_out->plugs.size() - ug_vst_out::PIN_AUDIOOUT0;
 }
 
 bool SeAudioMaster::wantsMidi()

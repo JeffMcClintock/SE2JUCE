@@ -25,6 +25,10 @@ struct VoiceControlState : public hasMidiTuning
 	}
 };
 
+// flags relating to parameter updates from DAW or MIDI
+static inline const int32_t kIsMidiMappedAutomation = 1 << 0;
+static inline const int32_t kMustUpdateUi = 1 << 1;
+
 class IDspPatchManager
 {
 public:
@@ -37,7 +41,7 @@ public:
 	virtual void vst_Automation(ug_container* voiceControlContainer, timestamp_t p_clock, int p_controller_id, float p_normalised_value, bool sendToMidiCv = true, bool sendToNonMidiCv = true) = 0;
 	virtual void vst_Automation2(timestamp_t p_clock, int p_controller_id, const void* data, int size) = 0;
 #if defined(SE_TARGET_PLUGIN)
-	virtual	void setParameterNormalized(timestamp_t p_clock, int vstParameterIndex, float newValue ) = 0;
+	virtual	void setParameterNormalized(timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) = 0;
 #endif
 	virtual void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) = 0;
 	virtual void getPresetState( std::string& chunk, bool saveRestartState) = 0;

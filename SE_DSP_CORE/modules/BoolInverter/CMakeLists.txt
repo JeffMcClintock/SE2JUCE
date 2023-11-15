@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
 
-build_sem_plugin(
-    BoolInverter
-    FALSE      # HAS_DSP
-    TRUE       # HAS_GUI
+project(BoolInverter)
+
+build_gmpi_plugin(
+    PROJECT_NAME ${PROJECT_NAME}
+    IS_OFFICIAL_MODULE
+    HAS_GUI
+    SOURCE_FILES BoolInverterGui.h BoolInverterGui.cpp
 )

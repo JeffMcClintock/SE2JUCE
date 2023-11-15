@@ -119,7 +119,7 @@ public:
 	virtual bool UsesAutoEnumList(IPlug* self);
 
 	// get properties
-	virtual CUG* UG(IPlug* /*self*/)
+	virtual class CUG* UG(IPlug* /*self*/)
 	{
 		assert(false);
 		return 0;
@@ -199,8 +199,6 @@ public:
 	}
 
 	// notification
-	virtual void OnNewConnection(IPlug* /*self*/, CLine2* /*p_line*/) {}
-	virtual void OnRemove(IPlug* /*self*/) {}
 	virtual void OnUiDisconnect(IPlug* /*self*/) {}
 	virtual void DeleteDecorators(IPlug* /*self*/) {}
 
@@ -233,11 +231,11 @@ public:
 	{
 		return 100;
 	} // always last
-	virtual IPlugDescriptionDecorator* getPlugDescription()
+	IPlugDescriptionDecorator* getPlugDescription() override
 	{
-		return 0;
+		return {};
 	}
-	virtual void setPlugDescription(IPlugDescriptionDecorator* /*p_description*/)
+	void setPlugDescription(IPlugDescriptionDecorator* /*p_description*/) override
 	{
 		assert(false);
 	}

@@ -10,7 +10,7 @@ using namespace std;
 
 namespace
 {
-REGISTER_MODULE_1(L"VST Output", IDS_MN_VST_OUTPUT,IDS_MG_DEBUG,ug_vst_out ,CF_HIDDEN,"");
+REGISTER_MODULE_1(L"VST Output", IDS_MN_VST_OUTPUT,IDS_MG_DEBUG,ug_vst_out ,0,"");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters
@@ -19,6 +19,7 @@ void ug_vst_out::ListInterface2(InterfaceObjectArray& PList)
 	// IO Var, Direction, Datatype, Name, Default, defid (index into unit_gen::PlugFormats)
 	// defid used to name a enum list or range of values
 	LIST_VAR3N(L"MIDI In", DR_IN, DT_MIDI2 ,L"0",L"", 0,L"");
+//	LIST_VAR3(L"Processor/ClearTails", m_clear_tails, DR_IN, DT_INT, L"", L"", IO_HOST_CONTROL|IO_HIDE_PIN, L"");
 	LIST_PIN(L"Audio",DR_IN, L"",L"", IO_AUTODUPLICATE|IO_LINEAR_INPUT|IO_CUSTOMISABLE,L"");
 }
 
@@ -39,24 +40,38 @@ ug_vst_out::~ug_vst_out()
 
 void ug_vst_out::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p_state)
 {
-	const int outputIndex = p_to_plug->getPlugIndex() - 1;
-	if (outputIndex >= 0)
+	switch (p_to_plug->getPlugIndex())
 	{
-		pinIsSilent[outputIndex] = p_to_plug->getState() != ST_RUN && p_to_plug->getValue() == 0.0f;
-		pinChanged[outputIndex] = true;
+/* not needed at present
+		case PIN_CLEARTAILS:
+			// DAW has resumed, but plugin may emit spikes due to discontinuities. Fade output up gradually to mask them. (fix for Presonus One "invalid output" crap).
+			_RPTN(0, "ug_vst_out CLEARTAILS. fade start at %f\n", fadeLevel_);
+			startFade(false);
+			break;
+*/
+		default: // audio pins?
+		{
+			const int outputIndex = p_to_plug->getPlugIndex() - PIN_AUDIOOUT0;
+			if (outputIndex >= 0)
+			{
+				pinIsSilent[outputIndex] = p_to_plug->getState() != ST_RUN && p_to_plug->getValue() == 0.0f;
+				pinChanged[outputIndex] = true;
+			}
+		}
+		break;
 	}
 }
 
 uint64_t ug_vst_out::updateSilenceFlags(int output, int count)
 {
-	uint64_t ret{0xffffffff};
+	uint64_t ret{};
 
 	uint64_t flag = 1;
 	for (int i = 0 ; i < count; ++i)
 	{
-		if (!pinIsSilent[output + i] || pinChanged[output + i])
+		if (pinIsSilent[output + i] && !pinChanged[output + i])
 		{
-			ret ^= flag; // clear one bit
+			ret &= flag; // set one bit
 		}
 
 		pinChanged[output + i] = false; // reset for next buffer
@@ -69,8 +84,9 @@ uint64_t ug_vst_out::updateSilenceFlags(int output, int count)
 void ug_vst_out::setIoBuffers(float* const* p_outputs, int numChannels, int stride)
 {
 	bufferIncrement_ = stride;
+	dawChannels_ = numChannels;
 
-    const int myChannelCount = static_cast<int>(plugs.size()) - 1;
+    const int myChannelCount = static_cast<int>(plugs.size()) - PIN_AUDIOOUT0;
     const int channelCount = (std::min)(myChannelCount, numChannels); // Ableton will connect two channels to a 1 channel effect. Ignore last.
 
     int i = 0;
@@ -79,11 +95,10 @@ void ug_vst_out::setIoBuffers(float* const* p_outputs, int numChannels, int stri
         m_outputs[i] = p_outputs[i];
     }
 
-    // for mono use, just copy 1st channel to second.
-    // i.e. when host supplies fewer than we need.
+    // plugin has more outputs than DAW wants?
     for (; i < myChannelCount; ++i)
     {
-        m_outputs[i] = p_outputs[0];
+        m_outputs[i] = nullptr;
     }
 }
 
@@ -93,7 +108,7 @@ int ug_vst_out::Open()
 
     ChooseProcess();
 
-	size_t out_count = plugs.size() - 1;
+	size_t out_count = plugs.size() - PIN_AUDIOOUT0;
 	m_outputs = new float *[out_count];
 
 	pinIsSilent.assign(out_count, false);
@@ -115,10 +130,7 @@ void ug_vst_out::HandleEvent(SynthEditEvent* e)
 	{
 	case UET_EVENT_MIDI:
 	{
-		if( e->parm2 <= sizeof(int) )
-			MidiBuffer.Add( e->timeStamp, (unsigned char*) &(e->parm3), e->parm2 );
-		else
-			MidiBuffer.Add( e->timeStamp, (unsigned char*) e->extraData, e->parm2 );
+		MidiBuffer.Add( e->timeStamp, (unsigned char*) e->Data(), e->parm2 );
 	}
 	break;
 
@@ -165,3 +177,14 @@ void ug_vst_out::startFade(bool isDucked )
 
     SET_CUR_FUNC( &ug_vst_out::sub_process_check_mode );
 }
+/* not needed at present
+
+// DAW has resumed, but plugin may 'spike' due to discontinuities, mute output until we recieve the 'clear tails' signal (then fade-up).
+void ug_vst_out::MuteUntilTailReset()
+{
+	_RPT0(0, "ug_vst_out::MuteUntilTailReset()\n");
+
+	fadeLevel_ = targetLevel = 0.0f;
+	SET_CUR_FUNC(&ug_vst_out::sub_process_check_mode);
+}
+*/

@@ -135,18 +135,21 @@ void MpParameter_base::updateFromDsp(int recievingMessageId, my_input_stream & s
 
 	case code_to_long('p', 'p', 'c', 0): // "ppc" Patch parameter change. Either Output parameter or MIDI automation
 	{
+		// NOTE: Parameters which are updated by MIDI learn will NOT get relayed to DAW in VST3 (probly would clash when the DAW sent them back to the DSP)
+		// however the grab/ungrab emulation seems to update Cubase OK. If a bit jumpy.
+		// Ableton Live does not follow MIDI automated params in VST3 at least.
+ 
+		// this is always false in VST3.
 		bool vst_inhibit_send_automation;
 		strm >> vst_inhibit_send_automation;
 
-		int voice, patch;
+		int voice;
 		strm >> voice;
 
 		int32_t size = getDataTypeSize(datatype_);
 		bool resizeable = size == 0;
 		while (voice != -1)
 		{
-			strm >> patch;
-
 			if (resizeable) // variable size.
 			{
 				strm >> size;
@@ -164,7 +167,8 @@ void MpParameter_base::updateFromDsp(int recievingMessageId, my_input_stream & s
 			controller_->updateGuis(this, voice);
 			
 			emulateMouseDown();
-
+			//_RPTN(0, "ppc inhibit DAW notification: %d\n", (int)vst_inhibit_send_automation);
+			// 
 			// next? (-1 signifies end)
 			strm >> voice;
 		}
@@ -305,7 +309,7 @@ RawView MpParameter_base::getValueRaw(gmpi::FieldType paramField, int32_t voice)
 
 			default:
 			{
-				assert(false); // TODO.
+//				assert(false); // TODO.
 				float normalised = 0;
 				tempReturnValue = ToRaw4(normalised);
 				return RawView(tempReturnValue);
@@ -343,7 +347,7 @@ RawView MpParameter_base::getValueRaw(gmpi::FieldType paramField, int32_t voice)
 
 			default:
 			{
-				assert(false); // TODO.
+//				assert(false); // TODO.
 				float normalised = 1;
 				//			return ToRaw4(normalised);
 				tempReturnValue = ToRaw4(normalised);
@@ -700,15 +704,13 @@ bool MpParameter::setParameterRaw(gmpi::FieldType paramField, int32_t size, cons
 	{
 		const bool oldVal = m_grabbed;
 		m_grabbed = RawToValue<bool>(data, size);
-//			_RPT1(_CRT_WARN, "m_grabbed %d\n", (int)m_grabbed);
 
 		changed = oldVal != m_grabbed;
-		// May already be grabbed by MIDI automation. In which case no need to update GUI.
+
 		if (changed)
 			controller_->updateGuis(this, paramField, voice);
 
-		// Mouse overrides MIDI "grab".
-		m_grabbed_by_MIDI_timer = 0;
+		onGrabbedChanged();
 	};
 
 	return changed;
@@ -718,37 +720,34 @@ void MpParameter::emulateMouseDown()
 {
 	// Emulate Mouse down when automated from MIDI/Processor
 	const int timerResetValue = 4;
-	if (!m_grabbed)
+
+	const bool alreadyGrabbed = m_grabbed_by_MIDI_timer > 0;
+	m_grabbed_by_MIDI_timer = timerResetValue;
+
+	if (!alreadyGrabbed)
 	{
-		m_grabbed = true;
-		m_grabbed_by_MIDI_timer = timerResetValue;
 		StartTimer(50);
-//		_RPT1(_CRT_WARN, "m_grabbed (MIDI) %d\n", (int)m_grabbed);
-		controller_->updateGuis(this, gmpi::MP_FT_GRAB);
-	}
-	else
-	{
-		// Already grabbed and more MIDI arrives, refresh timer.
-		if (m_grabbed_by_MIDI_timer > 0)
-		{
-			m_grabbed_by_MIDI_timer = timerResetValue;
-		}
+		onGrabbedChanged();
 	}
 }
 
 bool MpParameter::OnTimer()
 {
-//	_RPT0(_CRT_WARN, "*\n");
-	bool done = m_grabbed_by_MIDI_timer-- <= 0;
+	const bool done = m_grabbed_by_MIDI_timer-- <= 0;
 	if (done)
 	{
-		if (m_grabbed)
-		{
-			m_grabbed = false;
-//			_RPT1(_CRT_WARN, "m_grabbed (MIDI) %d\n", (int)m_grabbed);
-			controller_->updateGuis(this, gmpi::MP_FT_GRAB);
-		}
+		onGrabbedChanged();
 	}
 
 	return !done;
+}
+
+void MpParameter_native::onGrabbedChanged()
+{
+	if (isGrabbed() != dawGrabbed)
+	{
+		dawGrabbed = isGrabbed();
+
+		controller_->ParamGrabbed(this, gmpi::MP_FT_GRAB);
+	}
 }

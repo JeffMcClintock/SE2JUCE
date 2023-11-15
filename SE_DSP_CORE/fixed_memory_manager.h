@@ -143,10 +143,10 @@ public:
 		    retVal->eventType = p_eventType;	// See MpEventType enumeration.
 		    retVal->timeStamp = p_timeStamp;	// Relative to block.
 		    retVal->parm1 = p_parm1;			// Pin index if needed.
-		    retVal->parm2 = p_parm2;			// Sizeof additional data. >4 implies extraData points to value.
+		    retVal->parm2 = p_parm2;			// Sizeof additional data. >8 implies extraData points to value.
 		    retVal->parm3 = p_parm3;			// Pin value (if 4 bytes or less).
-		    retVal->parm4 = p_parm4;			// Voice ID.
-		    retVal->extraData = extra;				// Additional data.
+		    retVal->parm4 = p_parm4;			// Pin value additional (if 8 bytes or less).
+		    retVal->extraData = extra;			// Additional data.
 		    retVal->next = 0;					// Next event in list.
 
 		    //set m_NextMessage to point to next message in pool (with wrap around)

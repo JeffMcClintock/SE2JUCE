@@ -30,12 +30,13 @@ protected:
 	int totalItems = 0;
 	int visibleItems = 0;
 	GmpiDrawing_API::MP1_POINT prevPoint;
+	float cumulativeScroll = {};
 
 public:
 	ListboxGui()
 	{
 		// initialise pins.
-		initializePin(0, pinChoice, static_cast<MpGuiBaseMemberPtr2>(&ListboxGui::redraw));
+		initializePin(0, pinChoice, static_cast<MpGuiBaseMemberPtr2>(&ListboxGui::onSetValue));
 		initializePin(1, pinItemList, static_cast<MpGuiBaseMemberPtr2>(&ListboxGui::onSetItemList));
 		initializePin(2, pinStyle, static_cast<MpGuiBaseMemberPtr2>(&ListboxGui::onSetStyle));
 		initializePin(3, pinWriteable);
@@ -58,6 +59,30 @@ public:
 	void onSetItemList()
 	{
 		calcScrollBars();
+		invalidateRect();
+	}
+
+	void onSetValue()
+	{
+		it_enum_list itr(pinItemList);
+		itr.FindValue(pinChoice);
+		if (!itr.IsDone())
+		{
+			const int newIndex = itr.CurrentItem()->index;
+
+			if (newIndex < scrollItemIndex)
+			{
+				scrollItemIndex = newIndex;
+			}
+
+			else if (newIndex > scrollItemIndex + visibleItems - 2)
+			{
+				scrollItemIndex = newIndex - visibleItems + 1;
+			}
+
+			const auto maxScroll = (std::max)(0, totalItems - visibleItems);
+			scrollItemIndex = std::clamp(scrollItemIndex, 0, maxScroll);
+		}
 		invalidateRect();
 	}
 
@@ -152,6 +177,7 @@ public:
 
 		isScrolling = point.x > getRect().getWidth() - scrollbar_w;
 		prevPoint = point;
+		cumulativeScroll = {};
 
 		return gmpi::MP_OK;
 	}
@@ -160,26 +186,27 @@ public:
 	{
 		if (getCapture() && isScrolling)
 		{
-			auto pixelsScrollPerRow = rowheight;
-			auto dy = point.y - prevPoint.y;
-			if (dy > pixelsScrollPerRow)
-			{
-				prevPoint.y += pixelsScrollPerRow;
-				++scrollItemIndex;
-				invalidateRect();
-
-				auto maxScroll = (std::max)(0, totalItems - visibleItems);
-				scrollItemIndex = (std::min)(scrollItemIndex, maxScroll);
-			}
-			if (dy < -pixelsScrollPerRow)
-			{
-				prevPoint.y -= pixelsScrollPerRow;
-				--scrollItemIndex;
-				invalidateRect();
-				scrollItemIndex = (std::max)(scrollItemIndex, 0);
-			}
+			doScroll(point.y - prevPoint.y);
+			prevPoint = point;
 		}
 		return gmpi::MP_OK;
+	}
+
+	void doScroll(float dy)
+	{
+		cumulativeScroll += dy;
+
+		const auto pixelsScrollPerRow = rowheight;
+
+		auto newscrollItemIndex = scrollItemIndex + (int)(cumulativeScroll / pixelsScrollPerRow);
+		newscrollItemIndex = std::clamp(newscrollItemIndex, 0, totalItems - visibleItems);
+
+		if (newscrollItemIndex != scrollItemIndex)
+		{
+			cumulativeScroll -= (newscrollItemIndex - scrollItemIndex) * pixelsScrollPerRow;
+			scrollItemIndex = newscrollItemIndex;
+			invalidateRect();
+		}
 	}
 
 	int32_t MP_STDCALL onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
@@ -208,6 +235,18 @@ public:
 				}
 			}
 		}
+		return gmpi::MP_OK;
+	}
+
+	int32_t MP_STDCALL onMouseWheel(int32_t flags, int32_t delta, GmpiDrawing_API::MP1_POINT point) override
+	{
+		// ignore horizontal scrolling
+		if (0 != (flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT))
+			return gmpi::MP_UNHANDLED;
+
+		const float scale = (flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) ? 1.0f / 12.0f : 1.0f / 1.2f;
+		doScroll(-delta * scale);
+
 		return gmpi::MP_OK;
 	}
 

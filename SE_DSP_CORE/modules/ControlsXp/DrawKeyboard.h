@@ -122,15 +122,14 @@ inline static int32_t Render(GmpiDrawing_API::IMpDeviceContext* drawingContext, 
 	Point grad1(0.f, -1.f);
 	Point grad2(0.f, (float)top_shadow);
 
-	GradientStop gradientStops[2];
-	gradientStops[0].color = Color::SlateGray;
-	gradientStops[0].position = 0.0f;
-	gradientStops[1].color = keyColor;
-	gradientStops[1].position = 1.0f;
+	GradientStop gradientStops[] = {
+		{ 0.0f, Color::SlateGray},
+		{ 1.0f, keyColor}
+	};
 
-	auto gradientStopCollection = g.CreateGradientStopCollection(gradientStops, 2);
+	auto gradientStopCollection = g.CreateGradientStopCollection(gradientStops);
 	LinearGradientBrushProperties lgbp1(grad1, grad2);
-	auto gradientBrush2 = g.CreateLinearGradientBrush(lgbp1, BrushProperties(), gradientStopCollection);// grad1, grad2, Color::SlateGray, keyColor);
+	auto gradientBrush2 = g.CreateLinearGradientBrush(lgbp1, BrushProperties(), gradientStopCollection);
 	g.FillRectangle(0.0f, 0.0f, (float)usableWidth, (float)top_shadow - 1.0f, gradientBrush2);
 
 	// white keys highlights + shadows on left

@@ -4,6 +4,7 @@ project(Spring2)
 
 build_gmpi_plugin(
     PROJECT_NAME ${PROJECT_NAME}
+    IS_OFFICIAL_MODULE
     HAS_GUI
     SOURCE_FILES 
         Spring2Gui.h

@@ -168,6 +168,7 @@ inline int getDataTypeSize(int datatype)
 	{
 	case DT_CLASS:
 	case DT_BLOB:
+	case DT_BLOB2:
 	case DT_TEXT:
 	case DT_STRING_UTF8:
 	{

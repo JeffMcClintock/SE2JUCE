@@ -34,15 +34,14 @@ void MidiLogger::onSetPins()
 	// Check which pins are updated.
 	if( pinFileName.isUpdated() )
 	{
-		wchar_t fullFilename[500];
-		getHost()->resolveFilename( pinFileName.getValue().c_str(), sizeof(fullFilename)/sizeof(fullFilename[0]), fullFilename );
+		const auto fullFilename = host.resolveFilename_old(pinFileName);
 
 		if( outputStream != 0 )
 		{
 			fclose( outputStream );
 		}
 #ifdef _WIN32
-		outputStream = _wfopen( fullFilename, L"wt");
+		outputStream = _wfopen( fullFilename.c_str(), L"wt");
 #else
         outputStream = fopen( JmUnicodeConversions::WStringToUtf8(fullFilename).c_str(), "wt");
 #endif

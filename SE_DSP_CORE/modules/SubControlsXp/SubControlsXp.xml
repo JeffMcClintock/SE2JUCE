@@ -7,7 +7,7 @@
       <Pin name="Concatenated" datatype="string" direction="out"/>
     </GUI>
   </Plugin>
-  <Plugin id="SE MPE Control" name="MPE Control" category="Special">
+  <Plugin id="SE MPE Control" name="MPE Control" category="MIDI">
     <GUI>
       <Pin name="Allocation Mode" datatype="int" private="true" hostConnect="MpeMode"/>
       <Pin name="list items" datatype="string" private="true" hostConnect="MpeMode" parameterField="EnumList"/>

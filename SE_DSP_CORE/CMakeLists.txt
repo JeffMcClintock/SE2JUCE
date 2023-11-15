@@ -21,20 +21,25 @@ ${se_sdk_folder}/TimerManager.h
 ${se_sdk_folder}/TimerManager.cpp
 ${se_sdk_folder}/smart_audio_pin.h
 ${se_sdk_folder}/smart_audio_pin.cpp
+${se_sdk_folder}/Drawing.h
+${se_sdk_folder}/ProtectedFile.h
 
 modules/shared/it_enum_list.h
 modules/shared/it_enum_list.cpp
-modules/shared/PatchCables.h
-modules/shared/PatchCables.cpp
-modules/shared/xp_dynamic_linking.h
-modules/shared/xp_dynamic_linking.cpp
-modules/shared/FileWatcher.h
-modules/shared/FileWatcher.cpp
-modules/shared/xplatform_modifier_keys.h
-modules/shared/xplatform_modifier_keys.cpp
 modules/shared/FileFinder.h
 modules/shared/FileFinder.cpp
-
+modules/shared/FileWatcher.h
+modules/shared/FileWatcher.cpp
+modules/shared/PatchCables.h
+modules/shared/PatchCables.cpp
+modules/shared/simdutf/simdutf.h
+modules/shared/simdutf/simdutf.cpp
+modules/shared/wav_file.h
+modules/shared/wav_file.cpp
+modules/shared/xp_dynamic_linking.h
+modules/shared/xp_dynamic_linking.cpp
+modules/shared/xplatform_modifier_keys.h
+modules/shared/xplatform_modifier_keys.cpp
 )
 
 set(srcs_json
@@ -203,8 +208,7 @@ PatchStorage.h
 pch.cpp
 pch.h
 plug_description.h
-ProtectedFile.cpp
-ProtectedFile.h
+PresetReader.h
 QueClient.h
 RawConversions.cpp
 RawConversions.h
@@ -272,6 +276,8 @@ ug_float_to_volts.cpp
 ug_float_to_volts.h
 ug_generic_1_1.cpp
 ug_generic_1_1.h
+ug_gmpi.cpp
+ug_gmpi.h
 ug_io_mod.cpp
 ug_io_mod.h
 ug_latency_adjust.h
@@ -367,6 +373,10 @@ ug_vst_in.cpp
 ug_vst_in.h
 ug_vst_out.cpp
 ug_vst_out.h
+ug_wave_player.cpp
+ug_wave_player.h
+ug_wave_recorder.cpp
+ug_wave_recorder.h
 ULookup.cpp
 ULookup.h
 UMidiBuffer2.h
@@ -384,6 +394,7 @@ conversion.cpp
 
 IF(APPLE)
 set(srcs ${srcs}
+modules/se_sdk3_hosting/Cocoa_Gfx.h
 modules/se_sdk3_hosting/EventHelper.h
 modules/se_sdk3_hosting/SynthEditCocoaView.h
 modules/se_sdk3_hosting/SynthEditCocoaView.mm
@@ -447,6 +458,7 @@ modules/BPMClock3/BpmClock3.cpp
 modules/BPMClock3/BpmTempo.cpp
 modules/Filters/ButterworthLp.cpp
 modules/Converters/Converters.cpp
+modules/Converters/BlobToBlob2.cpp
 modules/ControlsXp/FreqAnalyser.cpp
 modules/ImpulseResponse/ImpulseResponse.cpp
 modules/Increment3/Increment3Gui.cpp
@@ -460,6 +472,7 @@ modules/OversamplingControl/OversamplingControlGui.cpp
 modules/ControlsXp/Slider.cpp
 modules/SoftDistortion/SoftDistortion.cpp
 modules/Switches/Switches.cpp
+modules/Switches/SilenceGate.cpp
 modules/Converters/UnitConverter.cpp
 modules/ControlsXp/VoltMeter.cpp
 modules/ControlsXp/Waveshaper3Xp.cpp
@@ -572,7 +585,20 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   $<$<CONFIG:Release>:NDEBUG>
 )
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
+if(APPLE)
+
+  # generate debug symbols
+  target_compile_options(${PROJECT_NAME} PRIVATE
+      $<$<CONFIG:Debug>:-g>
+  )
+  set_target_properties(${PROJECT_NAME} PROPERTIES XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT
+    $<$<CONFIG:Debug>:dwarf-with-dsym>
+  )
+
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${COREFOUNDATION_LIBRARY} )
+endif()
 
 IF(WIN32)
 target_link_libraries(${PROJECT_NAME} d3d11.lib d2d1 dwrite windowscodecs)
@@ -580,3 +606,8 @@ endif()
 
 target_compile_definitions (${PROJECT_NAME} PRIVATE -D_UNICODE -DUNICODE -DSE_TARGET_PLUGIN)
 
+# enable super fast UTF conversions
+target_compile_definitions(
+  ${PROJECT_NAME} PUBLIC 
+  USE_SIMD_UTF_CONVERSION
+)

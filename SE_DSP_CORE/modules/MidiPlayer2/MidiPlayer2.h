@@ -43,7 +43,7 @@ public:
 	virtual bool loopEntireFile()
 	{
 		return pinLoopMode;
-	};
+	}
 	void OnGateChange( int blockPosition = -1 );
 	void ChooseSubProcess();
 	void NotesOff(int blockPosition);
@@ -57,6 +57,7 @@ protected:
 	FloatInPin pinHostBpm;
 	IntInPin pinTempoFrom;
 	BoolInPin pinLoopMode;
+	BoolInPin pinSendClocks;
 
 	float file_bpm; /* beats per minute */
 	bool gate_state;

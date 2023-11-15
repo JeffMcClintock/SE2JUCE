@@ -148,6 +148,8 @@ void WaveRecorder2::onSetPins()
 			wchar_t fullFilename[500];
 			getHost()->resolveFilename(filename.c_str(), sizeof(fullFilename) / sizeof(fullFilename[0]), fullFilename);
 
+			// TODO 			const auto fullFileName = host.resolveFilename(filename);
+
 			if( outputStream != 0 )
 			{
 				fclose(outputStream);

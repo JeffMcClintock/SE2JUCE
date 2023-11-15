@@ -17,6 +17,21 @@ namespace GmpiGuiHosting
 	// Cocoa don't allow this to be class variable.
 	static NSTextField* textField = nullptr;
 
+    inline NSRect gmpiRectToViewRect(NSRect viewbounds, GmpiDrawing::Rect rect)
+    {
+        #if USE_BACKING_BUFFER
+            // flip co-ords
+            return NSMakeRect(
+              rect.left,
+              viewbounds.origin.y + viewbounds.size.height - rect.bottom,
+              rect.right - rect.left,
+              rect.bottom - rect.top
+              );
+        #else
+            return NSMakeRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+        #endif
+    }
+
 	class PlatformMenu : public gmpi_gui::IMpPlatformMenu, public EventHelperClient
 	{
 		int32_t selectedId;
@@ -139,14 +154,14 @@ namespace GmpiGuiHosting
             
 			return gmpi::MP_OK;
 		}
-
+        
 		virtual int32_t MP_STDCALL ShowAsync(gmpi_gui::ICompletionCallback* pCompletionHandler) override
 		{
 			completionHandler = pCompletionHandler;
             
             [[button cell] setAltersStateOfSelectedItem:NO];
             [[button cell] attachPopUpWithFrame:NSMakeRect(0,0,1,1) inView:view];
-            [[button cell] performClickWithFrame:NSMakeRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top) inView:view];
+            [[button cell] performClickWithFrame:gmpiRectToViewRect(view.bounds, rect) inView:view];
 
 //			[button setNeedsDisplay:YES];
    //         [button performClick:nil]; // Display popup.

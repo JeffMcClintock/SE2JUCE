@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <PluginList>
+  <Plugin id="SE Spring3" name="Spring3" category="Sub-Controls" helpUrl="Spring2.htm">
+    <GUI>
+      <Pin name="Animation Position" datatype="float"/>
+      <Pin name="Mouse Down" datatype="bool"/>
+      <Pin name="Mouse Down" datatype="bool" direction="out" />
+      <Pin name="Reset Value" datatype="float"/>
+      <Pin name="On/Off" datatype="bool" default="1"/>
+    </GUI>
+  </Plugin>
+  
   <Plugin id="SE Spring2" name="Spring2" category="Sub-Controls/Old" graphicsApi="none" helpUrl="Spring2.htm">
     <GUI>
       <Pin id="0" name="Animation Position" direction="in" datatype="float"/>
@@ -12,7 +22,7 @@
 
   <!-- WAS: Old backwards compatible version with mouse-down on wrong side -->
   <!-- Turns out to work better than Spring2 when mouse-down needs to go to PatchMem -->
-  <Plugin id="SE Spring" name="Spring" category="Sub-Controls" graphicsApi="none" helpUrl="Spring2.htm">
+  <Plugin id="SE Spring" name="Spring" category="Sub-Controls/Old" graphicsApi="none" helpUrl="Spring2.htm">
     <GUI>
       <Pin id="0" name="Normalised Value" direction="in" datatype="float"/>
       <Pin id="1" name="Mouse Down" direction="in" datatype="bool"/>

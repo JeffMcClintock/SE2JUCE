@@ -50,14 +50,6 @@ newestVoice_( 0 )
 
 void Scope3Gui::onValueChanged( int voiceId )
 {
-	/* testing support
-	  IMpUserInterfaceHost* legacyHost = {};
-       getHost()->queryInterface(MP_IID_UI_HOST, (void**) &legacyHost);
-
-	   wchar_t ret[100];
-	   legacyHost->resolveFilename(L"background.png", 100, ret);
-	 */
-
 	VoiceLastUpdated[voiceId] = std::chrono::steady_clock::now(); // timeGetTime();
 
 	invalidateRect();

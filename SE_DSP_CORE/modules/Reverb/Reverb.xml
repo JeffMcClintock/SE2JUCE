@@ -13,6 +13,7 @@
 			<Pin id="7" name="Damp" direction="in" datatype="float" rate="audio" default="0.5"/>
 			<Pin id="8" name="Mix" direction="in" datatype="float" rate="audio" default="0"/>
 			<Pin id="9" name="Mode" direction="in" datatype="enum" default="0" metadata="Normal,Freeze,Gated"/>
+			<Pin datatype="int" name="Clear tails"/>
 		</Audio>
 	</Plugin>
 </PluginList>

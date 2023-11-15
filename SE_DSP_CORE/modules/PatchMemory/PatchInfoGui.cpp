@@ -29,10 +29,6 @@ int32_t PatchInfoGui::initialize()
 	channelListOut = L"All=-1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16";
 //	patchCommandListOut = L",Copy Patch,Load Inst,Save Inst,Load Bank,Save Bank";
 
-	/* test SDK functionality
-	wchar_t test[90];
-	getHost()->resolveFilename(L"test.txt", sizeof(test) / sizeof(test[0]), test);
-	*/
 	return gmpi::MP_OK;
 }
 

@@ -1,15 +1,14 @@
-#ifndef GUITARDECHANNELIZER_H_INCLUDED
-#define GUITARDECHANNELIZER_H_INCLUDED
+#pragma once
 
 #include "mp_sdk_audio.h"
-#include "hasMidiTuning.h"
+#include "mp_midi.h"
 
-class GuitarDechannelizer : public MpBase, public hasMidiTuning
+class GuitarDechannelizer : public MpBase
 {
 public:
 	GuitarDechannelizer( IMpUnknown* host );
-	void onMidiMessage(int pin, unsigned char* midiMessage, int size) override; // size < 4 for short msg, or > 4 for sysex
-	void OnKeyTuningChanged(int p_clock, int MidiNoteNumber, int tune) override;
+	void onMidiMessage(int pin, unsigned char* midiMessage, int size) override;
+	void onMidi2Message(const gmpi::midi::message_view& msg);
 
 private:
 	void SendPitch(int keyNumber);
@@ -21,10 +20,11 @@ private:
 	static const int MidiChannelCount = 16;
 	static const int MidiKeyCount = 128;
 	int stringKeyNumber[MidiChannelCount];
-	int bender[MidiChannelCount];
-	int benderRange[MidiChannelCount];
-	int incoming_rpn;
-};
+	float bender[MidiChannelCount] = {};
+	float benderRange[MidiChannelCount];
+	gmpi::midi_2_0::MidiConverter2 midiConverter;
 
-#endif
+	float tuningTable[MidiChannelCount][MidiKeyCount];
+	float tuningOut[MidiChannelCount];
+};
 

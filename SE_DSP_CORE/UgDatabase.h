@@ -10,12 +10,7 @@
 #include "SerializationHelper_XML.h"
 
 // Flags for special CUG types CUG::getType()->GetFlags()
-//#define CF_CONTAINER    1
-//#define CF_HAS_IO_PLUGS 2
 #define CF_IO_MOD       4
-
-// don't show ug on insert menu
-#define CF_HIDDEN       8
 
 // This UG controls polyphony (!!could use unit_gen flag UGF_POLYPHONIC_GENERATOR?)
 #define CF_NOTESOURCE   32
@@ -32,10 +27,7 @@
 #define CF_DUMMY_VIEW				0x0200
 #define CF_AUTOMATION_VIEW          0x0800
 #define CF_OLD_STYLE_LISTINTERFACE  0x1000
-//#define CF_NON_VISIBLE              0x2000
 
-// Patch select decorator is special...
-//#define CF_DRAW_AT_PANEL_TOP        0x4000
 #define CF_DEBUG_VIEW               0x8000
 
 #define CF_SHELL_PLUGIN             0x10000
@@ -54,6 +46,9 @@
 #define REGISTER_MODULE_1( module_id, sid_name, sid_group, ug, flags, desc ) bool PASTE_FUNCT1(res,__LINE__) = ModuleFactory()->RegisterModule(new Module_Info(module_id, sid_name, sid_group, 0, ug::CreateObject, flags) );
 
 #define ModuleFactory() CModuleFactory::Instance()
+
+
+std::wstring uniformDefaultString(std::wstring defaultValue, EPlugDataType dataType);
 
 // this class is a singleton,
 // it's shared between all instances of the dll (in VST mode)
@@ -85,7 +80,7 @@ public:
 
 	void ClearSerialiseFlags( void );
 	void SerialiseModuleInfo(CArchive& ar, bool loadingCache = false);
-	void ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType targetType);
+	void ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType targetType, int fileFormatVersion);
 	void ExportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType targetType);
 
 	// Editor support.

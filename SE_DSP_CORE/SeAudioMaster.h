@@ -44,11 +44,12 @@ class ug_base;
 class USampBlock;
 class CDocOb;
 
-// debug flags values
+// debug flags values. ref AudioMasterBase::GetDebugFlag()
 #define DBF_TRACE_POLY				1
 #define DBF_RANDOMISE_BLOCK_SIZE	2
 #define DBF_BLOCK_CHECK				4
 #define DBF_DS_EXCLUSIVE			8
+// DBF_OUT_VAL_CHECK requires SE_CHECK_BUFFERS
 #define DBF_OUT_VAL_CHECK			16
 #define SET_PARAMETER_QUE_SIZE		1024
 
@@ -347,7 +348,7 @@ public:
 		MidiIn( delta, (unsigned char*) &shortMidiMsg, 3 );
 	}
 	void MidiIn( int delta, const unsigned char* MidiMsg, int length );
-	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value );
+	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value, int32_t flags );
 
 	void getPresetState(std::string& chunk, bool saveRestartState)
     {
@@ -364,7 +365,8 @@ public:
     void getPresetState_UI_THREAD( std::string& chunk, bool processorActive, bool saveRestartState );
     void setPresetStateDspHelper();
     void getPresetStateDspHelper();
-    std::string presetChunk_;
+    std::string presetChunkIn_; // store preset from DAW while real-time thread reads it async
+    std::string presetChunkOut_; // store preset from processor so DAW can read it async
 	int getNumInputs();
 	int getNumOutputs();
 	bool wantsMidi();
@@ -420,6 +422,7 @@ public:
 	{
 		interrupt_flag.store(true, std::memory_order_release);
 	}
+	void ClearDelaysUnsafe();
 	void HandleEvent(SynthEditEvent* /*e*/) override;
 	void HandleInterrupt();
 	void AssignTemporaryHandle(dsp_msg_target* p_object) override;
@@ -551,6 +554,7 @@ public:
 	std::atomic<bool> interrupt_flag = {};
 	std::atomic<bool> interupt_start_fade_out = {};
 	std::atomic<bool> interupt_module_latency_change = {};
+	bool interrupt_clear_delays = false;
 
 	bool synth_thread_running;
 	bool synth_thread_started;
@@ -615,6 +619,8 @@ private:
 
 	ISpecialIoModuleAudio* audioOutModule = {};
 	ISpecialIoModuleAudio* audioInModule = {};
+
+	int32_t hCClearTailsNextValue = 1;
 };
 
 #endif // !defined(AFX_SEAUDIOMASTER_H__9F4E5251_C0C6_11D4_B6EE_00104B15CCF0__INCLUDED_)

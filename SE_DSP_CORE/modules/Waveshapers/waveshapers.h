@@ -13,7 +13,7 @@ public:
 	Waveshaper(IMpUnknown* host);
 
 	// overrides
-	virtual int32_t MP_STDCALL open();
+	int32_t MP_STDCALL open() override;
 
 	// methods
 	void subProcess(int bufferOffset, int sampleFrames);

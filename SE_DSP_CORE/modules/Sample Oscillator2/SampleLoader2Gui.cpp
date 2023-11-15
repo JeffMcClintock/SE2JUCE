@@ -20,36 +20,18 @@ void SampleLoader2Gui::onFileNameChanged() // or Bank.
 	RiffFile2 riff;
 	uint32_t riff_type;
 
-	wchar_t fullFileName[500];
-	getHost()->resolveFilename(pinFilename.getValue().c_str(), (int32_t) sizeof(fullFileName)/sizeof(fullFileName[0]), &fullFileName[0]);
+	const auto fullFileName = uiHost.resolveFilename(pinFilename);
 	const auto fullFileNameU = JmUnicodeConversions::WStringToUtf8(fullFileName);
 
-	gmpi_sdk::mp_shared_ptr<gmpi::IMpUserInterfaceHost2> host2;
-	getHost()->queryInterface(gmpi::MP_IID_UI_HOST2, host2.asIMpUnknownPtr());
-
-	assert(host2); // new way
-
-	gmpi_sdk::mp_shared_ptr<gmpi::IProtectedFile2> stream2;
-	host2->OpenUri(fullFileNameU.c_str(), stream2.getAddressOf());
+	auto stream2 = uiHost.OpenUri(fullFileNameU.c_str());
+	
 	if (!stream2)
 	{
 		pinPatchNames = L"<none>";
 		pinBankNames = L"<none>";
 		return;
 	}
-/*
-	// open imbedded (or not) file.
-	gmpi::IProtectedFile* file = 0;
 
-	int r = getHost()->open ProtectedFile( pinFilename.getValue().c_str(), &file );
-
-	if( r != gmpi::MP_OK )
-	{
-		pinPatchNames = L"<none>";
-		pinBankNames = L"<none>";
-		return;
-	}
-*/
 	riff.Open( stream2.get(), riff_type);
 
 	// Create list of chunks we could use

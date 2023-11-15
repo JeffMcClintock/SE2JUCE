@@ -275,7 +275,7 @@ struct FeedbackTrace* UPlug::PPSetDownstreamTunneling(ug_container* voiceControl
 	}
 	else
 	{
-		if (UG->ParentContainer()->getOutermostPolyContainer() == voiceControlContainer)
+		if (UG->ParentContainer()->getVoiceControlContainer() == voiceControlContainer)
 		{
 			return PPSetDownstream();
 		}
@@ -461,7 +461,7 @@ void UPlug::TransmitState(timestamp_t p_clock, state_type p_stat)
 		if( toUg->IsSuspended() )
 		{
 			assert(to->DataType != DT_MIDI);
-			toUg->DiscardOldPinEvents(to->getPlugIndex());
+			toUg->DiscardOldPinEvents(to->getPlugIndex(), DataType);
 		}
 
 		ug_event_type eventType;
@@ -745,6 +745,7 @@ void UPlug::SetDefaultDirect(const char* utf8val)
 	break;
 
 	case DT_BLOB: // not handled, perhaps could support hex !!!
+	case DT_BLOB2:
 		break;
 
 	default:
@@ -853,6 +854,15 @@ void UPlug::CreateBuffer()
 		}
 		break;
 
+		case DT_BLOB2:
+		{
+			// if plugin didn't provide storage for the variable, provide it ourself
+			if (io_variable == 0)
+			{
+				io_variable = &m_buffer.blob2_ptr;
+			}
+		}
+		break;
 		default:
 			assert(false); // unsupported type (add it here + destructor)
 		};
@@ -942,6 +952,7 @@ void UPlug::SetBufferValue( const char* p_val )
 	break;
 
 	case DT_BLOB: // not handled, perhaps could support hex !!!
+	case DT_BLOB2:
 		break;
 
 	default:
@@ -1002,6 +1013,7 @@ void UPlug::CloneBufferValue( const UPlug& clonePlug )
 	break;
 
 	case DT_BLOB: // not handles, perhaps could support hex !!!
+	case DT_BLOB2:
 		break;
 
 	default:
@@ -1045,6 +1057,11 @@ void UPlug::TransmitPolyphonic(timestamp_t timestamp, int physicalVoiceNumber, i
 			ug->SetPinValue(timestamp, to_plug->getPlugIndex(), DataType, data, data_size);
 		}
 	}
+
+	// prevent patch-param-setter from sending out default value (0.0) at sampleclock 0 AFTER we send a note-on at sampleclock zero.
+	// only a problem when note-on occurs at time zero.
+	if(0 == timestamp)
+		ClearFlag(PF_VALUE_CHANGED);
 }
 
 bool UPlug::CheckAllSame()

@@ -466,7 +466,8 @@ tinyxml2::XMLElement* Module_Info3_base::Export(tinyxml2::XMLElement* pluginE, E
 
 	if (CSynthEditDocBase::serializingMode == SERT_SEM_CACHE && !macSemBundlePath.empty())
 	{
-		pluginXml->SetAttribute("macSemBundlePath", WStringToUtf8(macSemBundlePath).c_str());
+		const auto path = WStringToUtf8(macSemBundlePath);
+		pluginXml->SetAttribute("macSemBundlePath", path.c_str());
 	}
 
 	return pluginXml;
@@ -834,14 +835,12 @@ void Module_Info::RegisterPin(TiXmlElement* pin, module_info_pins_t* pinlist, in
 	// name
 	pind.name = Utf8ToWstring(pin->Attribute("name"));
 
-	// default
-	pind.default_value = Utf8ToWstring(pin->Attribute("default"));
-
 	// flags
 	pind.flags = (plugin_sub_type == gmpi::MP_SUB_TYPE_AUDIO) ? 0 : IO_UI_COMMUNICATION;
 	SetPinFlag("private", IO_HIDE_PIN, pin, pind.flags);
 	SetPinFlag("autoRename", IO_RENAME, pin, pind.flags);
 	SetPinFlag("isFilename", IO_FILENAME, pin, pind.flags);
+	SetPinFlag("settableOutput", IO_SETABLE_OUTPUT, pin, pind.flags);
 	SetPinFlag("linearInput", IO_LINEAR_INPUT, pin, pind.flags);
 	SetPinFlag("ignorePatchChange", IO_IGNORE_PATCH_CHANGE, pin, pind.flags);
 	SetPinFlag("autoDuplicate", IO_AUTODUPLICATE, pin, pind.flags);
@@ -962,11 +961,6 @@ void Module_Info::RegisterPin(TiXmlElement* pin, module_info_pins_t* pinlist, in
 					if (rate && strcmp(rate, "audio") == 0)
 					{
 						pind.datatype = DT_FSAMPLE;
-						if (!pind.default_value.empty())
-						{
-							// multiply default by 10 (to Volts). DoubleToString() removes trailing zeros.
-							pind.default_value = DoubleToString(10.0f * StringToFloat(pind.default_value));
-						}
 					}
 				}
 				else if (pind.datatype == DT_CLASS) // e.g. "class:geometry"
@@ -1010,6 +1004,21 @@ void Module_Info::RegisterPin(TiXmlElement* pin, module_info_pins_t* pinlist, in
 #endif
 				}
 			}
+		}
+	}
+	
+	// default (depends on datatype)
+	if (const auto s = pin->Attribute("default"); s)
+	{
+		// we need to be consistant when for example comparing default of "" with "0" or "0.0" etc.
+		// else we get spurios "upgrading module" dialogs
+		pind.default_value = uniformDefaultString(Utf8ToWstring(s), pind.datatype);
+
+		// special-case Volts, need multiply by 10
+		if (pind.datatype == DT_FSAMPLE && !pind.default_value.empty())
+		{
+			// multiply default by 10 (to Volts). DoubleToString() removes trailing zeros.
+			pind.default_value = DoubleToString(10.0f * StringToFloat(pind.default_value));
 		}
 	}
 
@@ -1192,6 +1201,7 @@ void Module_Info::RegisterPin(tinyxml2::XMLElement* pin, module_info_pins_t* pin
 	SetPinFlag("private", IO_HIDE_PIN, pin, pind.flags);
 	SetPinFlag("autoRename", IO_RENAME, pin, pind.flags);
 	SetPinFlag("isFilename", IO_FILENAME, pin, pind.flags);
+	SetPinFlag("settableOutput", IO_SETABLE_OUTPUT, pin, pind.flags);
 	SetPinFlag("linearInput", IO_LINEAR_INPUT, pin, pind.flags);
 	SetPinFlag("ignorePatchChange", IO_IGNORE_PATCH_CHANGE, pin, pind.flags);
 	SetPinFlag("autoDuplicate", IO_AUTODUPLICATE, pin, pind.flags);

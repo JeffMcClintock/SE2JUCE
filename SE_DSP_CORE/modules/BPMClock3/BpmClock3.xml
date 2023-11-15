@@ -39,6 +39,11 @@
       <Pin id="1" name="Host Transport" direction="in" datatype="bool" hostConnect="Time/TransportPlaying" />
       <Pin id="2" name="Tempo Out" direction="out" datatype="float" rate="audio"/>
       <Pin id="3" name="Transport Run" direction="out" datatype="float" rate="audio"/>
+		<!-- DAW might suspend processing for some time, then resume it (e.g. Reaper Clip effects).
+		     We need to clear the tail of processors (esp reverb/delay) in this case.
+		-->
+      <Pin datatype="int" private="true" hostConnect="Processor/ClearTails"/>
+      <Pin name="Processor Resumed" datatype="bool" direction="out"/>
     </Audio>
   </Plugin>
 

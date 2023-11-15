@@ -17,7 +17,7 @@ public:
 	void vst_Automation(ug_container* voiceControlContainer, timestamp_t p_clock, int p_controller_id, float p_normalised_value, bool sendToMidiCv = true, bool sendToNonMidiCv = true) override;
 	void vst_Automation2(timestamp_t p_clock, int p_controller_id, const void* data, int size) override;
 #if defined(SE_TARGET_PLUGIN)
-	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue ) override; // VST3.
+	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) override; // VST3.
 #endif
 	void getPresetState( std::string& chunk, bool saveRestartState) override;
     void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;

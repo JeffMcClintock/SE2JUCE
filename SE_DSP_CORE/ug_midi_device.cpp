@@ -32,13 +32,13 @@ void ug_midi_device::HandleEvent(SynthEditEvent* e)
 	case UET_EVENT_MIDI:
 	{
 		// re-instated to allow patch automator MIDI-Chan to work (was accepting everything)
-		if( e->parm2 <= sizeof(int) )
+		if(e->parm2 < 4)
 		{
 			// filter out non-relevant events. Less events = less subdivision of audio block
 			// 0xF0 indicates a system msg (clocks etc)
 			if(midi_channel != -1) // -1 = All channels
 			{
-				const unsigned char* midiBytes = (const unsigned char*) &(e->parm3);
+				const unsigned char* midiBytes = (const unsigned char*)e->Data();
 				const short chan = (short)midiBytes[0] & 0x0f;
 				const bool is_system_msg = (midiBytes[0] & SYSTEM_MSG) == SYSTEM_MSG;
 
@@ -47,13 +47,9 @@ void ug_midi_device::HandleEvent(SynthEditEvent* e)
 					return;
 				}
 			}
+		}
 
-			OnMidiData( e->parm2,  (unsigned char*) &(e->parm3) );
-		}
-		else // Must be SYSEX.
-		{
-			OnMidiData( e->parm2, (unsigned char*) e->extraData );
-		}
+		OnMidiData( e->parm2, (unsigned char*) e->Data());
 	}
 	break;
 

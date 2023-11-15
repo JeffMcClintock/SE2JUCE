@@ -17,12 +17,16 @@ public:
     {
 	    int out_num = 0;
         int inc = bufferIncrement_;
-	    float level;
+	    float level = fadeLevel_;
 
-	    for(int j = 1 ; j < plugs.size() ; j++ )
+	    for(int j = PIN_AUDIOOUT0; j < plugs.size() ; j++ )
 	    {
 		    float* from = plugs[j]->GetSamplePtr() + start_pos;
 		    float* to = m_outputs[out_num];
+			
+			if (!to)
+				continue;
+
             float output;
 
 		    level = fadeLevel_;
@@ -49,8 +53,8 @@ public:
 		    }
 
             m_outputs[out_num++] += sampleframes * inc;
-			fadeLevel_ = level;
 	    }
+		fadeLevel_ = level;
 
         if constexpr( fadePolicy == ProcessFading )
         {
@@ -81,6 +85,7 @@ public:
 	void startFade(bool isDucked) override;
 	void HandleEvent(SynthEditEvent* e) override;
     void ChooseProcess();
+//	void MuteUntilTailReset();
 
 	int getOverallPluginLatencySamples()
 	{
@@ -92,12 +97,17 @@ public:
 
 	MidiBuffer3 MidiBuffer;
 
+	enum {PIN_MIDI, /*PIN_CLEARTAILS,*/ PIN_AUDIOOUT0};
+
 private:
+
 	float** m_outputs;
 	float fadeLevel_;
     float targetLevel;
 	float fadeIncrement_;
-    int bufferIncrement_;
+	int bufferIncrement_;
+	int dawChannels_ = 0;
+	//	int32_t m_clear_tails = 0;
 
 	std::vector<bool> pinIsSilent;
 	std::vector<bool> pinChanged;

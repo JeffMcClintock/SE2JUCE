@@ -1,6 +1,7 @@
 #include "mp_sdk_gui.h"
 #include <codecvt>
 #include <locale>
+#include "MpString.h"
 
 using namespace gmpi;
 
@@ -99,6 +100,8 @@ int32_t MpGuiBase_base::setHost(gmpi::IMpUnknown* host)
 		throw "host Interfaces not supported";
 	}
 
+	uiHost.Init(host);
+	
 	return r;
 }
 
@@ -218,7 +221,8 @@ MpGuiBase2::~MpGuiBase2()
 int32_t MpGuiBase2::setHost( gmpi::IMpUnknown* host )
 {
 	host->queryInterface( MP_IID_UI_HOST2, reinterpret_cast<void **>( &patchMemoryHost_ ) );
-
+	uiHost.Init(host);
+	
 	if( patchMemoryHost_ == 0 )
 	{
 		assert(false);
@@ -264,6 +268,44 @@ int32_t MpGuiBase2::initialize()
 	return gmpi::MP_OK;
 }
 
+std::string UiHost::RegisterResourceUri(const char* resourceName, const char* resourceType)
+{
+	if (!host2_)
+		return {};
+
+	gmpi_sdk::MpString fullUri;
+	host2_->RegisterResourceUri(resourceName, resourceType, &fullUri);
+
+	return fullUri.str();
+}
+
+//GmpiSdk::UriFile UiHost::openProtectedFile(const wchar_t* shortFilename)
+//{
+//	IProtectedFile* file = {};
+//	host_->openProtectedFile(shortFilename, &file);
+//	return GmpiSdk::UriFile(file);
+//}
+
+GmpiSdk::UriFile UiHost::OpenUri(std::string uri)
+{
+	if (!host2_)
+		return {};
+
+	gmpi_sdk::mp_shared_ptr<gmpi::IProtectedFile2> obj;
+	host2_->OpenUri(uri.c_str(), &obj.get());
+
+	return { obj };
+}
+
+std::string UiHost::FindResourceU(const char* resourceName, const char* resourceType)
+{
+	if (!host2_)
+		return {};
+
+	gmpi_sdk::MpString r;
+	host2_->FindResourceU(resourceName, resourceType, &r);
+	return r.str();
+}
 
 #if defined(_WIN32) && !defined(_WIN64)
 /**********************************************************************************

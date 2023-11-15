@@ -28,6 +28,7 @@ namespace SynthEdit2
 		GmpiDrawing_API::MP1_POINT lastMovePoint = { -1, -1 };
 
 	protected:
+bool isIteratingChildren = false;
 		bool isArranged = false;
 		int viewType;
 		std::vector< std::unique_ptr<IViewChild> > children;
@@ -79,6 +80,7 @@ namespace SynthEdit2
 
 		void calcMouseOverObject(int32_t flags);
 		void OnChildDeleted(IViewChild* childObject);
+		void onSubPanelMadeVisible();
 		
 		int32_t onContextMenu(int32_t idx) override
 		{
@@ -204,6 +206,7 @@ namespace SynthEdit2
 		int32_t onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
 		{
 			parent->releaseCapture();
+			parent->autoScrollStop();
 
 			GmpiDrawing::Rect invalidRect(bounds_);
 			invalidRect.Inflate(2);

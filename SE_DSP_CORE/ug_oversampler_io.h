@@ -105,139 +105,6 @@ public:
 //		_RPT0(_CRT_WARN, "XXX ----------------------\n");
 	}
 };
-/*
-class UpsamplingInterpolator2 // sinc.
-{
-	static const int histSamples = 16;
-	float history[histSamples + 1];
-
-public:
-	UpsamplingInterpolator2()
-	{
-		memset(history, 0, sizeof(history));
-		history[histSamples] = 1234.0f;
-	}
-
-	static int calcCoefsMemoryBytes(int sincSize, int factor)
-	{
-		return sizeof(float) * sincSize * factor;
-	}
-
-	static void initCoefs(int sincSize, int factor, float* coefs)
-	{
-		float* dest = coefs;
-
-		// Sub-table one consists of a single "1".
-		for (int i = 0; i < sincSize; i++)
-		{
-			*dest++ = 0.0f;
-		}
-		coefs[sincSize/2 - 1] = 1.0f;
-
-		//_RPT0(_CRT_WARN, "----------------f\n");
-		//for (int i = 0; i < sincSize; i++)
-		//{
-		//	_RPT1(_CRT_WARN, "%f\n", coefs[i]);
-		//}
-
-		// Subsequent tables
-		const int tableWidth = sincSize / 2;
-		for(int sub_table = 1 ; sub_table < factor ; ++sub_table)
-		{
-//			_RPT0(_CRT_WARN, "----------------f\n");
-			double fir_sum = 0.f;
-			for (int i = 0; i < sincSize; i++)
-			{
-				int i2 = i - tableWidth;
-
-				// position on x axis
-				double o = i2 + (factor-sub_table) / (double)factor;
-				assert(o != 0.0); // else div by zero.
-				double sinc = sin(PI * o) / (PI * o);
-
-				// apply tailing function
-				double hanning = cos(0.5 * PI * o / (double)tableWidth);
-				float windowed_sinc = (float)(sinc * hanning * hanning);
-
-				*dest++ = windowed_sinc;
-				fir_sum += windowed_sinc;
-			}
-
-			// Normalize.
-			dest -= sincSize;
-
-			for (int i = 0; i < sincSize; i++)
-			{
-				*dest /= (float) fir_sum;
-				if (is_denormal(*dest))
-					*dest = 0.f;
-
-//				_RPT1(_CRT_WARN, "%f\n", *dest);
-				dest++;
-			}
-		}
-	}
-
-	inline void process(int outSampleframes, float* from, float* to, int subSample, int oversampleFactor, int sincSize, float* coefs)
-	{
-		int inIdx = 0;
-		float* buffer = history + 4;
-
-		history[inIdx + 8] = from[inIdx]; // incrementally fill history
-		for (int s = outSampleframes; s > 0; --s)
-		{
-			// Convolution with sinc.
-			float* filter = coefs + sincSize * subSample;
-			float sum = 0.0f;
-			for(int i = -sincSize/2; i < sincSize / 2; ++ i)
-			{
-				sum += buffer[inIdx + i] * filter[sincSize / 2 + i];
-			}
-			*to++ = sum;
-
-			if (++subSample == oversampleFactor)
-			{
-				subSample = 0;
-				++inIdx;
-
-				// once we have read out small history buffer, use samples directly from input buffer.
-				if (inIdx == 8)
-				{
-					buffer = from - 4;
-				}
-				else
-				{
-					if (inIdx < 8 && s > 1) // dosn't count after last sample.
-					{
-						assert(from[inIdx] < 20.0f);
-						history[inIdx + 8] = from[inIdx]; // incrementally fill history.
-						assert(history[inIdx + 8] < 100.0f);
-					}
-				}
-			}
-		}
-
-		// Copy last 12 samples to history.
-		const int keepSamples = 8;
-		int inSampleFrames = inIdx;
-		int shift2 = (std::min)(keepSamples, inSampleFrames);
-
-		for (int i = 0; i < keepSamples - shift2; ++i)
-		{
-			history[i] = history[shift2 + i];
-			assert(history[i] < 100.0f);
-		}
-
-		for (int i = 0; i < shift2; ++i)
-		{
-			history[keepSamples - shift2 + i] = from[inSampleFrames - shift2 + i];
-			assert(history[keepSamples - shift2 + i] < 100.0f);
-		}
-
-		assert(history[16] == 1234.0f);
-	}
-};
-*/
 
 template <int sincSize>
 class UpsamplingInterpolator3 // sinc SSE
@@ -320,7 +187,7 @@ public:
 			for (int i = 0; i < sincSize; i++)
 			{
 				*dest /= (float)fir_sum;
-				if (is_denormal(*dest))
+				if (fpclassify(*dest) == FP_SUBNORMAL)
 					*dest = 0.f;
 
 				//				_RPT1(_CRT_WARN, "%f\n", *dest);
@@ -361,7 +228,7 @@ public:
 			for (int i = 0; i < sincSize; i++)
 			{
 				*dest /= (float)fir_sum;
-				if (is_denormal(*dest))
+				if (fpclassify(*dest) == FP_SUBNORMAL)
 					*dest = 0.f;
 
 //				_RPT1(_CRT_WARN, "%f, ", *dest);

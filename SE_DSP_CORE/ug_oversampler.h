@@ -99,6 +99,7 @@ public:
 	int32_t RegisterIoModule(class ISpecialIoModule*) override { return 1; } // can't oversample an IO module
 
 	UPlug* routePatchCableOut(UPlug* plug);
+	void ReRoutePlugs() override;
 
 private:
 

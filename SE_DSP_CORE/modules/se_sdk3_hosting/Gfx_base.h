@@ -186,6 +186,8 @@ namespace gmpi
 			
 			virtual void MP_STDCALL AddArc(const GmpiDrawing_API::MP1_ARC_SEGMENT* arc) override
 			{
+                constexpr auto PI = static_cast<float>(M_PI);
+                
 				// Ported from canvg (https://code.google.com/p/canvg/)
 				float rx, ry, rotx;
 				float x1, y1, x2, y2, cx, cy, dx, dy, d;
@@ -219,7 +221,7 @@ namespace gmpi
 				dx = x1 - x2;
 				dy = y1 - y2;
 				d = sqrtf(dx*dx + dy*dy);
-				if (d < 1e-6f || rx < 1e-6f || ry < 1e-6f) {
+				if (d < 1e-6f || rx < 1e-6f || ry < 1e-6f /*|| fabsf(arc->rotationAngle) < 1e-6f */ ) {
 					// The arc degenerates to a line
 					//nsvg__lineTo(p, x2, y2);
 					AddLine(GmpiDrawing::Point(x2, y2));
@@ -266,14 +268,17 @@ namespace gmpi
 				a1 = nsvg__vecang(1.0f, 0.0f, ux, uy);	// Initial angle
 				da = nsvg__vecang(ux, uy, vx, vy);		// Delta angle
 
-														//	if (vecrat(ux,uy,vx,vy) <= -1.0f) da = NSVG_PI;
-														//	if (vecrat(ux,uy,vx,vy) >= 1.0f) da = 0;
+                if (nsvg__vecrat(ux,uy,vx,vy) <= -1.0f) da = PI;
+                if (nsvg__vecrat(ux,uy,vx,vy) >= 1.0f) da = 0;
 
 				if (fs == 0 && da > 0)
 					da -= 2 * static_cast<float>(M_PI); // NSVG_PI;
 				else if (fs == 1 && da < 0)
 					da += 2 * static_cast<float>(M_PI); // NSVG_PI;
 
+                if(da == 0.0f) // prevent crash on malformed arcs
+                    return;
+                
 				// Approximate the arc using cubic spline segments.
 				t[0] = cosrx; t[1] = sinrx;
 				t[2] = -sinrx; t[3] = cosrx;

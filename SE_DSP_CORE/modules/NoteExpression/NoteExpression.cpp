@@ -4,6 +4,8 @@ using namespace gmpi;
 
 SE_DECLARE_INIT_STATIC_FILE(NoteExpression);
 
+// TODO. might need to copy MidiToCv2, in that the outputs 'jump' on a new note, yet glide otherwise. Would need audio outputs.
+
 class NoteExpression2 final : public MpBase2
 {
 	FloatInPin pinVolume;

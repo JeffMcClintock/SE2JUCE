@@ -539,6 +539,9 @@ bool AreCompatible( EPlugDataType d1, EPlugDataType d2 )
 	if ((d1 == DT_FSAMPLE || d1 == DT_INT) && (d2 == DT_FSAMPLE || d2 == DT_INT))
 		return true;
 
+	if ((d1 == DT_BLOB || d1 == DT_BLOB2) && (d2 == DT_BLOB || d2 == DT_BLOB2))
+		return true;
+
 	/* no
 	if (d1 == DT_INT && d2 == DT_ENUM)
 		return true;
@@ -810,11 +813,11 @@ void reverse(void* p_ptr,int count )
 	}
 }
 
-bool is_denormal( float f )
-{
-	unsigned int l = *((unsigned int*)&f);
-	return( f != 0.f && (l & 0x7FF00000) == 0 && (l & 0x000FFFFF) != 0 ); // anything less than approx 1E-38 excluding +ve and -ve zero (two distinct values)
-}
+//bool is_denormal( float f )
+//{
+//	unsigned int l = *((unsigned int*)&f);
+//	return( f != 0.f && (l & 0x7FF00000) == 0 && (l & 0x000FFFFF) != 0 ); // anything less than approx 1E-38 excluding +ve and -ve zero (two distinct values)
+//}
 
 struct TextToIntStruct // holds XML -> enum info
 {
@@ -876,6 +879,7 @@ static const TextToIntStruct2 datatypeInfo[] =
 	("string")			,DT_TEXT,
 	"string_utf8"		,DT_STRING_UTF8,
 	("blob")			,DT_BLOB,
+	("blob2")			,DT_BLOB2,
 	("midi")			,DT_MIDI,
 	("bool")			,DT_BOOL,
 	("enum")			,DT_ENUM,

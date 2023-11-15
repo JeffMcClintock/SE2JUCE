@@ -272,6 +272,8 @@ const float rainbow_bgyr_35_85_c72[256][3] = {
 
 namespace SynthEdit2
 {
+	GmpiDrawing::Point ConnectorView2::pointPrev{}; // for dragging nodes
+
 	Point InterpolatePoint(double t, Point a, Point b)
 	{
 		return Point(static_cast<float>(a.x + (b.x - a.x) * t), static_cast<float>(a.y + (b.y - a.y) * t));
@@ -589,7 +591,7 @@ namespace SynthEdit2
 		GmpiDrawing::Factory factory(parent->GetDrawingFactory());
 
 		StrokeStyleProperties strokeStyleProperties;
-		strokeStyleProperties.setCapStyle(CapStyle::Flat);
+		strokeStyleProperties.setCapStyle(draggingFromEnd != -1 ? CapStyle::Round : CapStyle::Flat);
 		strokeStyleProperties.setLineJoin(LineJoin::Round);
 		strokeStyle = factory.CreateStrokeStyle(strokeStyleProperties);
 
@@ -1099,8 +1101,8 @@ namespace SynthEdit2
 		if (!isShownCached)
 			return false;
 
-		// <ctrl> click ignores patch cables (so patch point can spawn new cable)
-		if ((flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) != 0)
+		// <ctrl> or <shift> click ignores patch cables (so patch point can spawn new cable)
+		if ((flags & (gmpi_gui_api::GG_POINTER_KEY_CONTROL| gmpi_gui_api::GG_POINTER_KEY_SHIFT)) != 0)
 			return false;
 
 		if (!bounds_.ContainsPoint(point) || geometry.isNull()) // FM-Lab has null geometries for hidden patch cables.
@@ -1151,14 +1153,16 @@ namespace SynthEdit2
 		// Select Object.
 		Presenter()->ObjectClicked(handle, gmpi::modifier_keys::getHeldKeys());
 
-		if ((flags & gmpi_gui_api::GG_POINTER_FLAG_SECONDBUTTON) == 0)
+		if ((flags & gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON) != 0)
 		{
+/* confusing
 			// <SHIFT> deletes cable.
 			if ((flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT) != 0)
 			{
 				parent->RemoveCables(this);
 				return gmpi::MP_HANDLED;
 			}
+*/
 
 			// Left-click
 			GmpiDrawing::Size delta = from_ - Point(point);
@@ -1199,11 +1203,31 @@ namespace SynthEdit2
 			// dragging a node.
 			if (draggingNode != -1)
 			{
-				Presenter()->DragNode(getModuleHandle(), draggingNode, point);
-				nodes[draggingNode] = point;
-				CalcBounds();
+				const auto snapGridSize = Presenter()->GetSnapSize();
+				GmpiDrawing::Size delta(point.x - pointPrev.x, point.y - pointPrev.y);
+				if (delta.width != 0.0f || delta.height != 0.0f) // avoid false snap on selection
+				{
+					const float halfGrid = snapGridSize * 0.5f;
+					
+					GmpiDrawing::Point snapReference = nodes[draggingNode];
 
-				parent->ChildInvalidateRect(bounds_);
+					// nodes snap to center of grid, not lines of grid like modules do
+					GmpiDrawing::Point newPoint = snapReference + delta;
+					newPoint.x = halfGrid + floorf((newPoint.x) / snapGridSize) * snapGridSize;
+					newPoint.y = halfGrid + floorf((newPoint.y) / snapGridSize) * snapGridSize;
+					GmpiDrawing::Size snapDelta = newPoint - snapReference;
+
+					pointPrev += snapDelta;
+
+					if (snapDelta.width != 0.0 || snapDelta.height != 0.0)
+					{
+						Presenter()->DragNode(getModuleHandle(), draggingNode, pointPrev);
+						nodes[draggingNode] = pointPrev;
+						CalcBounds();
+
+						parent->ChildInvalidateRect(bounds_);
+					}
+				}
 
 				return gmpi::MP_OK;
 			}
@@ -1364,64 +1388,13 @@ namespace SynthEdit2
 		}
 		else
 		{
-#if 0 // hit testing done already by hittest()
-			GmpiDrawing::Point local(point);
-			local.x -= bounds_.left;
-			local.y -= bounds_.top;
-
-			// Hittest nodes if selected already.
-			int hitNode = -1;
-			int hitSegment = -1;
-			int hitLine = gmpi::MP_UNHANDLED;
-			if (getSelected())
-			{
-				int i = 0;
-				for (auto& n : nodes)
-				{
-					float dx = n.x - point.x;
-					float dy = n.y - point.y;
-
-					if ((dx * dx + dy * dy) <= (float)((1 + NodeRadius) * (1 + NodeRadius)))
-					{
-						hitNode = i;
-						hitLine = gmpi::MP_OK;
-						break;
-					}
-					++i;
-				}
-
-				if (hitNode == -1)
-				{
-					auto segments = GetSegmentGeometrys();
-					int i = 0;
-					for (auto& s : segments)
-					{
-						if (s.StrokeContainsPoint(point, hitTestWidth))
-						{
-							hitSegment = i;
-							hitLine = gmpi::MP_OK;
-							break;
-						}
-						++i;
-					}
-				}
-	}
-			else
-			{
-				hitLine = geometry.StrokeContainsPoint(point, hitTestWidth) ? gmpi::MP_OK : gmpi::MP_UNHANDLED;
-			}
-
-			//			_RPT1(_CRT_WARN, "hit %d\n", hit);
-
-			if (hitLine != gmpi::MP_OK && hitNode < 0)
-				return gmpi::MP_UNHANDLED;
-#endif
 			if ((flags & gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON) != 0)
 			{
 				// Clicked a node?
 				if (hoverNode >= 0)
 				{
 					draggingNode = hoverNode;
+					pointPrev = point;
 					parent->setCapture(this);
 					return gmpi::MP_OK;
 				}

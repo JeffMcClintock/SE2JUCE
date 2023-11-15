@@ -11,12 +11,8 @@ SE_DECLARE_INIT_STATIC_FILE(ug_denormal_stop)
 namespace
 
 {
-
-REGISTER_MODULE_1(L"Denormal Cleaner", IDS_MN_DENORMAL_CLEANER,IDS_MG_DIAGNOSTIC,ug_denormal_stop,CF_STRUCTURE_VIEW,L"Cleans DeNormal numbers any audio passing through.  Denormal numbers are VERY small value that are inaudible, but waste CPU resources.  This module is no longer needed, now that denormal removal is built-in to many other modules.");
-
+REGISTER_MODULE_1(L"Denormal Cleaner", IDS_MN_DENORMAL_CLEANER,IDS_MG_OLD,ug_denormal_stop,CF_STRUCTURE_VIEW,L"Cleans DeNormal numbers any audio passing through.  Denormal numbers are VERY small value that are inaudible, but waste CPU resources.  This module is no longer needed, now that denormal removal is built-in to many other modules.");
 }
-
-
 
 void ug_denormal_stop::sub_process(int start_pos, int sampleframes)
 

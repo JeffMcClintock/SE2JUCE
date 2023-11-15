@@ -17,12 +17,14 @@ protected:
 
 public:
 	// Support for FilterBase
-	virtual void StabilityCheck() override {}
-	virtual bool isFilterSettling() override
+	void StabilityCheck() override
+	{
+	}
+	bool isFilterSettling() override
 	{
 		return !pinSignal.isStreaming();
 	}
-	virtual AudioOutPin& getOutputPin() override
+	AudioOutPin& getOutputPin() override
 	{
 		return pinOutput;
 	}
@@ -272,7 +274,7 @@ public:
 		initializePin(pinOutput);
 	}
 
-	virtual void setupFilter() override
+	void setupFilter() override
 	{
 		filter.setup(pinPoles, 1.0, normalisedPitch(), pinRipple, pinRolloff);
 	}
@@ -295,7 +297,7 @@ public:
 		initializePin(pinOutput);
 	}
 
-	virtual void setupFilter() override
+	void setupFilter() override
 	{
 		filter.setup(pinPoles, 1.0, normalisedPitch(), pinRipple, pinRolloff);
 	}

@@ -33,7 +33,8 @@ protected:
 	void RegisterPin(class TiXmlElement* pin, module_info_pins_t* pinlist, int32_t plugin_sub_type, int& nextPinId);
 
 	void RegisterPin(tinyxml2::XMLElement * pin, module_info_pins_t * pinlist, int32_t plugin_sub_type, int & pin_id);
-
+	virtual int getClassType() {return 1;} // 0 - Module_Info3, 1 - Module_Info, 2 - Module_Info3_internal, 3 - Module_Info_Plugin
+	
 public:
 	bool scanned_xml_dsp;
 	bool scanned_xml_gui;
@@ -239,6 +240,6 @@ protected:
 	bool m_module_dll_available = {}; // Is the SEM present on local system? (or just a placeholder).
 
 private:
-	bool m_serialise_me; // flags if this info needs storing in project file (because this module used in patch)
+	bool m_serialise_me = false; // flags if this info needs storing in project file (because this module used in patch)
 	bool m_loaded_into_database;
 };

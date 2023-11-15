@@ -85,7 +85,7 @@ struct SincFilterCoefs
 		for (int i = 0; i < numCoefs_; i++)
 		{
 			coefs_[i] /= (float)fir_sum;
-			if (is_denormal(coefs_[i]))
+			if (fpclassify(coefs_[i]) == FP_SUBNORMAL)
 				coefs_[i] = 0.f;
 		}
 

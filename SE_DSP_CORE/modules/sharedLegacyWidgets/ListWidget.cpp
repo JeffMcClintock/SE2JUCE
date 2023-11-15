@@ -121,6 +121,9 @@ void ListWidget::onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 	GmpiGui::GraphicsHost host(getGuiHost());
 	nativeFileDialog = host.createPlatformMenu(point);
 
+	if(!nativeFileDialog) // currently not implemented on WINUI3
+		return;
+
 	it_enum_list itr(items);
 	for (itr.First(); !itr.IsDone(); ++itr)
 	{

@@ -582,6 +582,7 @@ unsigned, can't handle negative points. not much practical use.
 	class DECLSPEC_NOVTABLE IMpBitmapPixels : public gmpi::IMpUnknown
 	{
 	public:
+		// older Windows uses a format of kRGBA, newer uses kBGRA_SRGB. macOS uses kBGRA (sRGB curves)
 		enum PixelFormat {
 			kARGB,
 			kRGBA,

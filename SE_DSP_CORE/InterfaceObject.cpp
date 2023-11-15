@@ -228,7 +228,7 @@ std::wstring InterfaceObject::getFileExt(IPlug* self)
 		return self->getDefaultEnumList();
 	}
 
-	return std::wstring((L""));
+	return {};
 }
 
 bool InterfaceObject::UsesAutoEnumList(IPlug* self)
@@ -241,8 +241,7 @@ bool InterfaceObject::UsesAutoEnumList(IPlug* self)
 		}
 		else
 		{
-			// recursive: return self->getDefaultEnumList() == (L"{AUTO}");
-			return getDefaultEnumList(0) == (L"{AUTO}");
+			return getDefaultEnumList(0) == L"{AUTO}";
 		}
 	}
 
@@ -322,7 +321,8 @@ void InterfaceObject::SetDefault(IPlug* self, const std::wstring& val)
 {
 	if( val != GetDefault(self) )
 	{
-		IPlugDescriptionDecorator* pd = self->AddDecorator( new Plug_decorator_default() );
+		auto pd = new Plug_decorator_default();
+		self->AddDecorator(pd);
 		pd->SetDefault(self, val);
 	}
 };
@@ -534,7 +534,6 @@ void InterfaceObject::Export(class Json::Value& pins_json, ExportFormatType targ
 		pin_json["hostConnect"] = WStringToUtf8(GetHostControlName(hostControlId));
 		if( getParameterFieldId(0) != FT_VALUE )
 		{
-			//pinXml->SetAttribute("parameterField", XmlStringFromParameterField(getParameterFieldId(0)));
 			pin_json["parameterField"] = XmlStringFromParameterField(getParameterFieldId(0));
 		}
 	}

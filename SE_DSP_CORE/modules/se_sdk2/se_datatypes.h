@@ -7,7 +7,7 @@
 #define id_to_int(c1,c2,c3,c4) ((c1) + ((c2) << 8 ) + ((c3) << 16 ) + ((c4) << 24 ))
 
 enum EDirection : uint8_t {DR_IN, DR_OUT, DR_UNUSED, DR_PARAMETER, DR_FEATURE=DR_OUT,DR_CNTRL=DR_IN }; // plug direction
-enum EPlugDataType : int8_t { DT_ENUM, DT_TEXT, DT_MIDI2, DT_MIDI = DT_MIDI2, DT_DOUBLE, DT_BOOL, DT_FSAMPLE, DT_FLOAT, DT_VST_PARAM, DT_INT, DT_INT64, DT_BLOB, DT_CLASS, DT_STRING_UTF8, DT_NONE=-1 };  //plug datatype
+enum EPlugDataType : int8_t { DT_ENUM, DT_TEXT, DT_MIDI2, DT_MIDI = DT_MIDI2, DT_DOUBLE, DT_BOOL, DT_FSAMPLE, DT_FLOAT, DT_VST_PARAM, DT_INT, DT_INT64, DT_BLOB, DT_CLASS, DT_STRING_UTF8, DT_BLOB2, DT_NONE=-1 };  //plug datatype
 
 // Backward compatible verions
 typedef int EDirection_int;
@@ -30,15 +30,17 @@ enum ug_event_type {
 		, UET_DELAYED_GATE__DEPRECATED
 		, UET_PARAM_AUTOMATION__DEPRECATED
 	, UET_VOICE_REFRESH
-	, UET_VOICE_OUTPUT_STATUS
+	, UET_VOICE_STREAMING_STATE
 	, UET_NULL			// do nothing
 	, UET_GENERIC1		// MODULES CAN USE FOR WHATEVER
 	, UET_GENERIC2
 	, UET_RUN_FUNCTION2
 	, UET_SERVICE_GUI_QUE
-	, UET_DEACTIVATE_VOICE
+//	, UET_DEACTIVATE_VOICE
 	, UET_FORCE_NEVER_SLEEP
 	, UET_PLAY_WAITING_NOTES
+	, UET_VOICE_LEVEL
+	, UET_VOICE_DONE_CHECK
 
 	// BELOW HERE. Only events published in SDK, must match events in MP_API.h
 	, UET_EVENT_SETPIN = 100
@@ -63,6 +65,7 @@ enum ug_event_type {
 // ALLOW USER TO SET THE VALUE OF THIS OUTPUt eg on 'constant value' ug
 #define IO_SETABLE_OUTPUT		32
 // plugs which can be duplicated/deleted by CUG
+// DEPRECATED. NOT STORED IN XML BECAUSE DUPLICATES 'IO_AUTODUPLICATE'. Remove after 2022 (once we're sure)
 #define IO_CUSTOMISABLE			64
 // plugs which handle multiple inputs, must belong to an Adder ug
 #define IO_ADDER				128

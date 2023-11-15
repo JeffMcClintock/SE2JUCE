@@ -58,12 +58,16 @@ namespace SynthEdit2
 		assert(guiObjectMap.empty());
 
 		// Clear out previous view.
+		assert(!isIteratingChildren);
 		children.clear();
 		elementBeingDragged = nullptr;
 		patchAutomatorWrapper_ = nullptr;
 
-		if(mouseCaptureObject)
+		if (mouseCaptureObject)
+		{
 			releaseCapture();
+			mouseCaptureObject = {};
+		}
 
 #ifdef _DEBUG
 		debugInitializeCheck_ = false; // satisfy checks in base-class.
@@ -415,8 +419,8 @@ namespace SynthEdit2
 		{
 			if (auto cable = dynamic_cast<SynthEdit2::ConnectorViewBase*>(mouseCaptureObject); cable)
 			{
+				autoScrollStop();
 				EndCableDrag({ -10000, -10000 }, cable);
-//				return mouseCaptureObject->OnKeyPress(c);
 				return gmpi::MP_OK;
 			}
 		}

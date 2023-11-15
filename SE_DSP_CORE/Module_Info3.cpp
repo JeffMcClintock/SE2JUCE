@@ -1,10 +1,11 @@
 #include "pch.h"
 
+#include <sstream>
 #include "Module_Info3.h"
 #include "ug_plugin3.h"
+#include "ug_gmpi.h"
 #include "BundleInfo.h"
 #include "tinyxml/tinyxml.h"
-#include <sstream>
 #include "./modules/se_sdk3/MpString.h"
 #include "GmpiSdkCommon.h"
 
@@ -107,6 +108,12 @@ bool Module_Info3::LoadDllOnDemand()
 {
 	if (!dllHandle)
 	{
+		if (filename.empty())
+		{
+			// this is a module description from a project file, that don't exist locally.
+			return true;
+		}
+
 		LoadDll(); // load on demand
 
 #if defined( SE_EDIT_SUPPORT )
@@ -119,7 +126,7 @@ bool Module_Info3::LoadDllOnDemand()
 				gmpi_sdk::mp_shared_ptr<gmpi::IMpShellFactory> shellFactory;
 				{
 					auto r = factory->queryInterface(gmpi::MP_IID_SHELLFACTORY, shellFactory.asIMpUnknownPtr());
-					MpString s;
+					gmpi_sdk::MpString s;
 					r = shellFactory->getPluginInformation(m_unique_id.c_str(), s.getUnknown());
 
 					// scan XML.
@@ -188,6 +195,10 @@ void Module_Info3::LoadDll()
 
 #if defined( SE_EDIT_SUPPORT )
 	CWaitCursor wait;
+	
+	// if we are loading a project with incompatible modules. Don't attempt to load dll until it's upgraded.
+	if (m_incompatible_with_current_module)
+		return;
 #else
 	#if defined( SE_TARGET_PLUGIN ) && SE_EXTERNAL_SEM_SUPPORT==1
 		load_filename = combine_path_and_file( BundleInfo::instance()->getSemFolder(), load_filename );
@@ -218,10 +229,11 @@ void Module_Info3::LoadDll()
 
 		// Open the bundle
 		dllHandle = (DLL_HANDLE) CFBundleCreate(kCFAllocatorDefault, bundleUrl);
+		CFRelease(bundleUrl);
+		CFRelease(pluginPathStringRef);
+
 		if(dllHandle == 0) {
 			printf("Couldn't create bundle reference\n");
-			CFRelease(pluginPathStringRef);
-			CFRelease(bundleUrl);
 			return;
 		}
     	return; // success.
@@ -461,7 +473,7 @@ int32_t r;
 		else
 		{
 			// GMPI SDK
-			// only difference is utf8 ID instead of utf16
+			// uses utf8 ID instead of utf16
 			gmpi_sdk::mp_shared_ptr<gmpi::api::IPluginFactory> factory;
 			r = factoryBase->queryInterface((const gmpi::MpGuid&) gmpi::api::IPluginFactory::guid, factory.asIMpUnknownPtr());
 
@@ -469,32 +481,33 @@ int32_t r;
 			{
 				return {};
 			}
-			auto uniqueIdUtf8 = WStringToUtf8(m_unique_id);
+
+			const auto uniqueIdUtf8 = WStringToUtf8(m_unique_id);
 
 			gmpi::shared_ptr<gmpi::api::IUnknown> plugin;
-			r = (int32_t) factory->createInstance(uniqueIdUtf8.c_str(), gmpi::api::PluginSubtype::Audio, plugin.asIMpUnknownPtr());
-			if (!plugin || r != gmpi::MP_OK)
+			const auto r2 = factory->createInstance(uniqueIdUtf8.c_str(), gmpi::api::PluginSubtype::Audio, plugin.asIMpUnknownPtr());
+			if (!plugin || r2 != gmpi::ReturnCode::Ok)
 			{
 				return {};
 			}
 
+			auto gmpi_plugin = plugin.As<gmpi::api::IAudioPlugin>();
+			if (!gmpi_plugin)
 			{
-				auto gmpi_plugin = plugin.As<gmpi::api::IAudioPlugin>();
-				if (gmpi_plugin)
-				{
-					// Now plugin safely created. Host it.
-					auto ug = new ug_plugin3<gmpi::api::IAudioPlugin, gmpi::api::Event>();
-					ug->AttachGmpiPlugin(gmpi_plugin);
-					ug->setModuleType(this);
-					ug->flags = static_cast<UgFlags>(ug_flags);
-					ug->latencySamples = latency;
-
-					return ug;
-				}
+				return {};
 			}
+
+			// Now plugin safely created. Host it.
+			auto ug = new ug_gmpi(this, gmpi_plugin);
+			ug->flags = static_cast<UgFlags>(ug_flags);
+			ug->latencySamples = latency;
+
+			return ug;
 		}
 
 		{
+			// SynthEdit SEM (modern)
+
 			// Obtain factory.
 			gmpi_sdk::mp_shared_ptr<gmpi::IMpFactory> factory;
 			{
@@ -556,11 +569,11 @@ std::wstring Module_Info3::showSdkVersion()
 	const int32_t nCharacters = 100;
 	wchar_t compilerInfo[nCharacters] = L"";
 
-	if( !LoadDllOnDemand() )
+	if (!LoadDllOnDemand())
 	{
 		const char* gmpi_dll_entrypoint_name = "MP_GetFactory";
 		gmpi::MP_DllEntry MP_GetFactory;
-		int32_t r = MP_DllSymbol( dllHandle, gmpi_dll_entrypoint_name, (void**) &MP_GetFactory );
+		int32_t r = MP_DllSymbol(dllHandle, gmpi_dll_entrypoint_name, (void**)&MP_GetFactory);
 
 		gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> com_object;
 		r = MP_GetFactory(com_object.asIMpUnknownPtr());
@@ -570,14 +583,14 @@ std::wstring Module_Info3::showSdkVersion()
 
 		if (factory && r == MP_OK)
 		{
-			return L"No information about SDK available";
-	}
+			factory->getSdkInformation(sdkVersion, nCharacters, compilerInfo);
+		}
 	}
 
 	std::wostringstream oss;
 	if (sdkVersion > -1)
 	{
-	oss << L"SDK V" << ((float)sdkVersion * 0.0001f) << L", " << compilerInfo << L"\n";
+		oss << L"SDK V" << ((float)sdkVersion * 0.0001f) << L", " << compilerInfo << L"\n";
 	}
 	oss << L"File: " << Filename();
 

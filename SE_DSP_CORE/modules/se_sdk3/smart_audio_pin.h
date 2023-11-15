@@ -46,20 +46,20 @@ private:
 	void subProcessPulse( int bufferOffset, int sampleFrames, bool& canSleep );
 
 	SapSubProcessMethodPointer curSubProcess_;
-	float transitionTime_;
-	float inverseTransitionTime_;
-	float currentValue_;
-	float targetValue_;
-	int mode_;
+	double transitionTime_ = {};
+	double inverseTransitionTime_ = {};
+	double currentValue_ = {};
+	double targetValue_ = {};
+	int mode_ = {};
 
 	// Curve variables.
-	float dv;	//difference v (velocity)
-	float ddv;	//difference dv
-	float c;	//constant added to ddv
+	double dv = {};	//difference v (velocity)
+	double ddv = {};//difference dv
+	double c = {};	//constant added to ddv
 
-	int count;
-	float adaptiveHi_;
-	float adaptiveLo_;
+	int count = {};
+	double adaptiveHi_ = {};
+	double adaptiveLo_ = {};
 };
 
 class RampGenerator
@@ -69,46 +69,47 @@ public:
 	void setTransitionTime( float transitionSamples );
 	void setTarget( float targetValue );
 	void setValueInstant( float targetValue );
+    void jumpToTarget();
 	float getInstantValue();
 	float getTargetValue();
 	float getNext();
 	bool isDone()
 	{
-		return dv == 0.0f;
+		return dv == 0.0;
 	}
 
 private:
-	float dv;
-	float currentValue_;
-	float targetValue_;
-	float inverseTransitionTime_;
-	float transitionTime_;
+	double dv = {};
+	double currentValue_ = {};
+	double targetValue_ = {};
+	double inverseTransitionTime_ = {};
+	double transitionTime_ = {};
 };
 
 class RampGeneratorAdaptive
 {
-	float adaptiveHi_;
-	float adaptiveLo_;
+	double adaptiveHi_ = {};
+	double adaptiveLo_ = {};
 
 public:
 	RampGeneratorAdaptive() :
-		currentValue_((std::numeric_limits<float>::max)())
-		, dv(0.0f)
+		currentValue_((std::numeric_limits<double>::max)())
+		, dv(0.0)
 	{}
 
 	void Init( float sampleRate)
 	{
-		inverseTransitionTime_ = 1.0f / ( sampleRate * 0.015f ); // 15ms default.
+		inverseTransitionTime_ = 1.0 / ( sampleRate * 0.015 ); // 15ms default.
 
-		adaptiveLo_ = 1.0f / ( sampleRate * 0.050f ); // 50ms max.
-		adaptiveHi_ = 1.0f / ( sampleRate * 0.001f ); // 1ms min.
+		adaptiveLo_ = 1.0 / ( sampleRate * 0.050 ); // 50ms max.
+		adaptiveHi_ = 1.0 / ( sampleRate * 0.001 ); // 1ms min.
 	}
 	void setTarget(float targetValue)
 	{
-		if( currentValue_ == ( std::numeric_limits<float>::max )( ) )
+		if( currentValue_ == ( std::numeric_limits<double>::max )( ) )
 		{
 			currentValue_ = targetValue_ = targetValue;
-			dv = 0.0f;
+			dv = 0.0;
 			return;
 		}
 
@@ -116,14 +117,14 @@ public:
 		{
 			if( inverseTransitionTime_ < adaptiveHi_ )
 			{
-				inverseTransitionTime_ *= 1.05f; // slower 'decay', kind of peak follower.
+				inverseTransitionTime_ *= 1.05; // slower 'decay', kind of peak follower.
 			}
 		}
 		else
 		{
 			if( inverseTransitionTime_ > adaptiveLo_ )
 			{
-				inverseTransitionTime_ *= 0.9f;
+				inverseTransitionTime_ *= 0.9;
 			}
 		}
 
@@ -134,29 +135,29 @@ public:
 	void setValueInstant(float targetValue)
 	{
 		currentValue_ = targetValue_ = targetValue;
-		dv = 0;
+		dv = 0.0;
 	}
 
 	float getInstantValue() const
 	{
-		return currentValue_;
+		return static_cast<float>(currentValue_);
 	}
 
 	float getTargetValue() const
 	{
-		return targetValue_;
+		return static_cast<float>(targetValue_);
 	}
 
 	inline float getNext()
 	{
 		currentValue_ += dv;
 
-		if( dv > 0 )
+		if( dv > 0.0 )
 		{
 			if( currentValue_ >= targetValue_ )
 			{
 				currentValue_ = targetValue_;
-				dv = 0.0f;
+				dv = 0.0;
 			}
 		}
 		else
@@ -164,27 +165,27 @@ public:
 			if( currentValue_ <= targetValue_ )
 			{
 				currentValue_ = targetValue_;
-				dv = 0.0f;
+				dv = 0.0;
 			}
 		}
 
-		return currentValue_;
+		return static_cast<float>(currentValue_);
 	}
 
 	inline bool isDone()
 	{
-		return dv == 0.0f;
+		return dv == 0.0;
 	}
 
 	void jumpToTarget()
 	{
-		setValueInstant(targetValue_);
+		setValueInstant(static_cast<float>(targetValue_));
 	}
 private:
-	float dv;
-	float currentValue_;
-	float targetValue_;
-	float inverseTransitionTime_;
+	double dv = {};
+	double currentValue_ = {};
+	double targetValue_ = {};
+	double inverseTransitionTime_ = {};
 };
 
 #endif // .H INCLUDED

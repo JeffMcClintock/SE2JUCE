@@ -71,22 +71,29 @@ void ug_midi_filter::onMidi2Message(const gmpi::midi::message_view& msg)
 			goto fail_filter;
 		}
 	}
+	break;
 
-	// fall through case
 	case gmpi::midi_2_0::NoteOff:
 	{
 		const auto note = gmpi::midi_2_0::decodeNote(msg);
 		const auto Midi1Velocity = noteOnVelocities[header.channel][note.noteNumber];
 
-		if (
-			note.noteNumber < note_num_lo || note.noteNumber > note_num_hi ||
-			Midi1Velocity < velocity_lo || Midi1Velocity > velocity_hi
-			)
+		if (note.noteNumber < note_num_lo || note.noteNumber > note_num_hi)
 		{
 			goto fail_filter;
 		}
 	}
 	break;
+
+	case gmpi::midi_2_0::PolyAfterTouch:
+	{
+		const auto aftertouch = gmpi::midi_2_0::decodePolyController(msg);
+
+		if (aftertouch.noteNumber < note_num_lo || aftertouch.noteNumber > note_num_hi)
+		{
+			goto fail_filter;
+		}
+	}
 
 	case gmpi::midi_2_0::ProgramChange:
 		if (pinProgramChange == 0)

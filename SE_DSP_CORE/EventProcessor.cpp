@@ -83,7 +83,7 @@ void EventProcessor::Wake()
 	sleeping = false; // done after WantProcess() so it can check flag
 }
 
-void EventProcessor::AddEvent( SynthEditEvent* p_event )
+void EventProcessor::AddEvent( SynthEditEvent* p_event, int datatype)
 {
 	// added sleeping test to prevent resumeing plugin on every single event
 	if( sleeping && /*p_wake && */(flags & UGF_SUSPENDED) == 0 )
@@ -136,8 +136,16 @@ short_cut:
 					// remove any previous identical stat change
 					if( event2->parm1 == pin_idx )
 					{
+						// blob2 data represents a pointer to a reference counted object.
+						// need to decrement the count to indicate that the data is not referenced and can be reused.
+						if (datatype == DT_BLOB2)
+						{
+							auto blob2 = reinterpret_cast<gmpi::IMpUnknown**>(const_cast<int32_t*>(&(event2->parm3)));
+							if (*blob2)
+								(*blob2)->release();
+						}
+
 						events.erase( it );
-						// delete event2;
 						delete_SynthEditEvent(event2);
 					}
 
@@ -217,7 +225,7 @@ timestamp_t EventProcessor::SampleClock() const
 #endif
 
 // discard expired stat changes on pin
-void EventProcessor::DiscardOldPinEvents( int pin_index )
+void EventProcessor::DiscardOldPinEvents( int pin_index, int datatype)
 {
 	const timestamp_t bsc = AudioMaster()->BlockStartClock();
 	// find most recent event for this pin, at or before block start. leave it in place.
@@ -241,45 +249,15 @@ void EventProcessor::DiscardOldPinEvents( int pin_index )
 
 		if( e2->parm1 == pin_index && e2->eventType >= UET_EVENT_SETPIN && e2->eventType <= UET_EVENT_STREAMING_STOP  )
 		{
-			it = events.erase( it );
-			delete_SynthEditEvent(e2);
-		}
-	}
-}
+			// blob2 data represents a pointer to a reference counted object.
+			// need to deccrement the count to indicate that the data is not referenced and can be reused.
+			if(datatype == DT_BLOB2)
+			{
+				auto blob2 = reinterpret_cast<gmpi::IMpUnknown**>(const_cast<int32_t*>(&(e2->parm3)));
+				if (*blob2)
+					(*blob2)->release();
+			}
 
-// only ever used for discarding old program changes.
-void EventProcessor::DiscardOldEvents( int eventType )
-{
-	timestamp_t bsc = AudioMaster()->BlockStartClock();
-	// skip over events in current block.
-	EventIterator it( events.rbegin() );
-
-	for( ; it != events.rend() ; --it )
-	{
-		if( (*it)->timeStamp <= bsc )
-		{
-			break;
-		}
-	}
-
-	// skip over first event before or equal to block start (so module gets initial value correct)
-	for( ; it != events.rend() ; --it )
-	{
-		SynthEditEvent* e2 = *it;
-
-		if( e2->eventType == eventType && (timestamp_t)e2->timeStamp <= bsc )
-		{
-			break;
-		}
-	}
-
-	// erase any earlier events.
-	for( ; it != events.rend() ; --it )
-	{
-		SynthEditEvent* e2 = *it;
-
-		if( e2->eventType == eventType )
-		{
 			it = events.erase( it );
 			delete_SynthEditEvent(e2);
 		}
@@ -399,7 +377,7 @@ void EventProcessor::LogEvents(std::ofstream& eventLogFile)
 				switch (e2->eventType)
 				{
 				case UET_UI_NOTIFY:
-				case UET_DEACTIVATE_VOICE:
+//				case UET_DEACTIVATE_VOICE:
 				case UET_SUSPEND:
 				{
 				}
@@ -443,24 +421,12 @@ void EventProcessor::LogEvents(std::ofstream& eventLogFile)
 					case DT_TEXT:
 					{
 						eventLogFile << "{some text}";
-						/*
-						if (e->parm2 > sizeof(int))
-						{
-						std::wstring temp((wchar_t*)e->extraData, e->parm2 / sizeof(wchar_t));
-						*((std::wstring*)p->io_variable) = (temp);
-						}
-						else // less than 4 bytes.
-						{
-						std::wstring temp((wchar_t*)&(e->parm3), e->parm2 / sizeof(wchar_t));
-						*((std::wstring*)p->io_variable) = (temp);
-						}
-						*/
 					}
 					break;
 
 					case DT_DOUBLE: // phase out this type. float easier
 					{
-						eventLogFile << *((double*)e2->extraData);
+						eventLogFile << *((double*)e2->Data());
 					}
 					break;
 
@@ -469,20 +435,9 @@ void EventProcessor::LogEvents(std::ofstream& eventLogFile)
 						break;
 
 					case DT_BLOB:
+					case DT_BLOB2:
 					{
 						eventLogFile << "{BLOB}";
-						/*
-						MpBlob* blob = (MpBlob*)p->io_variable;
-
-						if (e->parm2 > sizeof(int))
-						{
-						blob->setValueRaw(e->parm2, e->extraData);
-						}
-						else // less than 4 bytes.
-						{
-						blob->setValueRaw(e->parm2, &(e->parm3));
-						}
-						*/
 					}
 					break;
 

@@ -157,7 +157,7 @@ dsp_patch_parameter_base::dsp_patch_parameter_base() :
 	,isPolyphonic_(false)
 	,Sdk2BackwardCompatibilityFlag_(false)
 	,voiceContainer_(0)
-	, voiceContainerHandle_(-1)
+//	, voiceContainerHandle_(-1)
 	,moduleHandle_(-1)
 	,moduleParameterId_(0)
 {
@@ -178,11 +178,12 @@ void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 	case code_to_long('p','p','c',0): // "ppc" Patch parameter change. Either Output parameter or MIDI automation
 	{
 		bool due_to_program_change;
-		int voice = 0;
-		int patch;
 		p_stream >> due_to_program_change;
-		p_stream >> patch;
+		
+//		int patch;
+//		p_stream >> patch;
 
+		int voice = 0;
 		if( isPolyphonic() )
 		{
 			p_stream >> voice;
@@ -269,6 +270,7 @@ void dsp_patch_parameter_base::SendValue( timestamp_t unadjusted_timestamp, int 
 	if (isPolyphonic())
 	{
 		auto voiceControlContainer = getVoiceContainer();
+		assert(voiceControlContainer);
 
 		if (isPolyphonicGate())
 		{
@@ -391,7 +393,7 @@ int dsp_patch_parameter_base::queryQueMessageLength( int availableBytes )
 		{
 			if( voiceMemory->isDirty( patch ) )
 			{
-				int voiceDataSize = sizeof(int) * 2;
+				int voiceDataSize = sizeof(int);// *2;
 
 				if( typeIsVariableSize() )
 				{
@@ -422,7 +424,7 @@ int dsp_patch_parameter_base::queryQueMessageLength( int availableBytes )
 void dsp_patch_parameter_base::getQueMessage( my_output_stream& outStream, int messageLength )
 {
 	// Write standard header. This not included in 'messageLength'.
-		outStream << Handle();
+	outStream << Handle();
 
 	outStream << id_to_long("ppc");
 	outStream << messageLength;
@@ -435,16 +437,16 @@ void dsp_patch_parameter_base::getQueMessage( my_output_stream& outStream, int m
 	// perhaps better is patch mem was one-dimensional, either 128 voices OR 128 patches never both.
 	// scaning 128 X 128 would not be efficient.
 	int voice = 0;
-
-	for( patchMemory_t::iterator it = patchMemory.begin() ; it != patchMemory.end() ; ++it )
+	constexpr int patch = 0;
+	for( auto it = patchMemory.begin() ; it != patchMemory.end() ; ++it )
 	{
 		PatchStorageBase* voiceMemory = *it;
 
-		for( int patch = voiceMemory->getPatchCount() - 1 ; patch >= 0 ; --patch )
+		//for( int patch = voiceMemory->getPatchCount() - 1 ; patch >= 0 ; --patch )
 		{
 			if( voiceMemory->isDirty( patch ) )
 			{
-				int voiceDataSize = sizeof(int) * 2;
+				int voiceDataSize = sizeof(int);// *2;
 				if( typeIsVariableSize() )
 				{
 					voiceDataSize += sizeof(int);
@@ -455,7 +457,7 @@ void dsp_patch_parameter_base::getQueMessage( my_output_stream& outStream, int m
 				if( messageLength >= bytesSent + voiceDataSize )
 				{
 					outStream << voice;
-					outStream << patch;
+					//outStream << patch;
 					SerialiseValue( outStream, voice, patch );
 					voiceMemory->setDirty( patch, false );
 
@@ -510,6 +512,8 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 {
 	xml->QueryIntAttribute("Module", &moduleHandle_);
 	xml->QueryIntAttribute("ModuleParamId", &moduleParameterId_);
+	
+//	xml->QueryIntAttribute("ContainerHandle", &voiceContainerHandle_);
 
 #if defined( _DEBUG )
 	debugName = FixNullCharPtr(xml->Attribute("DebugName"));
@@ -544,10 +548,6 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 	xml->QueryIntAttribute("Handle", &v);
 	SetHandle( v );
 
-	xml->QueryIntAttribute("ContainerHandle", &voiceContainerHandle_);
-
-	//ISeAudioMaster* am = m_patch_mgr->Container()->AudioMaster();
-	//am->RegisterDspMsgHandle( this, Handle() );
 	v = 0;
 	xml->QueryIntAttribute("isPolyphonic", &v);
 	setPolyphonic( v != 0 );
@@ -579,18 +579,13 @@ void dsp_patch_parameter_base::Initialize( class TiXmlElement* xml )
 	assert(patch_xml == nullptr || strcmp(patch_xml->Value(), "patch-list") == 0);
 	if (patch_xml)
 	{
-//		const bool isEditor = BundleInfo::instance()->isEditor;
-
-		ParseXmlPreset(
+		ParseXmlPreset2(
 			xml,
-			[this/*, isEditor*/](int voiceId, int preset, const char* xmlvalue)
+			[this](int voiceId, const char* xmlvalue)
 			{
 				// plugins have only one preset on the DSP at a time. Editor has many.
-//				if ((isEditor && preset < 128) || preset == 0)
-				if (preset == 0)
-				{
-					SetValueFromXml(xmlvalue, voiceId, preset);
-				}
+				const int preset = 0;
+				SetValueFromXml(xmlvalue, voiceId, preset);
 			}
 		);
 	}
@@ -695,7 +690,7 @@ void dsp_patch_parameter_base::UpdateOutputParameter(int voice, UPlug* p_plug)
 	outputMidiAutomation(false, voice);
 }
 
-void dsp_patch_parameter_base::vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, [[maybe_unused]] bool isMidiMappedAutomation)
+void dsp_patch_parameter_base::vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, [[maybe_unused]] int32_t flags)
 {
 	int patch = EffectivePatch();
 	int patchMemoryVoice = isPolyphonic() ? voice : 0; // For monophonic parameters, we always access voice zero.
@@ -708,7 +703,7 @@ void dsp_patch_parameter_base::vst_automate2(timestamp_t timestamp, int voice, c
 		// Exception is MIDI Messages internally mapped to Parameter.
 		// (With SE.exe we must always notify GUI).
 #if defined( SE_TARGET_PLUGIN )
-		if (isMidiMappedAutomation)
+		if( flags & (kIsMidiMappedAutomation | kMustUpdateUi) )
 #endif
 		{
 			UpdateUI(false, patchMemoryVoice);
@@ -811,8 +806,6 @@ void dsp_patch_parameter_base::setUpFromDsp( parameter_description* parameterDes
 	{
 		InitializePatchMemory( parameterDescription->defaultValue.c_str() );
 	}
-
-	//set PinId( m _plug->UniqueId() );
 }
 
 void dsp_patch_parameter_base::createPatchMemory(int voiceCount)
@@ -843,41 +836,3 @@ const int patchCount = 1;
 	}
 }
 
-#if 0
-int dsp_patch_parameter_base::EffectivePatch()
-{
-	if( patchMemory[0]->getPatchCount() == 1 ) // ignore PC?
-		return 0;
-
-	return m_patch_mgr->getProgram();
-}
-
-int dsp_patch_parameter_base::PatchCount()
-{
-	return patchMemory[0]->getPatchCount();
-}
-
-void dsp_patch_parameter_base::OnPatchChanged( int previousProgram, int newProgram )
-{
-	bool ignoreProgramChange = patchMemory[0]->getPatchCount() == 1;
-
-	if( !isPolyphonic() && !ignoreProgramChange )
-	{
-		const int voiceId = 0; // only affects non-poly params.
-
-		// Compare new preset value with old. Updating Polyphony unnesc causes sound engine reset on EVERY patch change.
-		int size = patchMemory[voiceId]->GetValueSize(previousProgram);
-		if( size == patchMemory[voiceId]->GetValueSize(newProgram) )
-		{
-			//void* value = patchMemory[voiceId]->GetValue(previousProgram);
-			if( memcmp( patchMemory[voiceId]->GetValue(previousProgram), patchMemory[voiceId]->GetValue(newProgram), size ) == 0 )
-			{
-				// Patch values are identical. No need to notify anything.
-				return;
-			}
-		}
-
-		OnValueChangedFromGUI( true, voiceId );
-	}
-}
-#endif

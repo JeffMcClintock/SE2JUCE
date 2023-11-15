@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <PluginList>
+  <Plugin id="SE MIDI Recorder" name="MIDI Recorder" category="MIDI">
+    <Audio>
+      <Pin name="Host BPM" datatype="float" hostConnect="Time/BPM" />
+      <Pin name="Host SP" datatype="float" hostConnect="Time/SongPosition" />
+      <Pin name="Host Bar Start" datatype="float" hostConnect="Time/BarStartPosition" />
+      <Pin name="Numerator" datatype="int" hostConnect="Time/Timesignature/Numerator" />
+      <Pin name="Denominator" datatype="int" hostConnect="Time/Timesignature/Denominator" />
+
+      <Pin name="File Name" datatype="string" default="popcorn" isFilename="true" metadata="mid"/>
+      <Pin name="Trigger" datatype="bool" default="1"/>
+      <Pin name="Gate" datatype="bool" default="1"/>
+      <Pin name="MIDI In" datatype="midi"/>
+    </Audio>
+  </Plugin>
+  
   <Plugin id="SE MidiMessage" name="MIDI Message" category="MIDI">
     <Audio>
       <Pin name="Hex Bytes" datatype="string" default="90 39 64" />
@@ -34,7 +49,8 @@
       <Pin id="4" name="Host BPM" direction="in" datatype="float" hostConnect="Time/BPM" />
       <Pin id="5" name="Tempo from" direction="in" datatype="enum" metadata="Host=1,MIDI File=0" default="1" isMinimised="true" />
       <Pin id="6" name="Loop Mode" direction="in" datatype="bool" default="0" />
-    </Audio>
+      <Pin name="Send Clocks" datatype="bool" default="1" private="true"/>
+	</Audio>
   </Plugin>
 
   <!-- Old version for backward compatibility -->

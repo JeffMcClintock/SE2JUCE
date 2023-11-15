@@ -86,7 +86,7 @@ void ug_patch_automator::assignPlugVariable(int p_plug_desc_id, UPlug* p_plug)
 		p_plug->AssignVariable( &midi_out );
 		break;
 
-	case 3: // don't change. used in ug_container::EnsurePpSetterDownstream()
+	case 3: // don't change. used in ug_container::RouteDummyPinToPatchAutomator()
 		p_plug->AssignVariable( &midi_out_hidden );
 		break;
 

@@ -163,21 +163,7 @@ public:
 			}
 			else // Feedback-out (helper) module
 			{
-				unsigned char* data;
-
-				if (e->parm2 <= sizeof(int))
-				{
-					// filter out non-relevant events. Less events = less subdivision of audio
-					// block
-					// 0xF0 indicates a system msg (clocks etc)
-					data = (unsigned char *)&(e->parm3);
-				}
-				else // Must be SYSEX.
-				{
-					data = (unsigned char *)e->extraData;
-				}
-
-				GetPlug(1)->Transmit(e->timeStamp, e->parm2, data);
+				GetPlug(1)->Transmit(e->timeStamp, e->parm2, e->Data());
 			}
 		}
 		break;

@@ -161,7 +161,7 @@ namespace
 static pin_description plugs[] =
 {
 	L"Spare"		, DR_IN		, DT_FSAMPLE,	L"0"	, L""				, IO_CONTAINER_PLUG|IO_RENAME|IO_AUTODUPLICATE|IO_CUSTOMISABLE, L"Connection to a module inside",
-	// todo move to MIDI-CV
+	// obsolete
 	L"Polyphony"	, DR_IN		, DT_ENUM ,		L"6"	, L"range 1,128"	, IO_DISABLE_IF_POS|IO_MINIMISED	, L"",
 	// obsolete
 	L"MIDI Automation", DR_IN	, DT_BOOL ,		L""		, L""				, IO_DISABLE_IF_POS|IO_MINIMISED	, L"",
@@ -387,7 +387,7 @@ bool ug_container::belongsTo(ug_container* container)
 	return false;
 }
 
-ug_container* ug_container::getOutermostPolyContainer()
+ug_container* ug_container::getVoiceControlContainer()
 {
 	auto fromVoiceContainer = this;
 
@@ -443,8 +443,8 @@ void ug_container::ConnectPatchCables()
 
 				// Check not routing out of polyphonic container.
 				{
-					auto topVoiceContainerA = fromPlug->UG->parent_container->getOutermostPolyContainer();
-					auto topVoiceContainerB = toPlug->UG->parent_container->getOutermostPolyContainer();
+					auto topVoiceContainerA = fromPlug->UG->parent_container->getVoiceControlContainer();
+					auto topVoiceContainerB = toPlug->UG->parent_container->getVoiceControlContainer();
 
 					if (topVoiceContainerA != topVoiceContainerB)
 					{
@@ -455,7 +455,7 @@ void ug_container::ConnectPatchCables()
 				auto datatype = fromPlug->DataType;
 				const wchar_t* feedbackModuleType = nullptr;
 
-				const wchar_t* datatypes[] = { L"Enum", L"Text", L"MIDI", L"Double", L"Bool", L"Volts", L"Float", L"", L"Int", L"Int64", L"Blob" };
+				const wchar_t* datatypes[] = { L"Enum", L"Text", L"MIDI", L"Double", L"Bool", L"Volts", L"Float", L"", L"Int", L"Int64", L"Blob", L"class-unused", L"Text8", L"Blob2" };
 
 				wchar_t temp[30];
 
@@ -474,6 +474,7 @@ void ug_container::ConnectPatchCables()
 				case DT_BOOL:
 				case DT_INT64:
 				case DT_BLOB:
+				case DT_BLOB2:
 				case DT_ENUM:
 					swprintf(temp, sizeof(temp) / sizeof(temp[0]), L"SE Feedback Delay - %ls", datatypes[datatype]);
 					feedbackModuleType = temp;
@@ -636,7 +637,7 @@ void ug_container::PostBuildStuff(bool xmlMethod)
 							targetUg->parent_container->AddUG(cr);
 							cr->SetupWithoutCug();
 							cr->GetPlug(0)->SetDefault(oss.str().c_str());
-							cr->connect(fromPlug, cr->GetPlugById(1));
+							cr->connect(fromPlug, cr->plugs[1]);
 						}
 						{
 							std::ostringstream oss;
@@ -787,7 +788,7 @@ void ug_container::SetupSecondaryPatchParameterSetter()
 				c->SetupSecondaryPatchParameterSetter();
 			}
 
-			if (m->GetFlag(UGF_PATCH_AUTO))
+			if (m->GetFlag(UGF_PATCH_AUTO| UGF_MIDI_REDIRECTOR))
 			{
 				m->FlagUpStream(UGF_UPSTREAM_PARAMETER);
 			}
@@ -798,13 +799,6 @@ void ug_container::SetupSecondaryPatchParameterSetter()
 // Reconnect all container Ins and outs to their true destination
 void ug_container::ReRoutePlugs()
 {
-	auto pps = GetParameterSetter();
-	if (pps)
-	{
-		// don't work, can't route upward when outer containers still being built, esp with nested oversamplers.
-		EnsurePpSetterDownstream();
-	}
-
 	// first do child containers.  This allows use of containers in poly voice chain
 #ifdef _DEBUG
 	if( SeAudioMaster::GetDebugFlag( DBF_TRACE_POLY ) )
@@ -846,7 +840,7 @@ void ug_container::ReRoutePlugs()
 	if (isContainerPolyphonic()) // avoid trying to determin polyphony on nested oversamplers.
 	{
 		/* could do
-		auto polyParent = parent_container->getOutermostPolyContainer();
+		auto polyParent = parent_container->getVoiceControlContainer();
 		if(polyParent == nullptr)
 		{
 		*/
@@ -856,7 +850,7 @@ void ug_container::ReRoutePlugs()
 			_RPT0(_CRT_WARN, "\n----------------------------------\nPolyphonicSetup()\nSTAGE 1 - Identify Downstream modules\n");
 		}
 #endif
-		auto e = get_patch_manager()->InitSetDownstream(this); // container_->getOutermostPolyContainer());
+		auto e = get_patch_manager()->InitSetDownstream(this); // container_->getVoiceControlContainer());
 
 		if (e)
 		{
@@ -1028,7 +1022,7 @@ ug_patch_param_setter* ug_container::GetParameterSetter()
 	{
 		assert( (flags & UGF_OPEN) == 0 && "can't create after open, or it may miss open()");
 		// perform functions normaly done by ug_base::Setup
-		parameterSetter_ = dynamic_cast<ug_patch_param_setter*>(ModuleFactory()->GetById((L"SE Patch Parameter Setter"))->BuildSynthOb());
+		parameterSetter_ = dynamic_cast<ug_patch_param_setter*>(ModuleFactory()->GetById(L"SE Patch Parameter Setter")->BuildSynthOb());
 		AddUG( parameterSetter_ );
 		parameterSetter_->SetupWithoutCug();
 	}
@@ -1047,7 +1041,7 @@ ug_patch_param_setter* ug_container::GetParameterSetterSecondary()
 
 	assert((flags & UGF_OPEN) == 0 && "can't create after open, or it may miss open()");
 	// perform functions normaly done by ug_base::Setup
-	Module_Info* modType = ModuleFactory()->GetById((L"SE Patch Parameter Setter"));
+	Module_Info* modType = ModuleFactory()->GetById(L"SE Patch Parameter Setter");
 	parameterSetterSecondary_ = dynamic_cast<ug_patch_param_setter*>(modType->BuildSynthOb());
 	AddUG(parameterSetterSecondary_);
 	parameterSetterSecondary_->SetupWithoutCug();
@@ -1099,7 +1093,7 @@ void ug_container::ConnectHostControl(HostControls hostConnect, UPlug* plug)
 	// Voice/Active and Voice-ID are always controled by the VoiceList.
 	if (hostConnect == HC_VOICE_VIRTUAL_VOICE_ID || hostConnect == HC_VOICE_ACTIVE)
 	{
-		auto polyContainer = getOutermostPolyContainer();
+		auto polyContainer = getVoiceControlContainer();
 		polyContainer->GetParameterSetter()->ConnectVoiceHostControl(polyContainer, hostConnect, plug);
 		/*
 		// Polyphonic containers control Voice-ID and Voice-Active.
@@ -1182,18 +1176,18 @@ void ug_container::BuildPatchManager(TiXmlElement* patchMgrXml, const std::strin
 // if not we need to supply one automatically.
 void ug_container::BuildAutomationModules()
 {
-	// AUTOMATION SENDER.
-	// Find Automation sender. Only pre-exists if user added it to patch.
-	automation_input_device = front()->findPatchAutomator();
+	assert(!automation_output_device); // doubling up!! (this container already has a patchautomator setup)
 
-	if(	automation_input_device == 0 )
+	// AUTOMATION SENDER.
+	// Only pre-exists if user added it to patch.
+	if(	automation_input_device == nullptr )
 	{
-		// Build Automation sender.
-		Module_Info* automatioSenderType = ModuleFactory()->GetById( L"SE Patch Automator" );
-		automation_input_device = (ug_patch_automator*) automatioSenderType->BuildSynthOb();
-		AddUG(automation_input_device);
-		automation_input_device->SetupWithoutCug();// automatioSenderType);
-		automation_input_device->patch_control_container = this;
+		// User didn't add one, Build Patch Automator.
+		auto automatioSenderType = ModuleFactory()->GetById( L"SE Patch Automator" );
+		auto pa = automatioSenderType->BuildSynthOb();
+		pa->patch_control_container = this;
+		AddUG(pa);
+		pa->SetupWithoutCug();
 	}
 
 	// AUTOMATION RECIEVER.
@@ -1225,41 +1219,32 @@ void ug_container::BuildAutomationModules()
 	assert(patch_control_container==this);
 }
 
-// Ensure ug_patch_param_setter always down-stream of ug_patch_automator by
-void ug_container::EnsurePpSetterDownstream()
+void ug_container::RouteDummyPinToPatchAutomator(UPlug* innerPin)
 {
-	assert(parameterSetter_);
-
 	// connecting a dummy MIDI connection.
-	const int ug_patch_automator_hidden_pin = 3; // "Hidden Output"
-	assert(parameterSetter_->GetPlug(L"MIDI In") == parameterSetter_->GetPlug(0));
+	assert(innerPin->DataType == DT_MIDI);
+	assert(innerPin->Direction == DR_IN);
 
 	auto currentContainer = this;
-	auto innerPin = parameterSetter_->GetPlug(0);
 
 	// handle situation of patch_automator in outer container by routing upward.
-	while(!currentContainer->automation_input_device)
+	while (!currentContainer->automation_input_device)
 	{
-		ug_base* iomod{};
-		ug_base* outerContainer{};
-		auto oversampler = dynamic_cast<ug_oversampler*>(currentContainer->AudioMaster());
-
-		if (oversampler)
+		if (auto oversampler = dynamic_cast<ug_oversampler*>(currentContainer->AudioMaster()); oversampler)
 		{
-			return; // FAILS due to outer containers still under construction, needs major rethink. !!!! (should work without oversamplers)
-			//iomod = oversampler->oversampler_in;
-			//outerContainer = oversampler->parent_container;
+			// not possible to connect parents patch-automator into oversampler due to outer containers still under construction
+			// defer till later
+			oversampler->SetFlag(UGF_ENSURE_AFTER_PA);
+			return;
 		}
-		else
+
+		auto outerContainer = currentContainer;
+		auto iomod = currentContainer->at(0)->findIoMod();
+		if (!iomod)
 		{
-			outerContainer = currentContainer;
-			iomod = currentContainer->at(0)->findIoMod();
-			if (!iomod)
-			{
-				iomod = ModuleFactory()->GetById(L"IO Mod")->BuildSynthOb();
-				currentContainer->AddUG(iomod);
-				iomod->SetupWithoutCug();
-			}
+			iomod = ModuleFactory()->GetById(L"IO Mod")->BuildSynthOb();
+			currentContainer->AddUG(iomod);
+			iomod->SetupWithoutCug();
 		}
 
 		auto ioPin = new UPlug(iomod, DR_OUT, DT_MIDI);
@@ -1274,28 +1259,14 @@ void ug_container::EnsurePpSetterDownstream()
 		ioPin->TiedTo = outerPin;
 
 		// up one.
-		if(currentContainer->parent_container)
-		{
-			currentContainer = currentContainer->parent_container;
-		}
-		else
-		{
-			// TODO: This will likely fail if oversampler don't have it's own patch-atomator,
-			// because oversamplers get finalised while outer container is still being constructed
-			// and at this point we may not have built the main-container's ug_patch_automator becuase we haven't fully parsed it's children.
+		currentContainer = currentContainer->parent_container;
+		assert(currentContainer);
 
-			// oversampler?
-			if(!oversampler)
-			{
-				// assert(false); // expected top-level container to have a patch_automator ('automation_input_device')
-				return; // FAIL!!!!
-			}
-			currentContainer = oversampler->parent_container;
-		}
 		innerPin = outerPin;
 	}
 
 	// connect outer dummy to patch_automator
+	const int ug_patch_automator_hidden_pin = 3; // "Hidden Output"
 	connect(
 		currentContainer->automation_input_device->GetPlug(ug_patch_automator_hidden_pin),
 		innerPin
@@ -1403,7 +1374,7 @@ void ug_container::DoVoiceRefresh()
 	{
 		if (nextRefreshVoice_ > 251) // don't kick of next refresh right away. pause a little.
 		{
-			nextRefreshVoice_ = -1; // So next time called, will increment to zero.
+			nextRefreshVoice_ = 0; // So next time called, will increment to one.
 		}
 	}
 	else

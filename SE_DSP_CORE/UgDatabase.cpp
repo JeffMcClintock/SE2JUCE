@@ -590,12 +590,18 @@ void CModuleFactory::RegisterPluginsXml(TiXmlNode* pluginList )
 	}
 }
 
-void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType fileType)
+void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType fileType, int fileFormatVersion)
 {
 #if defined( SE_EDIT_SUPPORT )
 	assert(m_in_use_old_module_list.empty());
 
 	const bool loadingCache = (fileType == SAT_SEM_CACHE);
+
+	// initial file format screwed up module database (missing flags, no differention between Module_Info classes).
+	// this was fixed in SE 1.4 file-format 130041 and 1.5 150000
+	const bool documentInfoUnreliable =
+		(fileFormatVersion >= 140000 && fileFormatVersion < 150000) ||
+		fileFormatVersion < 130041;
 
 	// load module infos stored in file, add any unknown ones to database
 	auto pluginList = documentE->FirstChildElement("PluginList");
@@ -606,17 +612,35 @@ void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 	for (auto pluginE = pluginList->FirstChildElement(); pluginE; pluginE = pluginE->NextSiblingElement())
 	{
 		const auto plugin_id = Utf8ToWstring(pluginE->Attribute("id"));
+		
+		int classTypeId = 0; // Module_Info3 by default
+		pluginE->QueryIntAttribute("class", &classTypeId);
 
 		Module_Info* mi{};
 
-		auto fileX = pluginE->Attribute("file");
-		if (fileX)
+		auto fileX = pluginE->Attribute("file"); // Cache-only
+		if (fileX || classTypeId == 0)
 		{
 			mi = new Module_Info3(Utf8ToWstring(fileX));
 		}
 		else
 		{
-			mi = new Module_Info(plugin_id);
+			switch (classTypeId)
+			{
+			case 2:
+				mi = new Module_Info3_internal(plugin_id.c_str());
+				break;
+				
+			case 1:
+				// meh:	mi = new Module_Info_Plugin();
+				// we can ignore that they are VST2 and just treat them as any module which is not available
+				[[fallthrough]];
+				
+			default:
+				mi = new Module_Info(plugin_id);
+				break;
+			}
+
 			mi->SetUnavailable(); // until creation function registered.
 		}
 
@@ -638,18 +662,12 @@ void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 				_RPTW1(_CRT_WARN, L"%s: Module info not avail, using stored info\n", mi->UniqueId().c_str());
 #endif
 			}
-			else
-			{
-				//#if defined( _DEBUG )
-				//	std::wstring t;
-				//	t.Format( (L"[%s] Loaded"), mi->UniqueId() );
-				//	_RPT1(_CRT_WARN, "%s\n", DebugCStringToAscii(t) );
-				//#endif
-			}
 		}
 		else
 		{
 			auto localModuleInfo = GetById(mi->UniqueId());
+
+			// TODO!!! this is repeatedly loading the same dll (once for each module in it).
 
 			// Check for wrapped VST2 plugins that are not available, only summary info.
 			// In this case we prefer to use the full module information from the project file.
@@ -669,7 +687,8 @@ void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 			}
 			else
 			{
-				if (!loadingCache)
+				// if we're loading an early document with broken module-info, discard it. (it will be retained only if no local version exist)
+				if (!loadingCache && !documentInfoUnreliable)
 				{
 					// Check stored pin data compatible with local version of module (rough check). Ck_Waveshaper1 has this problem. two versions with same ID but different pin count.
 					auto storedModuleInfo = mi;
@@ -682,15 +701,56 @@ void CModuleFactory::ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 						SafeMessagebox(0,oss.str().c_str(), L"", MB_OK | MB_ICONSTOP);
 					}
 
+					// XML format does not record these flags used only on legacy internal modules (e.g. Slider).
+					// // we pick them up from the auto-registered localModuleInfos which are created automatically at startup.
+					// CF_OLD_STYLE_LISTINTERFACE affects the order in which pins are added to the UG. Normally it's GUI first, but for Slider, it's strictly in the declared order (GUI last).
+					// Otherwise DSP connection get scrambled.
+					storedModuleInfo->flags |= (localModuleInfo->flags & (CF_OLD_STYLE_LISTINTERFACE | CF_IO_MOD | CF_NOTESOURCE| CF_DONT_EXPAND_CONTAINER| CF_IS_FEEDBACK));
+
 					// store pointer so object can be deleted after load.
+					mi->setLoadedIntoDatabase(false);
 					m_in_use_old_module_list.insert({ mi->UniqueId(), std::unique_ptr<Module_Info>{mi} });
+				}
+				else
+				{
+					delete mi;
+				}
+			}
+		}
+	}
+#if 0 // fixed with file version number
+	// fix screwup where projects written before 2023 omitted "IO_CONTAINER_PLUG" on container/IO Mod spare pins
+	// and 'IO_SETABLE_OUTPUT' on 'Fixed Values'
+	{
+		bool fileFormatMissingFlags = false;
+		{
+			auto it = m_in_use_old_module_list.find(L"Container");
+			if (it != m_in_use_old_module_list.end())
+			{
+				auto it2 = (*it).second->plugs.find(0);
+				if (it2 != (*it).second->plugs.end())
+				{
+					assert((*it2).second->GetName() == L"Spare");
+					fileFormatMissingFlags = 0 == ((*it2).second->GetFlags() & IO_CONTAINER_PLUG);
+				}
+			}
+		}
+
+		if (fileFormatMissingFlags)
+		{
+			// revert to local Container and 'fixed values' module database (not one from document).
+			for (auto moduletype : { L"Container", L"IO Mod", L"Fixed Values",L"SE:Fixed Values_Text", L"SE:Fixed Values_Float" , L"SE:Fixed Values_Int", L"SE:Fixed Values_Bool" })
+			{
+				if (auto it2 = m_in_use_old_module_list.find(moduletype); it2 != m_in_use_old_module_list.end())
+				{
+					m_in_use_old_module_list.erase(it2);
 				}
 			}
 		}
 	}
 #endif
+#endif
 }
-
 
 Module_Info::Module_Info(const std::wstring& p_unique_id) :
 	flags(0)
@@ -900,6 +960,47 @@ ug_base* Module_Info::BuildSynthOb()
 	return module;
 }
 
+// numerical values of zero are returned as empty string, to keep XML compact and consistant (no false warnings about "0" not equal "" or "0.0" whatever)
+std::wstring uniformDefaultString(std::wstring defaultValue, EPlugDataType dataType)
+{
+	if (defaultValue.empty())
+		return {};
+
+	switch (dataType)
+	{
+	case DT_MIDI2:
+		return {};
+		break;
+
+	default:
+		return defaultValue;
+		break;
+
+	case DT_FLOAT:
+	case DT_DOUBLE:
+	case DT_FSAMPLE:
+	{
+		const auto v = StringToFloat(defaultValue); // won't cope with large 64bit doubles.
+		if (v != 0.0f)
+			return FloatToString(v);
+	}
+	break;
+
+	case DT_INT:
+	case DT_INT64:
+	case DT_BOOL:
+	case DT_ENUM:
+	{
+		const auto v = StringToInt(defaultValue);
+		if (v)
+			return IntToString(v);
+	}
+	break;
+	}
+
+	return {};
+}
+
 #if defined( SE_EDIT_SUPPORT )
 void Module_Info::Serialize( CArchive& ar )
 {
@@ -1053,41 +1154,17 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 	}
 	else
 	{
-		wstring default = pin->GetDefault(0);
-		if (!default.empty())
+		auto defaultString = uniformDefaultString(pin->GetDefault(0), pin->GetDatatype());
+		if (!defaultString.empty())
 		{
-			bool needsDefault = true;
-			// In SDK3 Audio data defaults are literal (not volts).
-			if (pin->GetDatatype() == DT_FSAMPLE || pin->GetDatatype() == DT_FLOAT || pin->GetDatatype() == DT_DOUBLE)
+			// special-case Volts, need divide by 10
+			if (pin->GetDatatype() == DT_FSAMPLE)
 			{
-				float d = StringToFloat(default); // won't cope with large 64bit doubles.
-
-				if( pin->GetDatatype() == DT_FSAMPLE )
-				{
-					d *= 0.1f; // Volts to actual value.
-				}
-
-				default = FloatToString(d);
-
-				needsDefault = d != 0.0f;
-			}
-			if( pin->GetDatatype() == DT_ENUM || pin->GetDatatype() == DT_BOOL || pin->GetDatatype() == DT_INT || pin->GetDatatype() == DT_INT64 )
-			{
-				int d = StringToInt(default); // won't cope with large 64bit ints.
-				default = IntToString(d);
-
-				needsDefault = d != 0;
+				// divide default by 10 (to Volts). DoubleToString() removes trailing zeros.
+				defaultString = DoubleToString(0.1f * StringToFloat(defaultString));
 			}
 
-			if( pin->GetDatatype() == DT_MIDI2 )
-			{
-				needsDefault = false;
-			}
-
-			if( needsDefault )
-			{
-				pinXml->SetAttribute("default", WStringToUtf8(default));
-			}
+			pinXml->SetAttribute("default", WStringToUtf8(defaultString));
 		}
 	}
 
@@ -1108,6 +1185,10 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 	{
 		pinXml->SetAttribute("isFilename", "true");
 	}
+	if ((pin->GetFlags() & IO_SETABLE_OUTPUT) != 0)
+	{
+		pinXml->SetAttribute("settableOutput", "true");
+	}
 	if ((pin->GetFlags() & IO_LINEAR_INPUT) != 0)
 	{
 		pinXml->SetAttribute("linearInput", "true");
@@ -1119,6 +1200,10 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 	if ((pin->GetFlags() & IO_AUTODUPLICATE) != 0)
 	{
 		pinXml->SetAttribute("autoDuplicate", "true");
+	}
+	if ((pin->GetFlags() & IO_CONTAINER_PLUG) != 0)
+	{
+		pinXml->SetAttribute("isContainerIoPlug", "true");
 	}
 	//if ((pin->GetFlags() & IO_PARAMETER_SCREEN_ONLY) != 0)
 	//{
@@ -1218,41 +1303,17 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 	}
 	else
 	{
-		wstring default = pin->GetDefault(0);
-		if (!default.empty())
+		auto defaultString = uniformDefaultString(pin->GetDefault(0), pin->GetDatatype());
+		if (!defaultString.empty())
 		{
-			bool needsDefault = true;
-			// In SDK3 Audio data defaults are literal (not volts).
-			if (pin->GetDatatype() == DT_FSAMPLE || pin->GetDatatype() == DT_FLOAT || pin->GetDatatype() == DT_DOUBLE)
+			// special-case Volts, need divide by 10
+			if (pin->GetDatatype() == DT_FSAMPLE)
 			{
-				float d = StringToFloat(default); // won't cope with large 64bit doubles.
-
-				if (pin->GetDatatype() == DT_FSAMPLE)
-				{
-					d *= 0.1f; // Volts to actual value.
-				}
-
-				default = FloatToString(d);
-
-				needsDefault = d != 0.0f;
-			}
-			if (pin->GetDatatype() == DT_ENUM || pin->GetDatatype() == DT_BOOL || pin->GetDatatype() == DT_INT || pin->GetDatatype() == DT_INT64)
-			{
-				int d = StringToInt(default); // won't cope with large 64bit ints.
-				default = IntToString(d);
-
-				needsDefault = d != 0;
+				// divide default by 10 (to Volts). DoubleToString() removes trailing zeros.
+				defaultString = DoubleToString(0.1f * StringToFloat(defaultString));
 			}
 
-			if (pin->GetDatatype() == DT_MIDI2)
-			{
-				needsDefault = false;
-			}
-
-			if (needsDefault)
-			{
-				pinXml->SetAttribute("default", WStringToUtf8(default).c_str());
-			}
+			pinXml->SetAttribute("default", WStringToUtf8(defaultString).c_str());
 		}
 	}
 
@@ -1273,6 +1334,10 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 	{
 		pinXml->SetAttribute("isFilename", "true");
 	}
+	if ((pin->GetFlags() & IO_SETABLE_OUTPUT) != 0)
+	{
+		pinXml->SetAttribute("settableOutput", "true");
+	}
 	if ((pin->GetFlags() & IO_LINEAR_INPUT) != 0)
 	{
 		pinXml->SetAttribute("linearInput", "true");
@@ -1284,6 +1349,10 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 	if ((pin->GetFlags() & IO_AUTODUPLICATE) != 0)
 	{
 		pinXml->SetAttribute("autoDuplicate", "true");
+	}
+	if ((pin->GetFlags() & IO_CONTAINER_PLUG) != 0)
+	{
+		pinXml->SetAttribute("isContainerIoPlug", "true");
 	}
 	if ((pin->GetFlags() & IO_MINIMISED) != 0)
 	{
@@ -1364,18 +1433,29 @@ tinyxml2::XMLElement* Module_Info::Export(tinyxml2::XMLElement* element, ExportF
 	}
 
 	pluginXml->SetAttribute("id", uniqueId.c_str());
-	pluginXml->SetAttribute("name", moduleName.c_str());
-
-	if (format != SAT_VST3 && format != SAT_CODE_SKELETON)
+	
+	if (SAT_SEM_CACHE == format || SAT_SYNTHEDIT_DOCUMENT == format)
 	{
-		pluginXml->SetAttribute("flags", flags);
+		if (const auto classTypeId = getClassType(); classTypeId != 0)
+		{
+			pluginXml->SetAttribute("class", classTypeId);
+		}
 	}
+
+	pluginXml->SetAttribute("name", moduleName.c_str());
 
 	if (isShellPlugin())
 	{
 		pluginXml->SetAttribute("shellPlugin", true);
 	}
 
+	// shortcut - save all module flags in one hit.
+	if (format != SAT_VST3 && format != SAT_CODE_SKELETON)
+	{
+		pluginXml->SetAttribute("flags", flags);
+	}
+
+	// .. except in code-skeleton, where we want the flags spelled out.
 	if ((flags & CF_ALWAYS_EXPORT) != 0 && format == SAT_CODE_SKELETON)
 	{
 		pluginXml->SetAttribute("alwaysExport", true);
@@ -1582,6 +1662,26 @@ tinyxml2::XMLElement* Module_Info::Export(tinyxml2::XMLElement* element, ExportF
 		}
 	}
 
+	// Patchpoints
+	if (!patchPoints.empty())
+	{
+		// <PatchPoint pinId="1" center="10,10" radius="5" />
+
+		auto PatchPointsXml = doc->NewElement("PatchPoints");
+		pluginXml->LinkEndChild(PatchPointsXml);
+		int id = 0;
+		for (const auto& pp : patchPoints)
+		{
+			auto PatchPointXml = doc->NewElement("PatchPoint");
+			PatchPointsXml->LinkEndChild(PatchPointXml);
+
+			PatchPointXml->SetAttribute("pinId", pp.dspPin);
+			std::string pointString = std::to_string(pp.x) + "," + std::to_string(pp.y);
+			PatchPointXml->SetAttribute("center", pointString.c_str());
+			PatchPointXml->SetAttribute("radius", pp.radius);
+		}
+	}
+
 	return pluginXml;
 }
 
@@ -1616,6 +1716,8 @@ void Module_Info::Import(tinyxml2::XMLElement* pluginE, ExportFormatType format)
 
 #endif
 
+	// "flags"
+	pluginE->QueryIntAttribute("flags", &flags);
 	SetPinFlag("polyphonicSource", CF_NOTESOURCE | CF_DONT_EXPAND_CONTAINER, pluginE, flags);
 	SetPinFlag("alwaysExport", CF_ALWAYS_EXPORT, pluginE, flags);
 	SetPinFlag("shellPlugin", CF_SHELL_PLUGIN, pluginE, flags);
@@ -1830,8 +1932,6 @@ void CModuleFactory::ClearModuleDb( const std::wstring& p_extension )
 	}
 }
 
-
-
 // On save, relevant module infos are flagged for saving
 void CModuleFactory::ClearSerialiseFlags()
 {
@@ -1969,9 +2069,10 @@ void CModuleFactory::ExportModuleInfo(tinyxml2::XMLElement* documentE, ExportFor
 
 bool Module_Info::hasAttachedHostControls()
 {
-	for( module_info_pins_t::iterator it = gui_plugs.begin() ; it != gui_plugs.end() ; ++it )
+	for( auto it = gui_plugs.begin() ; it != gui_plugs.end() ; ++it )
 	{
-		if( HostControlAttachesToParentContainer( (*it).second->getHostConnect(0) ) )
+		const auto hostConnect = (*it).second->getHostConnect(0);
+		if (AttachesToVoiceContainer(hostConnect) || AttachesToParentContainer(hostConnect))
 		{
 			return true;
 		}
@@ -1979,7 +2080,7 @@ bool Module_Info::hasAttachedHostControls()
 
 	return false;
 }
-	
+
 void Module_Info::FlagHostControls( bool* flaggedHostControls )
 {
 	for (auto it : gui_plugs)
@@ -2207,7 +2308,7 @@ parameter_description* Module_Info::getParameterByPosition(int index)
 // provide the original module info.
 Module_Info* CModuleFactory::GetByIdSerializing(const std::wstring& p_id)
 {
-	auto it = std::find(m_in_use_old_module_list.begin(), m_in_use_old_module_list.end(), p_id);
+	auto it = m_in_use_old_module_list.find(p_id);
 	if (it != m_in_use_old_module_list.end())
 		return it->second.get();
 
@@ -2290,6 +2391,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 
 #if GMPI_IS_PLATFORM_JUCE==1
 	INIT_STATIC_FILE(ADSR);
+	INIT_STATIC_FILE(BlobToBlob2)
 	INIT_STATIC_FILE(BpmClock3);
 	INIT_STATIC_FILE(BPMTempo);
 	INIT_STATIC_FILE(ButterworthHP);
@@ -2311,6 +2413,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(SVFilter4)
 	INIT_STATIC_FILE(SoftDistortion);
 	INIT_STATIC_FILE(Switch);
+	INIT_STATIC_FILE(SilenceGate);
 	INIT_STATIC_FILE(UnitConverter);
 	INIT_STATIC_FILE(VoltsToMIDICC);
 	INIT_STATIC_FILE(Waveshaper3Xp);
@@ -2374,6 +2477,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(ug_vst_out);
 #endif
 
+	INIT_STATIC_FILE(CpuMeterGui);
 	INIT_STATIC_FILE(PatchPoints);
 	//	INIT_STATIC_FILE(Scope3);
 	INIT_STATIC_FILE(VoiceMute);
@@ -2426,6 +2530,8 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 //	INIT_STATIC_FILE(ug_volt_meter);
 	INIT_STATIC_FILE(ug_voltage_to_enum);
 	INIT_STATIC_FILE(ug_volts_to_float);
+	INIT_STATIC_FILE(ug_wave_player);
+	INIT_STATIC_FILE(ug_wave_recorder);
 
 	INIT_STATIC_FILE(DAWSampleRate);
 	INIT_STATIC_FILE(StepSequencer2);

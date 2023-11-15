@@ -11,7 +11,7 @@ int StringToInt(const string& string)
 	const int p_base = 10;
 	assert(string.size() < 11 || string.find(L',') != wstring::npos); // else too many digits overflows sizeof int
 	char* temp;
-	return strtol(string.c_str(), &temp, p_base);
+	return static_cast<int>(strtol(string.c_str(), &temp, p_base));
 }
 
 void SplitString(const char* pText, std::vector<std::string>& returnValue)
@@ -122,6 +122,10 @@ void ImageMetadata::Serialise(mp_shared_ptr<gmpi::IProtectedFile2> stream)
 
 	for (auto& line : lines)
 	{
+		// comments are lines begining with a semicolon ; like this
+		if (!line.empty() && line[0] == ';')
+			continue;
+		
 		// Split to words.
 		std::vector<std::string> words;
 		words.clear();
@@ -130,7 +134,7 @@ void ImageMetadata::Serialise(mp_shared_ptr<gmpi::IProtectedFile2> stream)
 		{
 //			bool found_image_size = false;
 
-			if (words.size()  > 0)
+			if (words.size() > 0)
 			{
 				//				_RPT1(_CRT_WARN, "%s\n", words[0] );
 				if (words[0] == "type")
@@ -320,8 +324,9 @@ void SkinMetadata::Serialise(mp_shared_ptr<gmpi::IProtectedFile2> stream)
 						string category = words[1];
 						transform(category.begin(), category.end(), category.begin(), towlower);
 
-						fonts_.push_back(category);
-						current = &(fonts_.back());
+						fonts_.push_back(std::make_unique<FontMetadata>(category));
+
+						current = fonts_.back().get();
 					}
 				}
 
@@ -364,7 +369,7 @@ void SkinMetadata::Serialise(mp_shared_ptr<gmpi::IProtectedFile2> stream)
 						{
 							const int p_base = 16;
 							char* temp;
-							c = strtol(words[1].c_str() + 1, &temp, p_base);
+							c = static_cast<uint32_t>(strtol(words[1].c_str() + 1, &temp, p_base));
 						}
 						else
 						{
@@ -385,7 +390,7 @@ void SkinMetadata::Serialise(mp_shared_ptr<gmpi::IProtectedFile2> stream)
 						{
 							const int p_base = 16;
 							char* temp;
-							c = strtol(words[1].c_str() + 1, &temp, p_base);
+							c = static_cast<uint32_t>(strtol(words[1].c_str() + 1, &temp, p_base));
 						}
 						else
 						{
@@ -460,9 +465,9 @@ void SkinMetadata::Serialise(mp_shared_ptr<gmpi::IProtectedFile2> stream)
 	// compensate for incomplete font information.
 	for (auto&f : fonts_)
 	{
-		if (f.faceFamilies_.empty())
+		if (f->faceFamilies_.empty())
 		{
-			f.faceFamilies_.push_back("Verdana");
+			f->faceFamilies_.push_back("Verdana");
 		}
 	}
 }
@@ -471,12 +476,19 @@ const FontMetadata* SkinMetadata::getFont(std::string category) const
 {
 	transform(category.begin(), category.end(), category.begin(), towlower);
 
-	for( auto it = fonts_.begin(); it != fonts_.end(); ++it )
+	for (auto& f : fonts_)
 	{
-		if( ( *it ).category_ == category )
+		if( f->category_ == category )
 		{
-			return &( *it );
+			return f.get();
 		}
 	}
-	return &defaultFont_;
+	return defaultFont_.get();
+}
+
+SkinMetadata::SkinMetadata()
+{
+	defaultFont_ = std::make_unique<FontMetadata>("default");
+	defaultFont_->faceFamilies_.push_back("Arial");
+	defaultFont_->color_ = 0xff000000 | GmpiDrawing::Color::Black; // From SE.
 }

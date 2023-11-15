@@ -21,7 +21,7 @@ class ug_oversampler_out :
 		assert(filterSetting > 10); // FIR mode.
 
 		int FilterTaps = filterSetting;
-		if (filterSetting < 20) // Filter specified by quality. Number of taps increases with oversampling rate.
+		if (filterSetting < 20) // Filter specified by quality. Number of taps increases with oversampling rate. (filterSetting 13->16)
 		{
 			FilterTaps = (2 << (filterSetting - 8)) * oversampleFactor_;
 			FilterTaps = (std::max)(4, FilterTaps);

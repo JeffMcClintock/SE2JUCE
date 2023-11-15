@@ -57,6 +57,8 @@ public:
 
 protected:
 	Module_Info3(); // serialisation only
+	
+	int getClassType() override { return 0; } // 0 - Module_Info3, 1 - Module_Info, 2 - Module_Info3_internal, 3 - Module_Info_Plugin
 
 #if defined( SE_EDIT_SUPPORT )
 	DECLARE_SERIAL( Module_Info3 )

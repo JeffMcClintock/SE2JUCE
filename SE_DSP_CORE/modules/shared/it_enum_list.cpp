@@ -116,7 +116,7 @@ void it_enum_list::Next()
 			--en;
 		}
 
-		if( st > 0 || en < (int) m_current.text.size() )
+		if( st > 0 || en < m_current.text.size() )
 		{
 			m_current.text = m_current.text.substr(st,en-st);
 		}

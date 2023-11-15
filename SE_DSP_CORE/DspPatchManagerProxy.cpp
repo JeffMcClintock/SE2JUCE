@@ -41,7 +41,7 @@ float DspPatchManagerProxy::InitializeVoiceParameters(ug_container* voiceControl
 	// e.g.upsampleTimestamp(100 at 8x) -> 12 --downsampled--> 96 !!! = assertion (past timestamp)
 	/*
 	ug_patch_param_setter::HandleEvent (UET_GENERIC1)
-	   parent_container->PlayWaitingNotes( e->timeStamp );
+	   parent_container->Play WaitingNotes( e->timeStamp );
 	      VoiceList::DoNoteOn()
 		     DspPatchManagerProxy::InitializeVoiceParameters ..
 			    dsp_patch_parameter_base::SendValuePoly with downsampled timestamp
@@ -79,7 +79,7 @@ void DspPatchManagerProxy::OnUiMsg(int /*p_msg_id*/, my_input_stream& /*p_stream
 }
 
 #if defined(SE_TARGET_PLUGIN)
-void DspPatchManagerProxy::setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue ) // VST3.
+void DspPatchManagerProxy::setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) // VST3.
 {
 	assert(false);
 }

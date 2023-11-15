@@ -21,7 +21,7 @@ public:
 				auto e = events.front();
 				events.pop_front();
 
-				if (e->eventType == gmpi::EVENT_PIN_SET)
+				if (e->eventType == gmpi::EVENT_PIN_SET || e->eventType == gmpi::EVENT_MIDI)
 				{
 					// transfer event to dest module with adjusted timestamp.
 					bool first = true;

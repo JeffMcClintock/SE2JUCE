@@ -11,6 +11,39 @@ REGISTER_PLUGIN2 ( MidiToCv2, L"SE MIDI to CV 2" );
 
 namespace{
 	int32_t r = RegisterPluginXml(
+#if 1
+R"XML(
+<?xml version="1.0" encoding="UTF-8"?>
+<PluginList>
+	<Plugin id="SE MIDI to CV 2" name="MIDI-CV 2" category="MIDI" polyphonicSource="true" cloned="true">
+		<Audio>
+			<Pin name="MIDI In" datatype="midi"/>
+			<Pin name="Channel" datatype="enum" default="-1" ignorePatchChange="true" metadata="All=-1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+			<Pin name="Trigger" datatype="float" rate="audio" direction="out"/>
+			<Pin name="Gate" datatype="float" rate="audio" direction="out"/>
+			<Pin name="Pitch" datatype="float" rate="audio" direction="out"/>
+			<Pin name="Velocity" datatype="float" rate="audio" direction="out"/>
+			<Pin name="Aftertouch" datatype="float" rate="audio" direction="out"/>
+			<Pin name="Voice/Active" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Active"/>
+			<Pin name="Voice/Gate" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Gate"/>
+			<Pin name="Voice/Trigger" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Trigger"/>
+			<Pin name="Voice/VelocityKeyOn" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/VelocityKeyOn"/>
+			<Pin name="Voice/Pitch" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Pitch"/>
+			<Pin name="Voice/VirtualVoiceId" datatype="int" private="true" isPolyphonic="true" hostConnect="Voice/VirtualVoiceId"/>
+			<Pin name="Bender" datatype="float" private="true" hostConnect="Bender"/>
+			<Pin name="HoldPedal" datatype="float" private="true" hostConnect="HoldPedal"/>
+			<Pin name="GlideStartPitch" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/GlideStartPitch"/>
+			<Pin name="VoiceAllocationMode" datatype="int" private="true" hostConnect="VoiceAllocationMode"/>
+			<Pin name="Portamento" datatype="float" private="true" hostConnect="Portamento"/>
+			<Pin name="BenderRange" datatype="float" private="true" hostConnect="BenderRange"/>
+			<Pin name="Voice/Aftertouch" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Aftertouch"/>
+			<Pin name="ChannelPressure" datatype="float" private="true" isPolyphonic="true" hostConnect="Channel Pressure"/>
+			<Pin name="Voice/Bender" datatype="float" private="true" isPolyphonic="true" hostConnect="Voice/Bender"/>
+		</Audio>
+	</Plugin>
+</PluginList>
+)XML");
+#else
 		"<?xml version=\"1.0\" ?>"
 		"<PluginList>"
 		  "<Plugin id=\"SE MIDI to CV 2\" name=\"MIDI-CV 2\" category=\"MIDI\" cloned=\"true\" polyphonicSource=\"true\" >"
@@ -42,6 +75,7 @@ namespace{
 		  "</Plugin>"
 		"</PluginList>"
 		);
+#endif
 }
 
 MidiToCv2::MidiToCv2( ) :
@@ -134,11 +168,8 @@ void MidiToCv2::CleanVelocityAndAftertouch()
 
 void MidiToCv2::onSetPins()
 {
-	bool pitchUpdated = false;
-
 	// Actual value of trigger signal is garbage. All that matters is that it updated.
 	const bool triggered = pinVoiceTrigger.isUpdated() && pinVoiceActive == 1.0f; // pinVoiceActive is checked to avoid a spurious pulse on first sample.
-	bool hardReset = false;
 
 	if( triggered )
 	{
@@ -157,9 +188,10 @@ void MidiToCv2::onSetPins()
 	}
 
 	// Voice reset happens at hard note ons, unless mono mode is on and a voice is already sounding. (not suspended)
+	bool hardReset = false;
 	if( pinVoiceActive.isUpdated() )
 	{
-//		_RPT1(_CRT_WARN, "MidiToCv2::onSetPins pinVoiceActive=%f\n", (float) pinVoiceActive );
+		_RPTN(_CRT_WARN, "V%2d MidiToCv2::onSetPins pinVoiceActive=%f\n", debugVoice, pinVoiceActive.getValue() );
 		if( pinVoiceActive > 0.0f )
 		{
 			if (pinVoiceActive < 1.0f) // voiceActive of 0.5 indicates overlap voice, don't sustain.
@@ -188,27 +220,6 @@ void MidiToCv2::onSetPins()
 	}
 	*/
 
-	if(pinVoiceBender.isUpdated() || pinBender.isUpdated() || pinBenderRange.isUpdated() || hardReset)
-	{
-		//		_RPT1(_CRT_WARN, "MidiToCv2::onSetPins Bender=%f\n", (double) Bender );
-		constexpr float benderRangeScale = 1.0f / 120.0f;
-		// voice bender is hard-coded to 48 semitones (for MPE)
-		const float totalBend = pinVoiceBender * 0.05f + pinBender * pinBenderRange * benderRangeScale;
-		benderInterpolator_.setTarget(totalBend);
-		pitchUpdated = true;
-
-		// fix issue of MPE pitch blip on note-on due to benderInterpolator not done from previous note.
-		if (hardReset)
-		{
-			//if (!benderInterpolator_.isDone())
-			//{
-			//	_RPT1(_CRT_WARN, "                   MidiToCv2: Bender RESET %f\n", totalBend);
-			//}
-
-			benderInterpolator_.jumpToTarget();
-		}
-	}
-
 	if( pinHoldPedal.isUpdated() )
 	{
 		//		_RPT1(_CRT_WARN, "MidiToCv2::onSetPins pinHoldPedal=%f\n", (double) pinHoldPedal );
@@ -220,6 +231,25 @@ void MidiToCv2::onSetPins()
 	}
 
 	// PITCH.
+	bool pitchUpdated = false;
+	if (pinVoiceBender.isUpdated() || pinBender.isUpdated() || pinBenderRange.isUpdated())
+	{
+#if 0 //_DEBUG
+		_RPTN(_CRT_WARN, "V%2d MidiToCv2::onSetPins Bender=%f\n\n", debugVoice, pinBender.getValue());
+
+		if(pinBenderRange.isUpdated())
+		{
+			_RPTN(_CRT_WARN, "MidiToCv2 BenderRange=%f\n\n", pinBenderRange.getValue());
+		}
+#endif
+
+		constexpr float benderRangeScale = 1.0f / 120.0f;
+		// voice bender is hard-coded to 48 semitones (for MPE)
+		const float totalBend = pinVoiceBender * 0.05f + pinBender * pinBenderRange * benderRangeScale;
+		benderInterpolator_.setTarget(totalBend);
+		pitchUpdated = true;
+	}
+
 	if( pinPortamento.isUpdated() || pinVoiceAllocationMode.isUpdated() )
 	{
 		const bool constantTimeGlide = 0 != voice_allocation::extractBits(pinVoiceAllocationMode, voice_allocation::bits::GlideRate_startbit, 1);
@@ -231,42 +261,81 @@ void MidiToCv2::onSetPins()
 		}
 	}
 
-	if( pinGlideStartPitch.isUpdated() )
+	// glide start is only needed on fresh voice activations.
+	// else it's a soft-steal and current pitch should already be correct.
+	if (hardReset)
 	{
-		//_RPT1(_CRT_WARN, "MidiToCv2.setValueInstant(GlideStartPitch:%f)\n", 0.1f * pinGlideStartPitch);
+		// _RPTN(_CRT_WARN, "V%2d MidiToCv2.setValueInstant(GlideStartPitch:%f)\n", debugVoice, 0.1f * pinGlideStartPitch);
 		pitchInterpolator_.setValueInstant(0.1f * pinGlideStartPitch);
-		pitchUpdated = true;
+
+		// fix issue of MPE pitch blip on note-on due to benderInterpolator not done from previous note.
+		benderInterpolator_.jumpToTarget();
 	}
 
-	if( pinVoicePitch.isUpdated() )
+	// If pinVoicePitch updated, glide to that value.
+	if (pinVoicePitch.isUpdated() || hardReset)
 	{
-		//_RPT2(_CRT_WARN, "[v%2d] pinVoicePitch =%f\n", debugVoice, pinVoicePitch.getValue() );
-
-		// For samplers it's important to have no glide whatsoever, else wrong key layer is selected.
-		if (pinPortamento <= 0.0f)
+		// for constant RATE glide, first recalc glide time.
+		const bool constantRateGlide = GT_CONST_RATE == voice_allocation::extractBits(pinVoiceAllocationMode, voice_allocation::bits::GlideRate_startbit, 1);
+		if (constantRateGlide)
 		{
-			//_RPT1(_CRT_WARN, "pitchInterpolator_.setValueInstant(%f)\n", 0.1f * pinVoicePitch );
-			pitchInterpolator_.setValueInstant(0.1f * pinVoicePitch);
+			const float deltaPitch = fabsf(pinGlideStartPitch - pinVoicePitch);
+			pitchInterpolator_.setTransitionTime(getSampleRate() * VoltageToTime(pinPortamento) * deltaPitch);
 		}
-		else
-		{
-//			bool constantRateGlide = ((pinVoiceAllocationMode >> 18) & 0x01) != 0;
-			const bool constantRateGlide = 0 == voice_allocation::extractBits(pinVoiceAllocationMode, voice_allocation::bits::GlideRate_startbit, 1);
-//			_RPT1(_CRT_WARN, "constantRateGlide =%ds\n", (int) constantRateGlide );
-			if (constantRateGlide)
-			{
-				// recalculate glide time.
-				const float deltaPitch = fabsf(pinGlideStartPitch - pinVoicePitch);
-				//_RPT1(_CRT_WARN, "Glide Time =%fs\n", (double) VoltageToTime( pinPortamento ) * deltaPitch );
-				pitchInterpolator_.setTransitionTime(getSampleRate() * VoltageToTime(pinPortamento) * deltaPitch);
-			}
 
-			//_RPT1(_CRT_WARN, "pitchInterpolator_.setTarget(%f)\n", 0.1f * pinVoicePitch );
-			pitchInterpolator_.setTarget(0.1f * pinVoicePitch);
-		}
+		pitchInterpolator_.setTarget(0.1f * pinVoicePitch);
 		pitchUpdated = true;
 	}
 
+	// isFirstSample prevents pitch gliding gradually from zero (pinGlideStartPitch) at startup.
+	if (isFirstSample)
+	{
+		pitchInterpolator_.jumpToTarget();
+		pitchUpdated = true;
+	}
+
+#if 0
+	// For samplers it's important to have no glide whatsoever, else wrong key layer is selected.
+	if (pinVoicePitch.getValue() == pinGlideStartPitch.getValue() || pinPortamento <= 0.0f || isFirstSample)
+	{
+		pitchUpdated = pitchInterpolator_.getInstantValue() != 0.1f * pinVoicePitch;
+		pitchInterpolator_.setValueInstant(0.1f * pinVoicePitch);
+
+		_RPTN(_CRT_WARN, "V%2d pitchInterpolator_.setTarget(%f) (instant)\n", debugVoice, 0.1f * pinVoicePitch);
+	}
+	else
+	{
+		// glide start is only needed on fresh voice activations.
+		// else it's a soft-steal and current pitch should already be correct.
+		if (hardReset)
+		{
+			_RPTN(_CRT_WARN, "V%2d MidiToCv2.setValueInstant(GlideStartPitch:%f)\n", debugVoice, 0.1f * pinGlideStartPitch);
+			pitchInterpolator_.setValueInstant(0.1f * pinGlideStartPitch);
+		}
+		_RPTN(_CRT_WARN, "V%2d pinVoicePitch =%f\n", debugVoice, pinVoicePitch.getValue());
+
+		const bool constantRateGlide = GT_CONST_RATE == voice_allocation::extractBits(pinVoiceAllocationMode, voice_allocation::bits::GlideRate_startbit, 1);
+		//			_RPT1(_CRT_WARN, "constantRateGlide =%ds\n", (int) constantRateGlide );
+		if (constantRateGlide)
+		{
+			// recalculate glide time.
+			const float deltaPitch = fabsf(pinGlideStartPitch - pinVoicePitch);
+			//_RPT1(_CRT_WARN, "Glide Time =%fs\n", (double) VoltageToTime( pinPortamento ) * deltaPitch );
+			pitchInterpolator_.setTransitionTime(getSampleRate() * VoltageToTime(pinPortamento) * deltaPitch);
+		}
+
+		_RPTN(_CRT_WARN, "V%2d pitchInterpolator_.setTarget(%f) (glide)\n", debugVoice, 0.1f * pinVoicePitch);
+		pitchInterpolator_.setTarget(0.1f * pinVoicePitch);
+		pitchUpdated = true;
+	}
+#endif
+
+	if (pitchUpdated)
+	{
+//		_RPTN(_CRT_WARN, "V%2d pinPitch.setStreaming(%d))\n", debugVoice, (int)(!pitchInterpolator_.isDone() || !benderInterpolator_.isDone()));
+		pinPitch.setStreaming(!pitchInterpolator_.isDone() || !benderInterpolator_.isDone());
+	}
+	
 	bool legato = true;
 
 	if( pinVoiceGate.isUpdated() )
@@ -315,11 +384,6 @@ void MidiToCv2::onSetPins()
 		}
 	}
 
-	if( pitchUpdated )
-	{
-		pinPitch.setStreaming(!pitchInterpolator_.isDone() || !benderInterpolator_.isDone());
-	}
-
 	if( pinVoiceAftertouch.isUpdated())
 	{
 //		_RPT1(_CRT_WARN, "MidiToCv2::onSetPins pinVoiceAftertouch = %f\n", (float) pinVoiceAftertouch );
@@ -349,5 +413,7 @@ void MidiToCv2::onSetPins()
 		_RPTN(_CRT_WARN, "                              target    %f\n", benderInterpolator_.getTargetValue());
 	}
 #endif
+
+	isFirstSample = false;
 }
 

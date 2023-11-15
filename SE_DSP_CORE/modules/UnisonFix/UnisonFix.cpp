@@ -173,6 +173,7 @@ void UnisonFix::onMidiMessage( int pin, unsigned char* midiMessage, int size )
 				pinMIDIOut.send( midiMessage, size, blockPosition() );
 			}
 		} 
+		break;
 
 	default:
 		pinMIDIOut.send( midiMessage, size, blockPosition() );

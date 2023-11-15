@@ -20,7 +20,7 @@ public:
 
 	// IUnknown methods
 	//GMPI_QUERYINTERFACE1(gmpi::MP_IID_HOST, gmpi::IMpHost)
-	int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
+	int32_t queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
 	{
 		*returnInterface = 0;
 		if(iid == gmpi::MP_IID_HOST || iid == gmpi::MP_IID_UNKNOWN)
@@ -35,7 +35,7 @@ public:
 			addRef();
 			return gmpi::MP_OK;
 		}
-		if(iid == gmpi::MP_IID_HOST_EMBEDDED_FILE_SUPPORT)
+		if (iid == gmpi::MP_IID_HOST_EMBEDDED_FILE_SUPPORT)
 		{
 			*returnInterface = static_cast<gmpi::IEmbeddedFileSupport*>(this);
 			addRef();
@@ -46,52 +46,52 @@ public:
 	GMPI_REFCOUNT_NO_DELETE
 
 	// IMpHost methods
-	int32_t MP_STDCALL setPin(int32_t blockRelativeTimestamp, int32_t pinId, int32_t size, const void* data) override;
-	int32_t MP_STDCALL setPinStreaming(int32_t timestamp, int32_t id, int32_t is_streaming) override;
-	int32_t MP_STDCALL getBlockSize(int32_t& return_val) override;
-	int32_t MP_STDCALL getSampleRate(float& return_val) override;
-	int32_t MP_STDCALL sleep() override;
-	int32_t MP_STDCALL allocateSharedMemory(const wchar_t* table_name, void** table_pointer, float sample_rate, int32_t size_in_bytes, int32_t& ret_need_initialise) override;
-	int32_t MP_STDCALL getHandle(int32_t& return_val) override
+	int32_t setPin(int32_t blockRelativeTimestamp, int32_t pinId, int32_t size, const void* data) override;
+	int32_t setPinStreaming(int32_t timestamp, int32_t id, int32_t is_streaming) override;
+	int32_t getBlockSize(int32_t& return_val) override;
+	int32_t getSampleRate(float& return_val) override;
+	int32_t sleep() override;
+	int32_t allocateSharedMemory(const wchar_t* table_name, void** table_pointer, float sample_rate, int32_t size_in_bytes, int32_t& ret_need_initialise) override;
+	int32_t getHandle(int32_t& return_val) override
 	{
 		return_val = Handle();
 		return gmpi::MP_OK;
 	}
 
-	int32_t MP_STDCALL sendMessageToGui(int32_t id, int32_t size, const void* messageData) override;
-	int32_t MP_STDCALL getHostId(int32_t maxChars, wchar_t* returnString) override;
-	int32_t MP_STDCALL getHostVersion(int32_t& returnValue) override;
-	int32_t MP_STDCALL getRegisteredName(int32_t maxChars, wchar_t* returnString) override;
-	int32_t MP_STDCALL createPinIterator(gmpi::IMpPinIterator** returnInterface) override;
-	int32_t MP_STDCALL isCloned(int32_t* returnValue) override;
-	int32_t MP_STDCALL createCloneIterator(void** returnInterface) override;
-	int32_t MP_STDCALL resolveFilename(const wchar_t* shortFilename, int32_t maxChars, wchar_t* returnFullFilename) override;
-	int32_t MP_STDCALL openProtectedFile(const wchar_t* shortFilename, gmpi::IProtectedFile** file) override;
+	int32_t sendMessageToGui(int32_t id, int32_t size, const void* messageData) override;
+	int32_t getHostId(int32_t maxChars, wchar_t* returnString) override;
+	int32_t getHostVersion(int32_t& returnValue) override;
+	int32_t getRegisteredName(int32_t maxChars, wchar_t* returnString) override;
+	int32_t createPinIterator(gmpi::IMpPinIterator** returnInterface) override;
+	int32_t isCloned(int32_t* returnValue) override;
+	int32_t createCloneIterator(void** returnInterface) override;
+	int32_t resolveFilename(const wchar_t* shortFilename, int32_t maxChars, wchar_t* returnFullFilename) override;
+	int32_t openProtectedFile(const wchar_t* shortFilename, gmpi::IProtectedFile** file) override;
 
 	// IGmpiHost methods
 
 	// these 2 overlap IMpHost.
-	//virtual int32_t MP_STDCALL setPin( int32_t blockRelativeTimestamp, int32_t pinId, int32_t size, const void* data ) = 0;
-	// virtual int32_t MP_STDCALL sleep() = 0;
+	//virtual int32_t setPin( int32_t blockRelativeTimestamp, int32_t pinId, int32_t size, const void* data ) = 0;
+	// virtual int32_t sleep() = 0;
 
-	int32_t MP_STDCALL setPinStreaming(int32_t blockRelativeTimestamp, int32_t pinId, bool isStreaming) override
+	int32_t setPinStreaming(int32_t blockRelativeTimestamp, int32_t pinId, bool isStreaming) override
 	{
 		return setPinStreaming(blockRelativeTimestamp, pinId, static_cast<int32_t>(isStreaming));
 	}
-	int32_t MP_STDCALL setLatency( int32_t latency ) override;
-	int32_t MP_STDCALL getBlockSize() override
+	int32_t setLatency( int32_t latency ) override;
+	int32_t getBlockSize() override
 	{
 		int32_t return_val = 0;
 		getBlockSize(return_val);
 		return return_val;
 	}
-	float MP_STDCALL getSampleRate() override
+	float getSampleRate() override
 	{
 		float return_val = 0;
 		getSampleRate(return_val);
 		return return_val;
 	}
-	int32_t MP_STDCALL getHandle() override
+	int32_t getHandle() override
 	{
 		int32_t return_val = 0;
 		getHandle(return_val);
@@ -99,10 +99,8 @@ public:
 	}
 
 	// IEmbeddedFileSupport
-	// Determine file's location depending on host application's conventions. // e.g. "bell.wav" -> "C:/My Documents/bell.wav"
-	int32_t MP_STDCALL resolveFilename(const char* fileName, gmpi::IString* returnFullUri) override;
-	// open a resource, usually returns a IProtectedFile2 interface.
-	int32_t MP_STDCALL openUri(const char* fullUri, gmpi::IMpUnknown** returnStream) override;
+	int32_t resolveFilename(const char* fileName, gmpi::IString* returnFullUri) override;
+	int32_t openUri(const char* fullUri, gmpi::IMpUnknown** returnStream) override;
 
 	virtual gmpi::IMpUnknown* GetGmpiPlugin() = 0;
 
@@ -154,9 +152,12 @@ public:
 		// setup audio pin buffers
 		for( auto p : plugs )
 		{
-			if( p->DataType == DT_FSAMPLE )//&& p->Proxy == nullptr)
+			if( p->DataType == DT_FSAMPLE )
 			{
+				/* confuses ID with index (and relies on hacks in ug_base::Setup() to make it work)
 				plugin_->setBuffer(p->UniqueId(), p->GetSamplePtr() + bufferOffset);
+				*/
+				plugin_->setBuffer(p->getPlugIndex(), p->GetSamplePtr() + bufferOffset);
 			}
 		}
 
@@ -166,7 +167,12 @@ public:
 	bool BypassPin(UPlug* fromPin, UPlug* toPin) override
 	{
 		ug_plugin3Base::BypassPin(fromPin, toPin);
+		
+		/* confuses ID with index (and relies on hacks in ug_base::Setup() to make it work)
 		plugin_->setBuffer(toPin->UniqueId(), fromPin->GetSamplePtr() + localBufferOffset_);
+		*/
+		
+		plugin_->setBuffer(toPin->getPlugIndex(), fromPin->GetSamplePtr() + localBufferOffset_);
 		return true;
 	}
 
@@ -191,7 +197,7 @@ public:
 
 					switch( e2->eventType )
 					{
-					case UET_DEACTIVATE_VOICE:
+//					case UET_DEACTIVATE_VOICE:
 					case UET_SUSPEND:
 					{
 						ug_base::HandleEvent(e2);

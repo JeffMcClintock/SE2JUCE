@@ -12,7 +12,7 @@ using namespace gmpi;
 
 namespace
 {
-REGISTER_MODULE_1( L"Float Adder2", IDS_MN_FLOAT_ADDER2,IDS_MG_DEBUG,ug_adder2 ,CF_HIDDEN,L"");
+REGISTER_MODULE_1( L"Float Adder2", IDS_MN_FLOAT_ADDER2,IDS_MG_DEBUG,ug_adder2 ,0,L"");
 }
 namespace
 {

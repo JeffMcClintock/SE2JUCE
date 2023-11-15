@@ -81,6 +81,13 @@ SubView::SubView(int pparentViewType) :
 
 void SubView::onValueChanged()
 {
+	// if we just blinked into existence, need to update mouse over object
+	if (isShown())
+	{
+		auto moduleview = dynamic_cast<SynthEdit2::ModuleView*>(getGuiHost());
+		moduleview->parent->onSubPanelMadeVisible();
+	}
+
 	OnPatchCablesVisibilityUpdate();
 
 	invalidateRect();
@@ -356,7 +363,7 @@ int32_t SubView::onPointerMove(int32_t flags, MP1_POINT point)
 
 int32_t SubView::onPointerUp(int32_t flags, MP1_POINT point)
 {
-	if (isShown())
+	if (isShown() || mouseCaptureObject)  // attempt to fix it when object on panel captures mouse, then hides itself
 	{
 		point.x -= offset_.width;
 		point.y -= offset_.height;

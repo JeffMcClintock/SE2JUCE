@@ -208,7 +208,7 @@ void BpmClock4::onSetPins()
 
 	bool resync = false;
 	// Special case - When DAW hits 'play' sync at least to next bar, else could be waiting several bars.
-	if( pinHostTransport.isUpdated() && pinHostTransport == true ) // && pinPulseDivide <= -resyncDivisions )
+	if( pinHostTransport.isUpdated() && pinHostTransport == true )
 	{
 //		_RPTW1(_CRT_WARN, L"TRANSPORT START: Bar %f ********************\n", 0.25f * (float) pinHostSongPosition );
 		resync = true;
@@ -241,11 +241,7 @@ void BpmClock4::onSetPins()
 #ifdef DEBUG_BPMCLOCK
             _RPTW1(_CRT_WARN, L"TRANSPORT JUMP: Bar %f ********************\n", 0.25f * (float) pinHostSongPosition );
 #endif
-			resync = /*resyncInProgress =*/ true;
-//			multi plier = (std::min)(multi plier, resyncMultiplier);
-
-			// Recalc accumulator error given new PulseDivide.
-//			accumulatorError = CalcAccumulatorError(pinHostSongPosition, accumulator, multi plier, pinHostBarStart);
+			resync = true;
 		}
 
 		accumulator -= accumulatorError;

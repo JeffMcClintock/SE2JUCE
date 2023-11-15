@@ -1,5 +1,6 @@
+#pragma once
 
-/* Copyright (c) 2007,2013 Jeff F McClintock
+/* Copyright (c) 2007-2021 SynthEdit Ltd
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -9,14 +10,14 @@
 *     * Redistributions in binary form must reproduce the above copyright
 *       notice, this list of conditions and the following disclaimer in the
 *       documentation and/or other materials provided with the distribution.
-*     * Neither the name SEM, nor 'Music Plugin Interface' nor the
+*     * Neither the name SEM, nor SynthEdit, nor 'Music Plugin Interface' nor the
 *       names of its contributors may be used to endorse or promote products
 *       derived from this software without specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY Jeff F McClintock ``AS IS'' AND ANY
+* THIS SOFTWARE IS PROVIDED BY SynthEdit Ltd ``AS IS'' AND ANY
 * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL Jeff F McClintock BE LIABLE FOR ANY
+* DISCLAIMED. IN NO EVENT SHALL SynthEdit Ltd BE LIABLE FOR ANY
 * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -167,7 +168,7 @@ namespace gmpi
 		int32_t parm1;		// Pin index if needed.
 		int32_t parm2;		// Sizeof additional data. >4 implies extraData points to value.
 		int32_t parm3;		// Pin value (if 4 bytes or less).
-		int32_t parm4;		// Voice ID.
+		int32_t parm4;		// Voice ID. or additional pin value data
 		char* extraData;	// Additional data.
 		struct MpEvent* next;		// Next event in list.
 	};
@@ -420,7 +421,7 @@ public:
 	virtual int32_t MP_STDCALL receiveMessageFromGui( int32_t id, int32_t size, const void* messageData ) = 0;
 };
 
-// Music plugin audio processing interface. simplified.
+// Music plugin audio processing interface. simplified. compatible with IMpPlugin2.
 class IMpAudioPlugin : public IMpUnknown
 {
 public:
@@ -441,7 +442,7 @@ public:
 
 enum MP_PinDirection{ MP_IN, MP_OUT };
 
-enum MP_PinDatatype{ MP_ENUM=0, MP_STRING=1, MP_MIDI=2, MP_FLOAT64, MP_BOOL=4, MP_AUDIO=5, MP_FLOAT32=6, MP_INT32=8, MP_INT64=9, MP_BLOB=10, MP_STRING_UTF8=12 };
+enum MP_PinDatatype{ MP_ENUM=0, MP_STRING=1, MP_MIDI=2, MP_FLOAT64, MP_BOOL=4, MP_AUDIO=5, MP_FLOAT32=6, MP_INT32=8, MP_INT64=9, MP_BLOB=10, MP_STRING_UTF8=12, MP_BLOB2 };
 
 // SynthEdit imbedded file.
 class IProtectedFile
@@ -592,6 +593,17 @@ public:
 static const MpGuid MP_IID_HOST_EMBEDDED_FILE_SUPPORT =
 { 0xb486f4de, 0x9010, 0x4aa0, { 0x9d, 0xc, 0xdc, 0xd9, 0xf8, 0x87, 0x92, 0x57 } };
 
+// SynthEdit-specific.
+class ISharedBlob : public IMpUnknown
+{
+public:
+	virtual int32_t MP_STDCALL read(uint8_t** returnData, int64_t* returnSize) = 0;
+
+	// {770D50E5-796D-4495-9C3E-6C21EBEA7F72}
+	inline static const MpGuid guid =
+	{ 0x770d50e5, 0x796d, 0x4495, { 0x9c, 0x3e, 0x6c, 0x21, 0xeb, 0xea, 0x7f, 0x72 } };
+};
+
 
 // GUI PLUGIN
 
@@ -653,7 +665,7 @@ public:
 	// Host setting a pin due to patch-change or automation.
 	virtual int32_t MP_STDCALL setPin( int32_t pinId, int32_t voice, int32_t size, const void* data ) = 0;
 
-	/* can't see need for two-stage method. UPDATE: GDI view notifies input GUI pins when changed from *own* module (but not output pins),
+	/* can't see need for two-stage method. UPATE: was needed, see IMpUserInterface2B
 	   This is now difficult becuase simply setting pin does not trigger notification (unless it changed).
 	// Host indicates UI should act on pin update. (difficulty was triggering updates to zeroed pins).
 	virtual int32_t MP_STDCALL notifyPin( int32_t pinId, int32_t voice ) = 0;

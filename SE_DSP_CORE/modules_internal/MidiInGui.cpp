@@ -112,7 +112,7 @@ namespace
     <Audio>
       <Pin name="MIDI Data" datatype="midi" direction="out" />
       <Pin name="Activity" datatype="int" direction="out" parameterId="0" />
-      <Pin name="MPE Mode" datatype="bool" default="1"/>
+      <Pin name="MPE Mode" datatype="bool" default="0"/>
     </Audio>
   </Plugin>
 </PluginList>

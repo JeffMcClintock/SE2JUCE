@@ -26,8 +26,6 @@ CFBundleRef CreatePluginBundleRef();
 class BundleInfo
 {
 public:
-    enum class Vst3MidiCcSupport { Auto, None, MPE_Emu, Chan_16 };
-
     struct pluginInformation
     {
         int32_t pluginId = -1;

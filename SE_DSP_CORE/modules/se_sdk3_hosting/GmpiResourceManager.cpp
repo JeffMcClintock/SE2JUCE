@@ -77,16 +77,17 @@ int32_t GmpiResourceManager::RegisterResourceUri(int32_t moduleHandle, const std
 	}
 	else
 	{
-		if (strcmp(resourceType, "Image") == 0)
+		if (strcmp(resourceType, "Image") == 0 || strcmp(resourceType, "png") == 0 || strcmp(resourceType, "svg") == 0)
 		{
 			searchExtensions.push_back(L".png");
 			searchExtensions.push_back(L".bmp");
 			searchExtensions.push_back(L".jpg");
+			searchExtensions.push_back(L".svg");
 			searchWithSkin = true;
 		}
 		else
 		{
-			if (strcmp(resourceType, "Audio") == 0)
+			if (strcmp(resourceType, "Audio") == 0 || strcmp(resourceType, "wav") == 0)
 			{
 				searchExtensions.push_back(L".wav");
 
@@ -96,7 +97,7 @@ int32_t GmpiResourceManager::RegisterResourceUri(int32_t moduleHandle, const std
 			}
 			else
 			{
-				if (strcmp(resourceType, "Instrument") == 0)
+				if (strcmp(resourceType, "Instrument") == 0 || strcmp(resourceType, "sfz") == 0 || strcmp(resourceType, "sf2") == 0)
 				{
 					searchExtensions.push_back(L".sf2");
 					searchExtensions.push_back(L".sfz");
@@ -107,7 +108,7 @@ int32_t GmpiResourceManager::RegisterResourceUri(int32_t moduleHandle, const std
 				}
 				else
 				{
-					if (strcmp(resourceType, "MIDI") == 0)
+					if (strcmp(resourceType, "MIDI") == 0 || strcmp(resourceType, "mid") == 0)
 					{
 						searchExtensions.push_back(L".mid");
 
@@ -275,7 +276,7 @@ int32_t GmpiResourceManager::RegisterResourceUri(int32_t moduleHandle, const std
 	if( returnUri.empty() )
 	{
 #ifdef _DEBUG
-		_RPT1(0, "GmpiResourceManager::RegisterResourceUri(%s) FAIL !!!!!!!!!!!!!!!!!!!!!!!!!!!\n", resourceName);
+		_RPT1(0, "GmpiResourceManager::RegisterResourceUri(%s) Not Found\n", resourceName);
 #endif
 		return gmpi::MP_FAIL;
 	}

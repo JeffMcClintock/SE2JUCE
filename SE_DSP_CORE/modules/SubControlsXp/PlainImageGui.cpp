@@ -88,6 +88,8 @@ int32_t PlainImageGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContex
 				}
 			}
 		}
+        
+        pixelsDest.setPixel(0, 0, 0x00ff00ff);
 	}
 #endif
 	

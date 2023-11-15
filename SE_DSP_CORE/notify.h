@@ -36,9 +36,9 @@ public:
 	void NotifySafe2(int p_msg_id, void* pHint);
 	inline void NotifyFast(int p_msg_id, void* pHint = 0)
 	{
-		for (std::vector<Notifiable*>::iterator it = m_observers.begin(); it != m_observers.end(); ++it)
+		for (auto observer : m_observers)
 		{
-			(*it)->OnNotify(this, p_msg_id, pHint);
+			observer->OnNotify(this, p_msg_id, pHint);
 		}
 	}
 private:

@@ -12,7 +12,7 @@ using namespace std;
 namespace
 {
 REGISTER_MODULE_1(L"MIDI Automator", IDS_MN_MIDI_AUTOMATOR,IDS_MG_DEBUG,ug_midi_automator ,CF_DONT_EXPAND_CONTAINER|/*CF_CONTROL_AUTOMATOR|*/CF_STRUCTURE_VIEW,L"Enables MIDI automation of all a container's controls. See <a href=midi_control.htm>Patches & MIDI Control</a> for more.");
-REGISTER_MODULE_1(L"MIDI Automator Output", IDS_MN_MIDI_AUTOMATOR_OUTPUT,IDS_MG_DEBUG,ug_patch_automator_out ,CF_HIDDEN,L"Hidden module, provides MIDI output for control panel automation.");
+REGISTER_MODULE_1(L"MIDI Automator Output", IDS_MN_MIDI_AUTOMATOR_OUTPUT,IDS_MG_DEBUG,ug_patch_automator_out ,0,L"Hidden module, provides MIDI output for control panel automation.");
 }
 
 #define PLG_MIDI_OUT 2 //0

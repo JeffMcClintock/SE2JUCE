@@ -15,6 +15,8 @@ private:
 	BoolInPin pinHostTransport;
 	AudioOutPin pinTransport;
 	AudioOutPin pinBpm;
+	IntInPin pinProcessorResumedIn;
+	BoolOutPin pinProcessorResumed;
 };
 
 #endif

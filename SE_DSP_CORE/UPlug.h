@@ -97,16 +97,16 @@ public:
 	{
 		plugIndex_ = static_cast<int16_t>(index);
 	}
-	// int UniqueId(){ return getPlugIndex(); }; // todo return actual ID (posible non-sequential)
 	// NOTE: !! NOT UNIQUE ON AUTODUPLICATING PLUGS, THEY ALL GET SAME id!!!
+	// returns actual ID (posible non-sequential)
 	int UniqueId()
 	{
 		return uniqueId_;
-	} // return actual ID (posible non-sequential)
+	}
 	void setUniqueId(int uniqueId)
 	{
 		uniqueId_ = uniqueId;
-	}// todo return actual ID (posible non-sequential)
+	}
 	bool PPGetActiveFlag()
 	{
 		return (flags & PF_PP_ACTIVE) != 0;
@@ -145,10 +145,9 @@ public:
 	std::vector<UPlug*> connections;
 	void DeleteConnection(UPlug* other);
 
-	// attach appropriate buffer (MIDI/Audio in/out whatever), anything larger than 4 bytes is allocated
+	// attach appropriate buffer (MIDI/Audio in/out whatever), anything larger than 8 bytes is allocated
 	union
 	{
-//		USampBlock* sample_buffer;
 		float* buffer;
 		float* float_ptr;
 		midi_output* midi_out;
@@ -160,6 +159,7 @@ public:
 		int int_ob; // in or out
 		double* double_ptr; // in or out
 		bool bool_ob; // in or out
+		gmpi::ISharedBlob* blob2_ptr; // in or out
 	} m_buffer = {};
 
 	UPlug* TiedTo;

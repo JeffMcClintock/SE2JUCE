@@ -2,23 +2,32 @@
 #include "../shared/xp_simd.h"
 
 SE_DECLARE_INIT_STATIC_FILE(Converters);
-SE_DECLARE_INIT_STATIC_FILE(VoltsToBool);
+
 SE_DECLARE_INIT_STATIC_FILE(BoolToInt);
+SE_DECLARE_INIT_STATIC_FILE(BoolToText);
+SE_DECLARE_INIT_STATIC_FILE(BoolToFloat);
+
+SE_DECLARE_INIT_STATIC_FILE(FloatToBool);
+SE_DECLARE_INIT_STATIC_FILE(FloatToInt);
+SE_DECLARE_INIT_STATIC_FILE(FloatToText);
+
 SE_DECLARE_INIT_STATIC_FILE(IntToBool);
 SE_DECLARE_INIT_STATIC_FILE(IntToFloat);
-SE_DECLARE_INIT_STATIC_FILE(TextToText8);
-SE_DECLARE_INIT_STATIC_FILE(BoolToText);
-SE_DECLARE_INIT_STATIC_FILE(ListToInt);
-SE_DECLARE_INIT_STATIC_FILE(BoolToFloat);
-SE_DECLARE_INIT_STATIC_FILE(Text8ToText);
-SE_DECLARE_INIT_STATIC_FILE(FloatToInt);
-SE_DECLARE_INIT_STATIC_FILE(VoltsToInt);
+SE_DECLARE_INIT_STATIC_FILE(IntToText);
 SE_DECLARE_INIT_STATIC_FILE(IntToVolts);
-SE_DECLARE_INIT_STATIC_FILE(FloatToBool);
+//SE_DECLARE_INIT_STATIC_FILE(IntToInt64);
+//SE_DECLARE_INIT_STATIC_FILE(Int64ToInt);
+
+SE_DECLARE_INIT_STATIC_FILE(ListToInt);
+
+SE_DECLARE_INIT_STATIC_FILE(TextToText8);
 SE_DECLARE_INIT_STATIC_FILE(TextToBool);
 SE_DECLARE_INIT_STATIC_FILE(TextToInt);
-SE_DECLARE_INIT_STATIC_FILE(IntToText);
+SE_DECLARE_INIT_STATIC_FILE(TextToFloat);
+SE_DECLARE_INIT_STATIC_FILE(Text8ToText);
 
+SE_DECLARE_INIT_STATIC_FILE(VoltsToInt);
+SE_DECLARE_INIT_STATIC_FILE(VoltsToBool);
 
 typedef SimpleConverter<int, bool> IntToBool;
 typedef SimpleConverter<int, float> IntToFloat;
@@ -44,17 +53,25 @@ typedef SimpleConverter<std::wstring, std::string> Text16ToText8;
 typedef SimpleConverter<std::string, std::wstring> Text8ToText16;
 
 typedef SimpleConverter<int, int> ListToInt;
+typedef SimpleConverter<int32_t, int64_t> IntToInt64;
+typedef SimpleConverter<int64_t, int32_t> Int64ToInt;
+typedef SimpleConverter<float, double> FloatToFloat64;
+typedef SimpleConverter<double, float> Float64ToFloat;
 
 
 REGISTER_PLUGIN( IntToBool, L"SE IntToBool" );
 REGISTER_PLUGIN( IntToFloat, L"SE IntToFloat" );
 REGISTER_PLUGIN( IntToText, L"SE IntToText" );
-REGISTER_PLUGIN( IntToText8, L"SE IntToText8" );
+REGISTER_PLUGIN(IntToText8, L"SE IntToText8");
+REGISTER_PLUGIN(IntToInt64, L"SE IntToInt64");
+REGISTER_PLUGIN(Int64ToInt, L"SE Int64ToInt");
 
 REGISTER_PLUGIN( FloatToInt, L"SE FloatToInt" );
 REGISTER_PLUGIN( FloatToBool, L"SE FloatToBool" );
 REGISTER_PLUGIN( FloatToText, L"SE FloatToText" );
-REGISTER_PLUGIN( FloatToText8, L"SE FloatToText8" );
+REGISTER_PLUGIN(FloatToText8, L"SE FloatToText8");
+REGISTER_PLUGIN(FloatToFloat64, L"SE FloatToFloat64");
+REGISTER_PLUGIN(Float64ToFloat, L"SE Float64ToFloat");
 
 REGISTER_PLUGIN( BoolToInt, L"SE BoolToInt" );
 REGISTER_PLUGIN( BoolToFloat, L"SE BoolToFloat" );
@@ -71,8 +88,6 @@ REGISTER_PLUGIN( Text16ToText8, L"SE TextToText8" );
 
 REGISTER_PLUGIN( ListToInt, L"SE ListToInt" );
 
-SE_DECLARE_INIT_STATIC_FILE(FloatToText);
-SE_DECLARE_INIT_STATIC_FILE(TextToFloat);
 
 class VoltsToBool : public MpBase2
 {
@@ -138,7 +153,7 @@ public:
 		}
 	}
 
-	virtual void onSetPins() override
+	void onSetPins() override
 	{
 		setSubProcess(&BoolToVolts::subProcess);
 		pinVoltsOut.setStreaming(false);
@@ -235,7 +250,10 @@ public:
 	void onGraphStart() override	// called on very first sample.
 	{
 		MpBase2::onGraphStart();
-
+		std::string test1{ "moose" };
+		const std::wstring test2{ L"cat" };
+		pinFolder = test1;
+		pinFolder = test2;
 		pinFolder = L"C:\\SE\\SE15\\UnitTest\\Output\\";
 	}
 };

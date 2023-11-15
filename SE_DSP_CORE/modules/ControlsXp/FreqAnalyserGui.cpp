@@ -39,6 +39,11 @@ void FreqAnalyserGui::onModeChanged()
 
 #define USE_CACHED_BACKGROUND 1
 
+float calcTopFrequency(float samplerate)
+{
+	return floorf(samplerate / 20000.0f) * 10000.0f;
+}
+
 int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext)
 {
 	auto r = getRect();
@@ -60,8 +65,9 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 	float mid_y = floorf(0.5f + height * 0.5f);
 
 	float leftBorder = 22;
-	float bottomBorder = 22;
-	float graphWidth = width - leftBorder;
+	float rightBorder = width - leftBorder * 0.5f;
+	float bottomBorder = leftBorder;
+	float graphWidth = rightBorder - leftBorder;
 
 	int newSpectrumCount = -1 + pinSpectrum.rawSize() / sizeof(float);
 
@@ -74,6 +80,9 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 			spectrumCount = newSpectrumCount;
 			samplerate = capturedata[spectrumCount]; // last entry used for sample-rate.
 			pixelToBin.clear();
+
+			//for (int i = 20; i < 25; ++i)
+			//	_RPTN(0, "bin %d : %f\n", i, capturedata[i]);
 		}
 	}
 
@@ -99,7 +108,6 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 		dtextFormat.SetWordWrapping(WordWrapping::NoWrap); // prevent word wrapping into two lines that don't fit box.
 
 		auto gradientBrush = g.CreateLinearGradientBrush(Color::FromRgb(0x39323A), Color::FromRgb(0x080309), Point(0, 0), Point(0, height) );
-//		auto gradientBrush = g.CreateSolidColorBrush(Color::Transparent());
 		dc.FillRectangle(r, gradientBrush);
 
 		auto fontBrush = g.CreateSolidColorBrush(Color::Gold);
@@ -125,7 +133,7 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 
 				GraphXAxisYcoord = y;
 
-				dc.DrawLine(GmpiDrawing::Point(leftBorder, y), GmpiDrawing::Point(width, y), brush2, penWidth);
+				dc.DrawLine(GmpiDrawing::Point(leftBorder, y), GmpiDrawing::Point(rightBorder, y), brush2, penWidth);
 
 				if (y > lastTextY + fontHeight * 1.2)
 				{
@@ -146,14 +154,14 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 			y = (displayDbMax - db) * (height - bottomBorder) / displayDbRange;
 			y = snapToPixelOffset + floorf(0.5f + y);
 
-			dc.DrawLine(GmpiDrawing::Point(leftBorder, y), GmpiDrawing::Point(width, y), brush2, penWidth);
+			dc.DrawLine(GmpiDrawing::Point(leftBorder, y), GmpiDrawing::Point(rightBorder, y), brush2, penWidth);
 		}
 
 		if (pinMode == 0) // Log
 		{
 			// FREQUENCY LABELS
 			// Highest mark is nyquist rounded to nearest 10kHz.
-			float topFrequency = floor(samplerate / 20000.0f) * 10000.0f;
+			const float topFrequency = calcTopFrequency(samplerate);
 			float frequencyStep = 1000.0;
 			if (width < 500)
 			{
@@ -163,10 +171,12 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 			float previousTextLeft = INT_MAX;
 			float x = INT_MAX;
 			do {
-				float normalizedFrequency = 2.0f * hz / samplerate;
-				float octave = (log(normalizedFrequency) - log(1.0f)) / log(2.0f);
-				x = leftBorder + ((octave + displayOctaves) * graphWidth) / displayOctaves;
-				x = snapToPixelOffset + floorf(0.5f + x);
+				const float octave = displayOctaves - logf(topFrequency / hz) / logf(2.0f);
+
+				x = leftBorder + graphWidth * octave / displayOctaves;
+
+				// hmm, can be misleading when grid line is one pixel off due to snapping
+//				x = snapToPixelOffset + floorf(0.5f + x);
 
 				if (x <= leftBorder || hz < 5.0)
 					break;
@@ -213,9 +223,14 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 				}
 				dc.DrawLine(GmpiDrawing::Point(x, 0), GmpiDrawing::Point(x, lineBottom), brush2, penWidth);
 
-				if (frequencyStep > hz * 0.99)
+				//if (hz > 950 && hz < 1050)
+				//{
+				//	_RPTN(0, "1k line @ %f\n", x);
+				//}
+
+				if (frequencyStep > hz * 0.99f)
 				{
-					frequencyStep *= 0.1;
+					frequencyStep *= 0.1f;
 				}
 
 				hz = hz - frequencyStep;
@@ -225,7 +240,7 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 		else
 		{
 			// FREQUENCY LABELS
-			// Highest mark is nyquist rounded to nearest 1kHz.
+			// Highest mark is nyquist rounded to nearest 2kHz.
 			float topFrequency = floor(samplerate / 2000.0f) * 1000.0f;
 			float frequencyStep = 1000.0;
 			float hz = topFrequency;
@@ -255,9 +270,6 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 						sprintf(txt, "%.0f", hz);
 					}
 
-					//				int stringLength = strlen(txt);
-					//SIZE size;
-					//::GetTextExtentPoint32(hDC, txt, stringLength, &size);
 					auto size = dtextFormat.GetTextExtentU(txt);
 					// Ensure text don't overwrite text to it's right.
 					if (x + size.width / 2 < previousTextLeft)
@@ -297,10 +309,10 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 	if (spectrumCount < 1 || newSpectrumCount < 1)
 		return MP_OK;
 
-	auto factory = g.GetFactory();
-
 	if(geometry.isNull())
 	{
+        auto factory = g.GetFactory();
+   
 		geometry = factory.CreatePathGeometry();
 		auto sink = geometry.Open();
 
@@ -316,37 +328,35 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 			// precalculate log frequency scale
 			if (pixelToBin.empty())
 			{
-				constexpr float lowHz = 20.f;
-				constexpr float inv_lowHz = 1.0f / lowHz;
 				const float xScale2 = displayOctaves / graphWidth;
 				float hz2bin = spectrumCount / (0.5f * samplerate);
 				const float xScale = graphWidth / displayOctaves;
 				const float inv_log2 = 1.0f / logf(2.0f);
-#if 0
-				labelCoords.clear();
-				for (size_t i = 0; i < std::size(scaleMarkHz); ++i)
-				{
-					const float octaveFrom20 = logf(scaleMarkHz[i] * inv_lowHz) * inv_log2;
-					auto x = left + octaveFrom20 * xScale;
-					x = floorf(x + 0.5f) + 0.5f; // snap to pixels
-					labelCoords.push_back(x);
-				}
-#endif
-				for (float x = 0.0f; x < static_cast<float>(width - leftBorder); x += 0.25f)
+
+				const float topFrequency = calcTopFrequency(samplerate);
+
+				for (float x = 0.0f; x < graphWidth; x += 0.25f)
 				{
 					const float octave = x * xScale2;
-					const float hz = powf(2.0f, octave) * lowHz;
-					const float bin = hz * hz2bin - 1.0f;
+					const float hz = topFrequency / powf(2.0f, displayOctaves - octave);// *lowHz;
+					const float bin = hz * hz2bin;// -1.0f;
 					const float safeBin = std::clamp(bin, 0.f, (float)spectrumCount - 1.0f);
 
 					const int index = FastRealToIntTruncateTowardZero(safeBin);
 					const float fraction = safeBin - (float)index;
 					pixelToBin.push_back({ index, fraction });
+
+					//if (hz > 998 && hz < 1002)
+					//{
+					//	_RPTN(0, "Hz %f, bin %f\n", hz, safeBin);
+					//}
 				}
 			}
 
 			graphValues.clear();
 
+            graphValues.push_back({leftBorder, 0.0f}); // we will update y once we have it
+            
 			// convert spectrum to dB
 			std::vector<float> dbs;
 			dbs.reserve(spectrumCount);
@@ -376,51 +386,46 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 				const auto db = (y1 + 0.5 * fraction * (y2 - y0 + fraction * (2.0 * y0 - 5.0 * y1 + 4.0 * y2 - y3 + fraction * (3.0 * (y1 - y2) + y3 - y0))));
 
 				y = (displayDbMax - db) * (height - bottomBorder) / displayDbRange;
-				y = (std::min)(y, GraphXAxisYcoord);
+				y = (std::min)(y, GraphXAxisYcoord - 0.01f); // mac can't handle adjacent identical points, ensure no point exactly on axis at ends
 
-				graphValues.push_back({ (float)x, y });
+				graphValues.push_back({x, y});
+
+				//if (bin.index > 22 && bin.index < 24)
+				//{
+				//	_RPTN(0, "bin %f: x %f\n", bin.index + bin.fraction, x);
+				//}
 
 				x += 0.25f;
 			}
 
+            // extend line left to border
+            graphValues[0].y = graphValues[1].y;
+            
+            // extend line to right border
+            graphValues.push_back({width + 1, graphValues.back().y});
+            
 			SimplifyGraph(graphValues, responseOptimized);
 
-#if 0
-			for (int i = 1; i < spectrumCount; i++)
-			{
-				float normalizedFrequency = (float)i / (float)spectrumCount;
-				float octave = (log(normalizedFrequency) - log(1.0f)) / log(2.0f);
-				x = leftBorder + ((octave + displayOctaves) * graphWidth) / displayOctaves;
-				x = (std::max)(x, leftBorder);
-
-				float db = 10.f * log10f(*capturedata) + dbc;
-
-				y = (displayDbMax - db) * (height - bottomBorder) / displayDbRange;
-				y = (std::min)(y, GraphXAxisYcoord);
-
-				if (i == 1)
-				{
-					sink.AddLine(GmpiDrawing::Point(leftBorder, y));
-					lineSink.BeginFigure(leftBorder, y);
-				}
-				sink.AddLine(GmpiDrawing::Point(x, y));
-				lineSink.AddLine(GmpiDrawing::Point(x, y));
-
-				++capturedata;
-			}
-#endif
-			sink.AddLine(GmpiDrawing::Point(leftBorder, responseOptimized[0].y));
-			lineSink.BeginFigure(leftBorder, responseOptimized[0].y);
-
+            assert(responseOptimized.size() > 1);
+                       
+            bool first = true;
 			for (auto& p : responseOptimized)
 			{
+                if(first)
+                {
+                    lineSink.BeginFigure(responseOptimized[0]);
+                    first = false;
+                }
+                else
+                {
+       				lineSink.AddLine(p);
+                }
+                
 				sink.AddLine(p);
-				lineSink.AddLine(p);
 			}
 
-			lineSink.AddLine(GmpiDrawing::Point(width + 1, responseOptimized.back().y));
-			sink.AddLine(GmpiDrawing::Point(responseOptimized.back().x + 1, responseOptimized.back().y));
-			sink.AddLine(GmpiDrawing::Point(responseOptimized.back().x + 1, GraphXAxisYcoord));
+            // complete filled area down to axis
+			sink.AddLine(GmpiDrawing::Point(responseOptimized.back().x, GraphXAxisYcoord));
 		}
 		else // Linear frequency
 		{
@@ -435,20 +440,21 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 				y = (displayDbMax - db) * (height - bottomBorder) / displayDbRange;
 				y = (std::min)(y, height - bottomBorder);
 
+                const GmpiDrawing::Point p(x, y);
 				if (i == 1)
 				{
-					sink.AddLine(GmpiDrawing::Point(leftBorder, y));
-					lineSink.BeginFigure(leftBorder, y);
+					lineSink.BeginFigure(p);
 				}
-				sink.AddLine(GmpiDrawing::Point(x, y));
-				lineSink.AddLine(GmpiDrawing::Point(x, y));
+                else
+                {
+                    lineSink.AddLine(p);
+                }
+				sink.AddLine(p);
 
 				++capturedata;
 			}
 
-			lineSink.AddLine(GmpiDrawing::Point(width + 1, y));
-			sink.AddLine(GmpiDrawing::Point(x + 1, y));
-			sink.AddLine(GmpiDrawing::Point(x + 1, GraphXAxisYcoord));
+			sink.AddLine(GmpiDrawing::Point(x, GraphXAxisYcoord));
 		}
 
 		lineSink.EndFigure(FigureEnd::Open);
@@ -469,27 +475,6 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 
 	g.FillGeometry(geometry, g.CreateSolidColorBrush(fill));
 	g.DrawGeometry(lineGeometry, brush2, penWidth);
-
-/* test pixel to SRGB conversion
-	auto b = g.CreateSolidColorBrush(Color::Red);
-	Color c;
-	for (int i = 0; i < 256; ++i)
-	{
-		c.r = c.g = c.b = FastGamma::srgbToLinear(i / 255.0f);
-		b.SetColor(c);
-		b.SetColor(Color::FromBytes(i,i,i));
-		g.FillRectangle(Rect(i, 15, i + 1, 21), b);
-		if ((i % 20) == 0)
-		{
-			b.SetColor(Color::Red);
-			g.FillRectangle(Rect(i, 21, i + 1, 22), b);
-		}
-	}
-	for (float l = 0; l < 0.05; l += 0.0001)
-	{
-		_RPT2(_CRT_WARN, "%f\t%f\n", (float) FastGamma::float_to_sRGB(l), 255.f * (float)FastGamma::linearToSrgb(l));
-	}
-*/
 
 	return gmpi::MP_OK;
 }

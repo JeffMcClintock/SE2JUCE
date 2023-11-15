@@ -5,7 +5,6 @@
 
 typedef std::map< int, MP_CreateFunc2> FactoryMethodList2_t;
 
-
 class Module_Info3_internal : public Module_Info3_base
 {
 public:
@@ -13,24 +12,13 @@ public:
 	Module_Info3_internal(const char* xml);
 
 	int32_t RegisterPluginConstructor( int subType, MP_CreateFunc2 create );
-	virtual bool fromExternalDll(){ return false;}
+	bool fromExternalDll() override { return false;}
 
-	ug_base* BuildSynthOb();
-	virtual gmpi::IMpUnknown* Build(int subType, bool quietFail = false);
+	ug_base* BuildSynthOb() override;
+	gmpi::IMpUnknown* Build(int subType, bool quietFail = false) override;
 
 #if defined( SE_EDIT_SUPPORT )
-#if 0
-	class TiXmlElement* ExportXml(TiXmlElement* element, enum ExportFormatType format, const std::string& overrideModuleId, const std::string& overrideModuleName)
-	{
-		// Because these modules are built-in to the executable, they register their XML in VST3 (unlike SEMs), so don't need to serialise XML.
-		if (format != SAT_VST3)
-		{
-			return Module_Info3_base::ExportXml(element, format, overrideModuleId, overrideModuleName);
-		}
-		return nullptr;
-	}
-#endif
-	virtual tinyxml2::XMLElement* Export(tinyxml2::XMLElement* element, ExportFormatType format, const std::string & overrideModuleId, const std::string & overrideModuleName) override
+	tinyxml2::XMLElement* Export(tinyxml2::XMLElement* element, ExportFormatType format, const std::string & overrideModuleId, const std::string & overrideModuleName) override
 	{
 		// Because these modules are built-in to the executable, they register their XML in VST3 (unlike SEMs), so don't need to serialise XML.
 		if (format != SAT_VST3)
@@ -43,6 +31,7 @@ public:
 
 protected:
 	Module_Info3_internal() {} // Serialising.
+	int getClassType() override { return 2; } // 0 - Module_Info3, 1 - Module_Info, 2 - Module_Info3_internal, 3 - Module_Info_Plugin
 
 #if defined( SE_SUPPORT_MFC )
 	DECLARE_SERIAL( Module_Info3_internal )

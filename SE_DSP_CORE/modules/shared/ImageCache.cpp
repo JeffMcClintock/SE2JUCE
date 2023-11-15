@@ -56,26 +56,7 @@ GmpiDrawing::Bitmap ImageCache::GetImage(gmpi::IMpUserInterfaceHost2* host, gmpi
 
 	// Search skins folders for image, and mark as in-use and imbeddable. Return plain bitmap or animated bitmap (with frame count etc).
 
-#if 0 // old way.
-	// Load Image.
-	gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> stream;
-	host->OpenUri(fullUri.c_str(), stream.asIMpUnknownPtr());
-
-	gmpi_sdk::mp_shared_ptr<GmpiDrawing_API::IMpBitmap> image;
-	if( stream != 0 )
-	{
-		gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> o;
-		guiHost->LoadStreamImage(stream, o.asIMpUnknownPtr());
-		if( o != nullptr )
-		{
-			o->queryInterface(SE_IID_BITMAP_MPGUI, image.asIMpUnknownPtr());
-			o = nullptr;
-		}
-	}
-#else
-
 	auto image = factory.LoadImageU(fullUri.c_str());
-#endif
 
 	if (image.isNull())
 	{

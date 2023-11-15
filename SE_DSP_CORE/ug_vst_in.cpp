@@ -16,7 +16,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_vst_in)
 
 namespace
 {
-REGISTER_MODULE_1(L"VST Input", IDS_MN_VST_INPUT,IDS_MG_DEBUG,ug_vst_in ,CF_HIDDEN,L"");
+REGISTER_MODULE_1(L"VST Input", IDS_MN_VST_INPUT,IDS_MG_DEBUG,ug_vst_in ,0,L"");
 }
 
 // Fill an array of InterfaceObjects with plugs and parameters
@@ -73,13 +73,13 @@ void ug_vst_in::sub_process(int start_pos, int sampleframes)
     int inc = bufferIncrement_;
 
 #ifdef CANCELLATION_TEST_ENABLE2
-	const auto m_increment = M_PI * 2.0 * 1000. / SampleRate();
+	const auto m_increment = M_PI * 2.0 * 1000. / getSampleRate();
 
 	float phase;
 	for(int j = 1 ; j < plugs.size() ; j++ )
 	{
 		phase = m_phase;
-		FSAMPLE* to = plugs[j]->GetSamplePtr() + start_pos;
+		auto to = plugs[j]->GetSamplePtr() + start_pos;
         for( int s = sampleframes ; s > 0 ; --s )
         {
 			phase += m_increment;

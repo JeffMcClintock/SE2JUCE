@@ -29,7 +29,7 @@ public:
 	int GetValueRaw(const void*& returnData, int patch = 0, int voice = 0);
 	RawView GetValueRaw2(int patch = 0, int voice = 0);
 	void UpdateUI(bool due_to_vst_automation_from_dsp_thread = false, int voice = 0);
-	virtual void vst_automate(timestamp_t p_timestamp, int voiceId, float p_normalised_val, bool isMidiMappedAutomation) = 0;
+	virtual void vst_automate(timestamp_t p_timestamp, int voiceId, float p_normalised_val, int32_t flags) = 0;
 	virtual bool typeIsVariableSize() = 0;
 	virtual int typeSize() = 0;
 	virtual int dataType() = 0;
@@ -141,17 +141,17 @@ public:
 	{
 		voiceContainer_ = c;
 	}
-	inline int getVoiceContainerHandle()
-	{
-		return voiceContainerHandle_;
-	}
+	//inline int getVoiceContainerHandle()
+	//{
+	//	return voiceContainerHandle_;
+	//}
 	virtual void InitializePatchMemory( const wchar_t* defaultString ) = 0;
 	void createPatchMemory( /*int patchCount,*/ int voiceCount );
 	void setSdk2BackwardCompatibility(bool v)
 	{
 		Sdk2BackwardCompatibilityFlag_ = v;
 	}
-	void vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, bool isMidiMappedAutomation);
+	void vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, int32_t flags);
 int EffectivePatch() const
 {
 	return 0;
@@ -244,7 +244,7 @@ protected:
 	// Avoid sending floods of repeated MIDI msgs on tiny parameter changes
 	std::vector<int> lastMidiValue_;
 	bool isDspOnlyParameter_;
-	int voiceContainerHandle_; // Polyphonic host-controls associate with their container.
+//	int voiceContainerHandle_; // Polyphonic host-controls associate with their container.
 	ug_container* voiceContainer_;
 
 	int32_t moduleHandle_;

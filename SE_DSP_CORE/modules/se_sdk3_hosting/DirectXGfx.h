@@ -477,7 +477,7 @@ namespace gmpi
 
 				// For the default method, spacing depends solely on the content. For uniform spacing, the specified line height overrides the content.
 				DWRITE_LINE_SPACING_METHOD method = lineSpacing < 0.0f ? DWRITE_LINE_SPACING_METHOD_DEFAULT : DWRITE_LINE_SPACING_METHOD_UNIFORM;
-				return native()->SetLineSpacing(method, lineSpacing, baseline);
+				return native()->SetLineSpacing(method, fabsf(lineSpacing), baseline);
 			}
 
 			int32_t MP_STDCALL GetFontMetrics(GmpiDrawing_API::MP1_FONT_METRICS* returnFontMetrics) override;
@@ -514,17 +514,27 @@ namespace gmpi
 			IWICBitmapLock* pBitmapLock;
 			ID2D1Bitmap* nativeBitmap_;
 			int flags;
-			IMpBitmapPixels::PixelFormat pixelFormat;
+			IMpBitmapPixels::PixelFormat pixelFormat = kBGRA; // default to non-SRGB Win7 (not tested)
 
 		public:
-			bitmapPixels(ID2D1Bitmap* nativeBitmap, IWICBitmap* inBitmap, bool _alphaPremultiplied, int32_t pflags, IMpBitmapPixels::PixelFormat ppixelFormat = kRGBA) : // default to non-SRGB for Mac and Win7
-				pixelFormat(ppixelFormat)
+			bitmapPixels(ID2D1Bitmap* nativeBitmap, IWICBitmap* inBitmap, bool _alphaPremultiplied, int32_t pflags)
 			{
 				nativeBitmap_ = nativeBitmap;
 				assert(inBitmap);
 
 				UINT w, h;
 				inBitmap->GetSize(&w, &h);
+
+				{
+					WICPixelFormatGUID formatGuid;
+					inBitmap->GetPixelFormat(&formatGuid);
+
+					// premultiplied BGRA (default)
+					if (std::memcmp(&formatGuid, &GUID_WICPixelFormat32bppPBGRA, sizeof(formatGuid)) == 0)
+					{
+						pixelFormat = kBGRA_SRGB;
+					}
+				}
 
 				bitmap = nullptr;
 				pBitmapLock = nullptr;

@@ -13,7 +13,7 @@ class GuiPatchAutomator3 : public SeGuiInvisibleBase, public gmpi::IMpParameterO
 	std::map< std::pair< int32_t, int32_t>, int32_t> parameterToPinIndex_;	// pins are indexed by parameter-handle, field. value is pinId
 	std::vector< std::pair< int32_t, int32_t> > pinToParameterIndex_;		// lookup by pin Index, returns paramter ahndle, field id.
 
-	class IGuiHost2* patchManager_;
+	class IGuiHost2* patchManager_ = {};
 
 public:
 	virtual ~GuiPatchAutomator3();

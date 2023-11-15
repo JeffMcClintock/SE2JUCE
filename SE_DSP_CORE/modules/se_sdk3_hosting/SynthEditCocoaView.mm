@@ -26,10 +26,12 @@ class DrawingFrameCocoa : public gmpi_gui::IMpGraphicsHost, public gmpi::IMpUser
     IGuiHost2* controller;
     int32_t mouseCaptured = 0;
     GmpiGuiHosting::PlatformTextEntry* currentTextEdit = nullptr;
-    
+    GmpiGuiHosting::UpdateRegionMac dirtyRects;
+
 public:
     gmpi::cocoa::DrawingFactory drawingFactory;
     NSView* view;
+    NSBitmapImageRep* backBuffer{}; // backing buffer with linear colorspace for correct blending.
 
     void Init(SynthEdit2::IPresenter* presenter, class IGuiHost2* hostPatchManager, int pviewType)
     {
@@ -49,10 +51,14 @@ public:
         };
 #endif
      }
+     
+     void DeInit()
+     {
+        containerView = {};
+     }
 
     ~DrawingFrameCocoa()
     {
-        int x = 9;
 #if defined(SE_TARGET_AU)
         auto audioUnit = dynamic_cast<SEInstrumentBase*>(controller);
         if(audioUnit)
@@ -69,15 +75,81 @@ public:
         return containerView.get();
     }
     
-    void OnRender(NSView* frame, GmpiDrawing_API::MP1_RECT* dirtyRect)
+    void OnRender(NSView* frame /*, GmpiDrawing_API::MP1_RECT* dirtyRect*/)
     {
-        gmpi::cocoa::GraphicsContext context(frame, &drawingFactory);
+#if USE_BACKING_BUFFER
+        if(!backBuffer)
+            initBackingBitmap();
         
-        context.PushAxisAlignedClip(dirtyRect);
+        // draw onto linear back buffer.
+        [NSGraphicsContext saveGraphicsState];
+        [backBuffer retain];
+        NSGraphicsContext *g = [NSGraphicsContext graphicsContextWithBitmapImageRep:backBuffer];
+
+        [NSGraphicsContext setCurrentContext:g];
+
+        auto flipper = [NSAffineTransform transform];
+        [flipper scaleXBy:1 yBy:-1];
+        [flipper translateXBy:0.0 yBy:-[frame bounds].size.height];
+        [flipper concat];
+
+        dirtyRects.optimizeRects();
+#if 0
+        const GmpiDrawing::Rect osClip{
+            floorf(dirtyRect->left),
+            floorf(dirtyRect->top),
+            ceilf(dirtyRect->right),
+            ceilf(dirtyRect->bottom)
+        };
+#endif
+        // context must be disposed (via RIAA) before restoring state, because its destructor also restores state
+        {
+	        gmpi::cocoa::GraphicsContext context(frame, &drawingFactory);
+
+            // draw the absolute minimum.
+            for( auto& r : dirtyRects.rects )
+		    {
+                context.PushAxisAlignedClip(&r);
         
-        containerView->OnRender(static_cast<GmpiDrawing_API::IMpDeviceContext*>(&context));
+        	    containerView->OnRender(static_cast<GmpiDrawing_API::IMpDeviceContext*>(&context));
+
+       		    context.PopAxisAlignedClip();
+		    }
+        }
+
+#else
+        // context must be disposed before restoring state, because it's destructor also restores state
+        {
+	        gmpi::cocoa::GraphicsContext context(frame, &drawingFactory);
         
-        context.PopAxisAlignedClip();
+            // JUCE standalone tends to draw over window non-client area on macOS. clip drawing.
+            const auto r = [frame bounds];
+            const GmpiDrawing::Rect bounds{
+                (float) r.origin.x,
+                (float) r.origin.y,
+                (float) (r.origin.x + r.size.width),
+                (float) (r.origin.y + r.size.height)
+            };
+            
+            GmpiDrawing::Rect dirtyClipped{*dirtyRect};
+            
+            dirtyClipped.Intersect(bounds);
+
+            context.PushAxisAlignedClip(&dirtyClipped);
+        
+        	containerView->OnRender(static_cast<GmpiDrawing_API::IMpDeviceContext*>(&context));
+       		context.PopAxisAlignedClip();
+       }
+#endif
+
+#if USE_BACKING_BUFFER
+        [NSGraphicsContext restoreGraphicsState];
+        
+        // blit back buffer onto screen.
+        [backBuffer drawInRect:[view bounds]]; // copes with DPI
+#endif
+
+        dirtyRects.rects.clear();
     }
     
     // Inherited via IMpUserInterfaceHost2
@@ -129,14 +201,32 @@ public:
     }
 
     // IMpGraphicsHost
-    virtual void MP_STDCALL invalidateRect(const GmpiDrawing_API::MP1_RECT* invalidRect) override
+    void MP_STDCALL invalidateRect(const GmpiDrawing_API::MP1_RECT* invalidRect) override
     {
         if(invalidRect)
         {
-            [view setNeedsDisplayInRect:NSMakeRect (invalidRect->left, invalidRect->top, invalidRect->right - invalidRect->left, invalidRect->bottom - invalidRect->top)];
+            dirtyRects.rects.push_back(
+                {
+                    floorf(invalidRect->left),
+                    floorf(invalidRect->top),
+                    ceilf(invalidRect->right),
+                    ceilf(invalidRect->bottom)
+                });
+
+//            [view setNeedsDisplayInRect:NSMakeRect (invalidRect->left, invalidRect->top, invalidRect->right - invalidRect->left, invalidRect->bottom - invalidRect->top)];
+            
+            [view setNeedsDisplayInRect: GmpiGuiHosting::gmpiRectToViewRect(view.bounds, dirtyRects.rects.back())];
         }
         else
         {
+            dirtyRects.rects.push_back(
+                {
+                    0.0f,
+                    0.0f,
+                    (float) (std::numeric_limits<int32_t>::max) (),
+                    (float) (std::numeric_limits<int32_t>::max) ()
+                });
+                
             [view setNeedsDisplay:YES];
         }
     }
@@ -222,10 +312,53 @@ public:
     {
         currentTextEdit = nullptr;
     }
+    void initBackingBitmap()
+    {
+        NSSize logicalsize = view.frame.size;
+        NSSize pysicalsize = [view convertRectToBacking:[view bounds]].size;
+
+        // kCGColorSpaceGenericRGBLinear - middle gray is darker, blend seems correct.
+        // kCGColorSpaceExtendedLinearSRGB, kCGColorSpaceLinearDisplayP3 - same
+        // kCGColorSpaceGenericRGB - actually sRGB
+        
+        // kCGColorSpaceExtendedLinearSRGB might be best since float color values should match SE's linear RGB
+        CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
+        
+        NSColorSpace *linearRGBColorSpace = [[NSColorSpace alloc] initWithCGColorSpace:colorSpace];
+
+        NSBitmapImageRep* imagerep1 = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+           pixelsWide:pysicalsize.width
+           pixelsHigh:pysicalsize.height
+           bitsPerSample:16 //8     // 1, 2, 4, 8, 12, or 16.
+           samplesPerPixel:3
+           hasAlpha:NO
+           isPlanar:NO
+           colorSpaceName: NSCalibratedRGBColorSpace // makes no difference if we retag it later anyhow.
+           bitmapFormat: NSBitmapFormatFloatingPointSamples //NSAlphaFirstBitmapFormat
+           bytesPerRow:0    // 0 = don't care  800 * 4
+           bitsPerPixel:64 ];
+        
+        backBuffer = [imagerep1 bitmapImageRepByRetaggingWithColorSpace:linearRGBColorSpace];
+        [backBuffer setSize: logicalsize]; // Communicates DPI
+
+        // Release the resources
+        CGColorSpaceRelease(colorSpace);
+    }
     
     GMPI_REFCOUNT_NO_DELETE;
 };
 
+GmpiDrawing::Point mouseToGmpi(NSView* view, NSEvent* theEvent)
+{
+    NSPoint localPoint = [view convertPoint: [theEvent locationInWindow] fromView: nil];
+    
+#if USE_BACKING_BUFFER
+    localPoint.y = view.bounds.origin.y + view.bounds.size.height - localPoint.y;
+#endif
+    
+    GmpiDrawing::Point p(localPoint.x, localPoint.y);
+    return p;
+}
 
 #define SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME SE_MAKE_CLASSNAME(Cocoa_NSViewWrapperForAU)
 
@@ -240,14 +373,8 @@ public:
     GmpiDrawing::Point mousePos;
 }
 
-#if defined(SE_TARGET_AU)
-- (id) initWithEditController: (class ausdk::AUBase*) editController audioUnit: (AudioUnit) au preferredSize: (NSSize) size;
-#else
 - (id) initWithController: (class IGuiHost2*) _editController preferredSize: (NSSize) size;
-#endif
-
 - (void)drawRect:(NSRect)dirtyRect;
-
 - (void)onTimer: (NSTimer*) t;
 
 @end
@@ -278,25 +405,25 @@ public:
 
 - (NSView *)uiViewForAudioUnit:(AudioUnit)inAU withSize:(NSSize)inPreferredSize
 {
-    class ausdk::AUBase* editController = 0;
-    UInt32 size = sizeof (void*);
+    class ausdk::AUBase* editController = {};
+    UInt32 size = sizeof (editController);
     if (AudioUnitGetProperty (inAU, 64000, kAudioUnitScope_Global, 0, &editController, &size) != noErr)
         return nil;
     
-    auto view = [[[SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME alloc] initWithEditController:editController audioUnit:inAU preferredSize:inPreferredSize] autorelease];
-    
-    return view;
+    return [[[SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME alloc] initWithController:dynamic_cast<IGuiHost2*>(editController) preferredSize:inPreferredSize] autorelease];
+
+//    return [[[SeTestView alloc] initWithController:dynamic_cast<IGuiHost2*>(editController) preferredSize:inPreferredSize] autorelease];
 }
 
 @end
 
 #endif
 
+
 //--------------------------------------------------------------------------------------------------------------
 @implementation SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME
 
 //--------------------------------------------------------------------------------------------------------------
-#if !defined(SE_TARGET_AU)
 - (id) initWithController: (class IGuiHost2*) _editController preferredSize: (NSSize) size_unused
 {
     Json::Value document_json;
@@ -323,40 +450,60 @@ public:
     return self;
 }
 
-#else
+// Opt-in to notification that mouse entered window.
+- (void)viewDidMoveToWindow {
+     [super viewDidMoveToWindow];
 
-- (id) initWithEditController: (class ausdk::AUBase*) _editController audioUnit: (AudioUnit) au preferredSize: (NSSize) size
-{
-    Json::Value document_json;
-    Json::Reader r;
-    r.parse(BundleInfo::instance()->getResource("gui.se.json"), document_json);
-    auto& gui_json = document_json["gui"];
-    int width = gui_json["width"].asInt();
-    int height = gui_json["height"].asInt();
-
-    self = [super initWithFrame: NSMakeRect (0, 0, width, height)];
-    if (self)
+    auto window = [self window];
+    if(window)
     {
-        self->trackingArea = [NSTrackingArea alloc];
-        [self->trackingArea initWithRect:NSZeroRect options:(NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingMouseMoved| NSTrackingActiveAlways) owner:self userInfo:nil];
-        [self addTrackingArea:self->trackingArea ];
-        
-        drawingFrame.view = self;
-        auto presenter = new JsonDocPresenter(/*&gui_json,*/ dynamic_cast<IGuiHost2*>(_editController));
-        drawingFrame.Init(presenter, dynamic_cast<IGuiHost2*>(_editController), CF_PANEL_VIEW);
-        presenter->RefreshView();
-        
-        __unused NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(onTimer:) userInfo:nil repeats:YES ];
+        drawingFrame.drawingFactory.setBestColorSpace(window);
     }
-    return self;
 }
-#endif
+
+- (void) removeFromSuperview
+{
+     [super removeFromSuperview];
+     
+   // Editor is closing
+    [self onClose];
+}
+
+-(void)onClose
+{
+/* don't seem nesc
+
+    if( trackingArea )
+    {
+        [self removeTrackingArea:trackingArea];
+        trackingArea = nil;
+    }
+ */
+    if( trackingArea )
+    {
+ //       _RPT0(0, "onClose. Removing trackingArea\n");
+        [trackingArea release];
+        trackingArea = nil;
+    }
+    
+    // timer will retain NSView, so need to manually stop timer right before we release this view
+    if( timer )
+    {
+        [self->timer invalidate];
+        self->timer = nil;
+    }
+    
+    drawingFrame.DeInit();
+    drawingFrame.view = nil;
+}
 
 - (void)drawRect:(NSRect)dirtyRect
 {
+#if !USE_BACKING_BUFFER
     GmpiDrawing::Rect r(dirtyRect.origin.x, dirtyRect.origin.y, dirtyRect.origin.x + dirtyRect.size.width, dirtyRect.origin.y + dirtyRect.size.height);
-
-    drawingFrame.OnRender(self, &r);
+#endif
+    
+    drawingFrame.OnRender(self /*, &r*/);
     
 #ifdef _DEBUG
     {
@@ -382,102 +529,6 @@ public:
     }
     
 #endif
-    
-#if 0 // trying to get additive premultiplied image to render
-    const int width = 256;
-    const int height = 32;
-    
-    int32_t pixels[width*height];
-    int32_t* p = pixels;
-    for(int x = 0 ; x < width ; ++x)
-    {
-        int alpha = x;// > width/2 ? 0 : 255;
-        for(int y = 0 ; y < height ; ++y)
-        {
-            *p++ = 0x0000ff00;// | (alpha << 24);
-        }
-    }
-    auto provider = CGDataProviderCreateWithData(nullptr, pixels, width*height*4, nullptr);
-    
-    auto cgImage = CGImageCreate(width, height, 8, 32, 4*width, CGColorSpaceCreateDeviceRGB()
-                  , kCGBitmapByteOrderDefault | kCGImageAlphaPremultipliedLast
-                  , provider, NULL, true
-                  , kCGRenderingIntentDefault
-                  );
-    CGBlendMode blendModes[] = {
-        /* Available in Mac OS X 10.4 & later. */
-        kCGBlendModeNormal,
-        kCGBlendModeMultiply,
-        kCGBlendModeScreen,
-        kCGBlendModeOverlay,
-        kCGBlendModeDarken,
-        kCGBlendModeLighten,
-        kCGBlendModeColorDodge,
-        kCGBlendModeColorBurn,
-        kCGBlendModeSoftLight,
-        kCGBlendModeHardLight,
-        kCGBlendModeDifference,
-        kCGBlendModeExclusion,
-        kCGBlendModeHue,
-        kCGBlendModeSaturation,
-        kCGBlendModeColor,
-        kCGBlendModeLuminosity,
-
-        /* Available in Mac OS X 10.5 & later. R, S, and D are, respectively,
-           premultiplied result, source, and destination colors with alpha; Ra,
-           Sa, and Da are the alpha components of these colors.
-
-           The Porter-Duff "source over" mode is called `kCGBlendModeNormal':
-             R = S + D*(1 - Sa)
-
-           Note that the Porter-Duff "XOR" mode is only titularly related to the
-           classical bitmap XOR operation (which is unsupported by
-           CoreGraphics). */
-
-        kCGBlendModeClear,                  /* R = 0 */
-        kCGBlendModeCopy,                   /* R = S */
-        kCGBlendModeSourceIn,               /* R = S*Da */
-        kCGBlendModeSourceOut,              /* R = S*(1 - Da) */
-        kCGBlendModeSourceAtop,             /* R = S*Da + D*(1 - Sa) */
-        kCGBlendModeDestinationOver,        /* R = S*(1 - Da) + D */
-        kCGBlendModeDestinationIn,          /* R = D*Sa */
-        kCGBlendModeDestinationOut,         /* R = D*(1 - Sa) */
-        kCGBlendModeDestinationAtop,        /* R = S*(1 - Da) + D*Sa */
-        kCGBlendModeXOR,                    /* R = S*(1 - Da) + D*(1 - Sa) */
-        kCGBlendModePlusDarker,             /* R = MAX(0, (1 - D) + (1 - S)) */
-        kCGBlendModePlusLighter             /* R = MIN(1, S + D) */
-    };
-    
-    if(cgImage)
-    {
-        auto rect = CGRectMake(40,60,width,height);
-        
-        auto currentContext = [[NSGraphicsContext currentContext] CGContext];
-        
-        [[NSColor whiteColor] set];
-        NSRectFill(NSMakeRect(40,60,15,height));
-
-        [[NSColor redColor] set];
-        NSRectFill(NSMakeRect(60,60,15,height));
- 
-        [[NSColor blueColor] set];
-        NSRectFill(NSMakeRect(80,60,15,height));
-
-        [[NSColor blackColor] set];
-        NSRectFill(NSMakeRect(100,60,15,height));
-        
-        static int blendModeIndex = 0;
-        CGBlendMode mode = blendModes[blendModeIndex];//kCGBlendModeNormal;
-        CGContextSetBlendMode(currentContext, mode);
-        CGContextDrawImage(currentContext, rect, cgImage);
-        
-        CFRelease(cgImage);
-        
-        blendModeIndex = (1+blendModeIndex) % (sizeof(blendModes)/sizeof(blendModes[0]));
-    }
-    
-    CFRelease(provider);
-#endif
  }
 
 //--------------------------------------------------------------------------------------------------------------
@@ -486,45 +537,14 @@ public:
     [super setFrame: newSize];
 }
 
-
 //--------------------------------------------------------------------------------------------------------------
+#if !USE_BACKING_BUFFER
 - (BOOL)isFlipped { return YES; }
+#endif
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event { return YES; }
 
-//--------------------------------------------------------------------------------------------------------------
-    /*- (void)viewDidMoveToSuperview
-{
-
-    if (plugView)
-    {
-        if ([self superview])
-        {
-            if (!isAttached)
-            {
-                isAttached = plugView->attached (self, kPlatformTypeNSView) == kResultTrue;
-            }
-        }
-        else
-        {
-            if (isAttached)
-            {
-                plugView->removed ();
-                isAttached = NO;
-            }
-        }
-    }
-
-}
-     */
-//--------------------------------------------------------------------------------------------------------------
-- (void) dealloc
-{
-    if( trackingArea )
-        [self removeTrackingArea:trackingArea];
-
-    [super dealloc];
-}
+//-------------------------------------------------------------------------------------------------------------
 
 void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
 {
@@ -534,7 +554,7 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
         flags |= gmpi_gui_api::GG_POINTER_KEY_SHIFT;
     }
     
-    if(([theEvent modifierFlags ] & NSEventModifierFlagCommand) != 0)
+    if(([theEvent modifierFlags ] & NSEventModifierFlagControl /* was NSEventModifierFlagCommand*/ ) != 0)
     {
         flags |= gmpi_gui_api::GG_POINTER_KEY_CONTROL;
     }
@@ -573,17 +593,13 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     
     [[self window] makeFirstResponder:self]; // take focus off any text-edit. Works but does not dimiss it.
  
-    NSPoint localPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-
-    GmpiDrawing::Point p(localPoint.x, localPoint.y);
-
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_NEW;
 	flags |= gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON;
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerDown(flags, p);
+    drawingFrame.getView()->onPointerDown(flags, mouseToGmpi(self, theEvent));
     
  // no help to edit box   [super mouseDown:theEvent];
 }
@@ -591,72 +607,62 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
 - (void)rightMouseDown:(NSEvent *)theEvent
 {
     drawingFrame.removeTextEdit();
-    
-    NSPoint localPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-    GmpiDrawing::Point p(localPoint.x, localPoint.y);
-    
+        
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_NEW;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_SECONDBUTTON;
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerDown(flags, p);
+    drawingFrame.getView()->onPointerDown(flags, mouseToGmpi(self, theEvent));
 }
 
 - (void)rightMouseUp:(NSEvent *)theEvent
 {
-    NSPoint localPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-    GmpiDrawing::Point p(localPoint.x, localPoint.y);
-    
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_NEW;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_SECONDBUTTON;
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerUp(flags, p);
+    drawingFrame.getView()->onPointerUp(flags, mouseToGmpi(self, theEvent));
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
-    NSPoint localPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-    GmpiDrawing::Point p(localPoint.x, localPoint.y);
-
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON;
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerUp(flags, p);
+    drawingFrame.getView()->onPointerUp(flags, mouseToGmpi(self, theEvent));
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
-    
-    NSPoint localPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-
-    mousePos.x = static_cast<float>(localPoint.x);
-    mousePos.y = static_cast<float>(localPoint.y);
-
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON;
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerMove(flags, mousePos);
+    drawingFrame.getView()->onPointerMove(flags, mouseToGmpi(self, theEvent));
 }
 
-// Opt-in to notification that mouse entered window.
-- (void)viewDidMoveToWindow {
+- (void)scrollWheel:(NSEvent *)theEvent {
+    // Get the scroll wheel delta
+    auto deltaX = theEvent.deltaX;
+    auto deltaY = theEvent.deltaY;
 
-//    [self addTrackingArea: [[NSTrackingArea alloc] initWithRect:NSZeroRect options:(NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingMouseMoved| NSTrackingActiveAlways) owner:self userInfo:nil]];
+    int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
+    ApplyKeyModifiers(flags, theEvent);
 
-    // trackingRect is an NSTrackingRectTag instance variable
-    // eyeBox is a region of the view (instance variable)
- //   trackingRect = [self addTrackingRect:eyeBox owner:self userData:NULL assumeInside:NO];
-    auto window = [self window];
-    if(window)
+    constexpr float wheelConversion = 120.0f; // on windows the wheel scrolls 120 per knotch
+    if(deltaY)
     {
-        drawingFrame.drawingFactory.setBestColorSpace(window);
+        drawingFrame.getView()->onMouseWheel(flags, wheelConversion * deltaY, mouseToGmpi(self, theEvent));
+    }
+    if(deltaX)
+    {
+        flags |= gmpi_gui_api::GG_POINTER_SCROLL_HORIZ;
+        drawingFrame.getView()->onMouseWheel(flags, wheelConversion * deltaX, mouseToGmpi(self, theEvent));
     }
 }
 
@@ -666,11 +672,6 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
-    NSPoint localPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-
-    mousePos.x = static_cast<float>(localPoint.x);
-    mousePos.y = static_cast<float>(localPoint.y);
-    
     [self ToolTipOnMouseActivity];
     
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
@@ -678,7 +679,7 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerMove(flags, mousePos);
+    drawingFrame.getView()->onPointerMove(flags, mouseToGmpi(self, theEvent));
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
@@ -713,13 +714,6 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     }
 }
 
--(void)onClose
-{
-    // timer will retain NSView, so need to manually stop timer right before we release this view
-    [self->timer invalidate];
-    self->timer = nil;
-}
-
 @end
 
 // without including objective-C headers, we need to create an NSView from C++.
@@ -728,7 +722,7 @@ void* createNativeView(class IGuiHost2* controller, int width, int height)
 {
     NSSize inPreferredSize{(CGFloat)width, (CGFloat)height};
     
-    return (void*) [[[SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME alloc] initWithController:controller preferredSize:inPreferredSize] autorelease];
+    return (void*) [[SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME alloc] initWithController:controller preferredSize:inPreferredSize];
 }
 
 // VST3 version
@@ -736,7 +730,7 @@ void* createNativeView(void* parent, class IGuiHost2* controller, int width, int
 {
     NSSize inPreferredSize{(CGFloat)width, (CGFloat)height};
     NSView* native =
-    [[[SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME alloc] initWithController:controller preferredSize:inPreferredSize] autorelease];
+    [[SYNTHEDIT_PLUGIN_COCOA_NSVIEW_WRAPPER_CLASSNAME alloc] initWithController:controller preferredSize:inPreferredSize];
     
     NSView* parentView = (NSView*) parent;
     [parentView addSubview:native];

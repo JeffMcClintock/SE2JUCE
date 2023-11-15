@@ -109,7 +109,7 @@ std::wstring BundleInfo::getSemFolder()
     if (pluginIsBundle)
     {
         const auto path = gmpi_dynamic_linking::MP_GetDllFilename();
-        return path.substr(0, path.find(L"Contents")) + L"Contents/Plugins/";
+        return path.substr(0, path.rfind(L"Contents")) + L"Contents/Plugins/";
     }
 
     if(semFolder.empty())
@@ -131,6 +131,7 @@ std::wstring BundleInfo::getSemFolder()
             {
                 result = filePath2;
             }
+            CFRelease(url2);
         }
         ReleasePluginBundleRef(br);
     }
@@ -154,7 +155,6 @@ std::wstring BundleInfo::getResourceFolder()
         return path.substr(0, path.find(L"Contents")) + L"Contents/Resources/";
     }
 
-    assert(false); // check this not tested.
     // On Windows, SEM folder and resources folder are the same.
     return getImbeddedFileFolder();
 #else
@@ -172,6 +172,7 @@ std::wstring BundleInfo::getResourceFolder()
             {
                 result = filePath2;
             }
+            CFRelease(url2);
         }
         ReleasePluginBundleRef(br);
     }
@@ -429,7 +430,7 @@ std::string BundleInfo::getResource( const char* resourceId )
 
 int32_t BundleInfo::getPluginId() // 4-char VST2 code to identify presets.
 {
-    assert(-1 != info_.pluginId);
+    assert(-1 != info_.pluginId || isEditor);
 	return info_.pluginId;
 }
 

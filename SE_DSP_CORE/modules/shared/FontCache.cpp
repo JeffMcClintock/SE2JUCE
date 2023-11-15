@@ -125,6 +125,7 @@ GmpiDrawing::TextFormat_readonly FontCache::GetTextFormat(gmpi::IMpUserInterface
 		return textformat;
 	}
 
+	// error: creates std::unique_ptr to fontmetadata
 	return CreateTextFormatAndCache(host, guiHost, fontmetadata, returnMetadata);
 }
 
@@ -184,11 +185,11 @@ GmpiDrawing::TextFormat FontCache::AddCustomTextFormat(gmpi::IMpUserInterfaceHos
 {
 	assert(!TextFormatExists(host, guiHost, style)); // already registered?
 
-	FontMetadata customMetadata = *fontmetadata;
-	customMetadata.category_ = style; // adopt custom style name, else will overwrite base style cache.
+	auto customMetadata = std::make_unique<FontMetadata>(*fontmetadata);
+	customMetadata->category_ = style; // adopt custom style name, else will overwrite base style cache.
 
 	FontMetadata* returnMetadata = {};
-	auto tfReadOnly = CreateTextFormatAndCache(host, guiHost, &customMetadata, &returnMetadata);
+	auto tfReadOnly = CreateTextFormatAndCache(host, guiHost, customMetadata.get(), &returnMetadata);
 
 	// naughty, convert read-only text format to writable. (Allows caller to add final customization).
 	TextFormat res;
@@ -211,12 +212,13 @@ GmpiDrawing::TextFormat_readonly FontCache::GetCustomTextFormat(
 	}
 
 	// Get the specified font metadata and make a copy.
-	auto fontmetadata = *(getSkin(host)->getFont(basedOnStyle));
-	fontmetadata.category_ = customStyleName;
+	auto fontmetadata = std::make_unique<FontMetadata>(*(getSkin(host)->getFont(basedOnStyle)));
 
-	customizeFontCallback(&fontmetadata);
+	fontmetadata->category_ = customStyleName;
 
-	return CreateTextFormatAndCache(host, guiHost, &fontmetadata, returnMetadata);
+	customizeFontCallback(fontmetadata.get());
+
+	return CreateTextFormatAndCache(host, guiHost, fontmetadata.get(), returnMetadata);
 }
 
 // Need to keep track of clients so imagecache can be cleared BEFORE program exit (else WPF crashes).

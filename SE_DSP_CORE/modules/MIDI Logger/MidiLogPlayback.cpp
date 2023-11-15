@@ -68,8 +68,7 @@ void MidiLogPlayback::onSetPins()
 	// Check which pins are updated.
 	if( pinFileName.isUpdated() )
 	{
-		wchar_t fullFilename[500];
-		getHost()->resolveFilename( pinFileName.getValue().c_str(), sizeof(fullFilename)/sizeof(fullFilename[0]), fullFilename );
+		const auto fullFilename = host.resolveFilename_old(pinFileName);
 
 		if( inputStream != 0 )
 		{
@@ -77,7 +76,7 @@ void MidiLogPlayback::onSetPins()
 		}
 		//inputStream = _wfopen( fullFilename, L"rt");
 #ifdef _WIN32
-		inputStream = _wfopen( fullFilename, L"rt");
+		inputStream = _wfopen( fullFilename.c_str(), L"rt");
 #else
         inputStream = fopen( JmUnicodeConversions::WStringToUtf8(fullFilename).c_str(), "rt");
 #endif
