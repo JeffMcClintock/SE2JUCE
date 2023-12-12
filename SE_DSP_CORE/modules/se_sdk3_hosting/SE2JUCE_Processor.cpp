@@ -58,12 +58,18 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
         }
         else
         {
+            // handle inverted parameters
+            const auto actualMin = static_cast<float>(p->normalisedToReal(0.0));
+            const auto actualMax = static_cast<float>(p->normalisedToReal(1.0));
+            const auto minimumReal = (std::min)(actualMin, actualMax);
+            const auto maximumReal = (std::max)(actualMin, actualMax);
+
             juceParameter =
                 new juce::AudioParameterFloat(
                     {std::to_string(p->getNativeIndex()), 1},       // parameterID/versionhint
                     WStringToUtf8(p->name_).c_str(),                // parameter name
-                    static_cast<float>(p->normalisedToReal(0.0)),   // minimum value
-                    static_cast<float>(p->normalisedToReal(1.0)),   // maximum value
+                    minimumReal,   // minimum value
+                    maximumReal,   // maximum value
                     static_cast<float>(p->getValueReal())           // default value
                 );
         }
