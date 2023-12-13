@@ -41,8 +41,8 @@ int32_t PatchPointsGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingConte
 		for (int i = 0; i < numSides; ++i)
 		{
 			double a = startA + (2.0 * M_PI * i) / (double)numSides;
-			float x = radius * sin(a);
-			float y = radius * cos(a);
+			float x = radius * sinf(a);
+			float y = radius * cosf(a);
 			Point p = center + Size(x, y);
 
 			if (i == 0)

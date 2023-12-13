@@ -391,14 +391,18 @@ void MpController::Initialize()
 		}
 	}
 
-	fileWatcher.Start(
-		toPlatformString(BundleInfo::instance()->getPresetFolder()),
-		[this]()
-			{
-				// note: called from background thread.
-				presetsFolderChanged = true;
-			}
-	);
+	// JUCE does not have a preset folder at present. Prevent errors inside vst3 helper
+	if (auto presetsFolder = toPlatformString(BundleInfo::instance()->getPresetFolder()); !presetsFolder.empty())
+	{
+		fileWatcher.Start(
+			presetsFolder,
+			[this]()
+		{
+			// note: called from background thread.
+			presetsFolderChanged = true;
+		}
+		);
+	}
     
 	undoManager.initial(this);
 

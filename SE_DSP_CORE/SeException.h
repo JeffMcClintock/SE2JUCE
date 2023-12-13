@@ -15,8 +15,15 @@ class SeException
 {
 public:
 
-	SeException( int p_problem_code, void* p_hint1 = NULL, void* p_hint2 = NULL, std::wstring errorText = L""/*, std::vector<int>* moduleHandles = 0*/ );
-	virtual ~SeException();
+	SeException(int p_problem_code, void* p_hint1 = NULL, void* p_hint2 = NULL, std::wstring errorText = L"") :
+		problem_code(p_problem_code)
+		, hint1(p_hint1)
+		, hint2(p_hint2)
+		, errorText_(errorText)
+	{
+	}
+
+	virtual ~SeException() {}
 
 	int problem_code;
 	void* hint1;

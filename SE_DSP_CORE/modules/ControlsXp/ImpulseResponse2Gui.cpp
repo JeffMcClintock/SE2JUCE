@@ -6,6 +6,8 @@
 using namespace gmpi;
 using namespace GmpiDrawing;
 
+SE_DECLARE_INIT_STATIC_FILE(ImpulseResponseGui);
+
 class ImpulseResponseGui : public gmpi_gui::MpGuiGfxBase, public FontCacheClient
 {
 	void clearPrecalculatedDimensions()

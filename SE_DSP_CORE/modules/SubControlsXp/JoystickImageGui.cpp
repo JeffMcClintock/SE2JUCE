@@ -11,6 +11,7 @@ using namespace GmpiDrawing;
 using namespace GmpiDrawing_API;
 
 GMPI_REGISTER_GUI(MP_SUB_TYPE_GUI2, JoystickImageGui, L"ImageJoystick");
+SE_DECLARE_INIT_STATIC_FILE(ImageJoystick);
 
 JoystickImageGui::JoystickImageGui()
 {

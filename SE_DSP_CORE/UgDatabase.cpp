@@ -2421,6 +2421,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(UserSettingText); // not generated automatically at present
 	INIT_STATIC_FILE(UserSettingText_Gui);
 	INIT_STATIC_FILE(UserSettingText_Controller);
+	INIT_STATIC_FILE(ImpulseResponse);
 
 //	INIT_STATIC_FILE(Dynamics);
 //	INIT_STATIC_FILE(VoltMeter);
@@ -2447,6 +2448,14 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(Increment3_Gui)
 	INIT_STATIC_FILE(ListEntry_Gui);
 	INIT_STATIC_FILE(PlainImage_Gui)
+	INIT_STATIC_FILE(Scope3XP_Gui);
+	INIT_STATIC_FILE(FreqAnalyser2_Gui);
+	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui);
+	INIT_STATIC_FILE(VoltMeter_Gui);
+	INIT_STATIC_FILE(FloatToTextGUI_Gui);
+	INIT_STATIC_FILE(OversamplingControl_Gui);
+	INIT_STATIC_FILE(PatchMemoryBoolGui);
+	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui);
 #endif
 
 #else

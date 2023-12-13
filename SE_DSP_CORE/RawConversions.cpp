@@ -306,7 +306,7 @@ std::string RawToUtf8B(int datatype, const void* data, size_t size)
 
 	case DT_BLOB:
 	case DT_BLOB2:
-		{
+	{
 			std::string s((char*)data, size);
 			result = Base64::encode(s);
 		}

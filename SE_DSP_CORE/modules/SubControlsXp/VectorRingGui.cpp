@@ -4,6 +4,8 @@
 #include <math.h>
 #include "../shared/xplatform_modifier_keys.h"
 
+SE_DECLARE_INIT_STATIC_FILE(VectorRing);
+
 using namespace gmpi;
 using namespace gmpi_gui;
 using namespace GmpiDrawing;

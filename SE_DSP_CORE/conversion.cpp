@@ -1081,6 +1081,12 @@ bool CreateFolderRecursive(std::wstring folderPath)
 		}
 	}
 
+	// If root folder is a network location, ignore that
+	if (!paths.empty() && paths.back().find(L"\\\\") == 0)
+	{
+		paths.pop_back();
+	}
+
 	for (auto it = paths.rbegin(); it != paths.rend(); ++it)
 	{
 #ifdef _WIN32

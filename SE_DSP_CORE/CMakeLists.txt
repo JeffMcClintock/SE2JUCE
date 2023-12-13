@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+# To build SE 1.5 Modules, point CMake at 'SE15' folder, not here.
+
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
 
@@ -412,16 +414,16 @@ modules/shared/real_fft.cpp
 modules/shared/expression_evaluate.h
 modules/shared/expression_evaluate.cpp
 
-
 modules/EnvelopeAdsr/envelope.cpp
 modules/EnvelopeAdsr/Adsr.cpp
 modules/ControlsXp/ListEntry.cpp
 modules/ControlsXp/Scope3.cpp
-modules/Converters/FloatScaler2Gui.cpp
+modules/Converters/FloatScaler2Gui
 modules/Converters/FloatToText.cpp
 modules/Converters/VoltsToMidiCc.cpp
 
 modules/PatchMemory/PatchInfoGui.h
+modules/PatchMemory/PatchMemoryBoolGui.h
 modules/PatchMemory/PatchMemoryBoolOutGui.h
 modules/PatchMemory/PatchMemoryFloatGui.h
 modules/PatchMemory/PatchMemoryFloatOutGui.h
@@ -436,6 +438,7 @@ modules/PatchMemory/PatchMemoryList.cpp
 modules/PatchMemory/PatchMemoryText.cpp
 modules/PatchMemory/PatchBrowserGui.cpp
 modules/PatchMemory/PatchInfoGui.cpp
+modules/PatchMemory/PatchMemoryBoolGui.cpp
 modules/PatchMemory/PatchMemoryBoolOutGui.cpp
 modules/PatchMemory/PatchMemoryfloatGui.cpp
 modules/PatchMemory/PatchMemoryFloatOutGui.cpp

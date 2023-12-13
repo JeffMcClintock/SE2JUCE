@@ -15,7 +15,7 @@
 
 #ifdef _DEBUG
 // See also DEBUG_VOICEWATCHER & VM_DEBUG_OUTPUT
-//#define DEBUG_VOICE_ALLOCATION
+#define DEBUG_VOICE_ALLOCATION
 #endif
 
 class SeAudioMaster;
@@ -122,10 +122,9 @@ class SENoteStack
 		int midiKeyNumber;
 		int usePhysicalVoice;
 		timestamp_t timestamp;
+		bool canSteal = true; // the first time we attempt to allocate, we can steal. On later attempts don't least we OVER-steal.
 	};
 
-	//int first;
-	//int last;
 	static const int capacity = 128; // power-of-2 please.
 
 	std::vector<NoteStackEntry> notes;
@@ -143,20 +142,11 @@ public:
 		return notes.empty();// last == first;
 	}
 
-	//inline size_t size()
-	//{
-	//	return notes.size(); // (first - last + capacity) & (capacity - 1);
-	//}
-
 	void push(timestamp_t timestamp, /*int midiChannel,*/ int key/*, int velocity*/, int physicalVoice)
 	{
 		if (!inStack[key])
 		{
 			assert(notes.size() < capacity);
-
-			//notes[last].midiKeyNumber = key;
-			//notes[last].usePhysicalVoice = physicalVoice;
-			//notes[last].timestamp = timestamp;
 
 			NoteStackEntry n{ key , physicalVoice , timestamp };
 			notes.push_back(n);
@@ -175,7 +165,6 @@ public:
 		assert(!empty());
 		inStack[top().midiKeyNumber] = false;
 		notes.erase(notes.begin());
-//		first = (first + 1) & (capacity - 1);
 	}
 
 	void erase(int key)
@@ -235,8 +224,9 @@ public:
 	// NEW...
 	void VoiceAllocationNoteOn(timestamp_t timestamp, /* int midiChannel ,*/ int MidiKeyNumber/*, int velocity*/, int usePhysicalVoice = -1);
 	void PlayWaitingNotes(timestamp_t timestamp);
+	bool AttemptNoteOn(timestamp_t timestamp, int MidiKeyNumber, int usePhysicalVoice, bool steal);
 	void VoiceAllocationNoteOff(timestamp_t timestamp, /*int channel,*/ int voiceId);// , int voiceAllocationMode );
-	Voice* allocateVoice( timestamp_t timestamp/*, int channel*/, int voiceId, int voiceAllocationMode );
+	Voice* allocateVoice( timestamp_t timestamp/*, int channel*/, int voiceId, int voiceAllocationMode, bool steal);
 
 	int voiceReserveCount() const;
 	void setVoiceCount(int c);

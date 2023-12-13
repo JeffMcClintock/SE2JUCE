@@ -2,6 +2,7 @@
 
 REGISTER_GUI_PLUGIN( Spring2Gui, L"SE Spring2" );
 REGISTER_GUI_PLUGIN( Spring2Gui, L"SE Spring" );
+SE_DECLARE_INIT_STATIC_FILE(Spring);
 
 Spring2Gui::Spring2Gui(IMpUnknown* host) : MpGuiBase(host)
 ,prevMouseDown( false )

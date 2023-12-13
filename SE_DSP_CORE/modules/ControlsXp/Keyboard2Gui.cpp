@@ -42,17 +42,16 @@ int32_t KeyboardBase::onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT po
 		return gmpi::MP_OK; // Indicate successful hit, so right-click menu can show.
 	}
 
-	setCapture();
+	const auto key = DrawKeyBoard::PointToKeyNum(point, getRect(), baseKey_);
 
-	int key = DrawKeyBoard::PointToKeyNum(point, getRect(), baseKey_);
-
-	if ((flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) == 1) // <ctrl> key toggles.
+	if ((flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) != 0) // <ctrl> key toggles.
 	{
 		DoPlayNote(key, !keyStates[key]);
 	}
     else
 	{
 		DoPlayNote(key, true);
+		setCapture();
 	}
 //	_RPT1(_CRT_WARN, "%d\n", key);
 
@@ -64,18 +63,22 @@ int32_t KeyboardBase::onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT po
 	if (!getCapture())
 		return gmpi::MP_OK;
 
-	int newMidiNote = DrawKeyBoard::PointToKeyNum(point, getRect(), baseKey_);
+	const auto key = DrawKeyBoard::PointToKeyNum(point, getRect(), baseKey_);
 
-	if (midiNote_ != newMidiNote)
+	if (!keyStates[key])
 	{
-		int oldMidiNote = midiNote_;
+		DoPlayNote(key, true);
 
-		DoPlayNote(newMidiNote, true);
-
-		// turn off current note
-		if (/*!toggleMode_ && */oldMidiNote > -1)
+		if ((flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT) == 0)
 		{
-			DoPlayNote(oldMidiNote, false);
+			// turn off current note if any
+			for (int k = 0; k < 128; ++k)
+			{
+				if (keyStates[k] && k != key)
+				{
+					DoPlayNote(k, false);
+				}
+			}
 		}
 	}
 
@@ -91,15 +94,23 @@ int32_t KeyboardBase::onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT poin
 
 	if (!getCapture())
 		return gmpi::MP_OK;
-    
-//    if (GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_SHIFT) >= 0 && midiNote_ >= 0) // <ctrl> key toggles. <shft> adds to selection.
-	if (   (flags & gmpi_gui_api::GG_POINTER_KEY_CONTROL) == 0
-		&& (flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT) == 0
-		&& midiNote_ >= 0
+
+	const auto key = DrawKeyBoard::PointToKeyNum(point, getRect(), baseKey_);
+
+	// <ctrl> key toggles. <shft> adds to selection.
+	if ((flags & gmpi_gui_api::GG_POINTER_KEY_SHIFT) == 0
+		&& key >= 0
 		) // <ctrl> key toggles.
 	{
-		DoPlayNote(midiNote_, false);
-		midiNote_ = -1;
+//		DoPlayNote(key, false);
+		// release any held notes
+		for (int k = 0; k < 128; ++k)
+		{
+			if (keyStates[k])
+			{
+				DoPlayNote(k, false);
+			}
+		}
 	}
 
 	releaseCapture();

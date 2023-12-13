@@ -54,7 +54,7 @@ UniqueSnowflake* UniqueSnowflakeOwner::HandleToObjectWithNull( int p_handle )
 		return (*it).second;
 	}
 
-	return 0;
+	return nullptr;
 }
 
 bool UniqueSnowflakeOwner::HandleInUse( UniqueSnowflake* snowflake )

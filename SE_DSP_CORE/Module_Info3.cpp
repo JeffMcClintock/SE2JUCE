@@ -431,6 +431,12 @@ int32_t r;
 	r = dll_entry_point(factoryBase.asIMpUnknownPtr());
 #endif
 	auto factoryBase = getFactory2();
+    if(!factoryBase)
+    {
+        // can hapen with Intel-only SEMs on M1
+        printf("Couldn't get a pointer to plugin's factory function\n");
+        return nullptr;
+    }
 
 	int32_t r{};
 	// Obtain factory V2 if avail.

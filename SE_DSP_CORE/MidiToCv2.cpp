@@ -191,7 +191,7 @@ void MidiToCv2::onSetPins()
 	bool hardReset = false;
 	if( pinVoiceActive.isUpdated() )
 	{
-		_RPTN(_CRT_WARN, "V%2d MidiToCv2::onSetPins pinVoiceActive=%f\n", debugVoice, pinVoiceActive.getValue() );
+//		_RPTN(_CRT_WARN, "V%2d MidiToCv2::onSetPins pinVoiceActive=%f\n", debugVoice, pinVoiceActive.getValue() );
 		if( pinVoiceActive > 0.0f )
 		{
 			if (pinVoiceActive < 1.0f) // voiceActive of 0.5 indicates overlap voice, don't sustain.

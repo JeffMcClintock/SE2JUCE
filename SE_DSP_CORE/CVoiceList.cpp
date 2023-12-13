@@ -16,6 +16,7 @@
 #include "midi_defs.h"
 #include "dsp_patch_manager.h"
 #include "ug_patch_param_setter.h"
+#include "SeException.h"
 
 #ifdef DEBUG_VOICE_ALLOCATION
 #include <iomanip>
@@ -214,11 +215,7 @@ ug_base* Voice::AddUG( ug_base* ug )
 	{
 		if( SetNoteSource( ug ) )
 		{
-			if (m_voice_number == 0)
-			{
-				ug->ParentContainer()->message(L"You have several 'MIDI to CV', 'Soundfont Player', or 'Drum Trigger' modules together, or nested. Put each in it's own container.");
-			}
-			ug->AudioMaster2()->end_run();
+			throw(SeException(SE_MULTIPLE_NOTESOURCES));
 		}
 	}
 	if (ug->GetFlag(UGF_PATCH_AUTO))
@@ -279,86 +276,114 @@ void VoiceList::AddUG( ug_base* ug )
 
 void VoiceList::VoiceAllocationNoteOn(timestamp_t timestamp, /*int midiChannel,*/ int MidiKeyNumber/*, int velocity*/, int usePhysicalVoice)
 {
-	noteStack.push(timestamp, MidiKeyNumber, usePhysicalVoice);
-
-	VoiceList::PlayWaitingNotes(timestamp);
-}
-
-void VoiceList::PlayWaitingNotes(timestamp_t timestamp)
-{
-	while(!noteStack.empty())
-	{
-	auto MidiKeyNumber = noteStack.top().midiKeyNumber;
-	auto usePhysicalVoice = noteStack.top().usePhysicalVoice;
-
 	if (!note_status[MidiKeyNumber])
 	{
 		note_status[MidiKeyNumber] = true;
 		++keysHeldCount;
 	}
 
-	int lVoiceAllocationMode;
-	if (overridingVoiceAllocationMode_ != -1)
-	{
-		lVoiceAllocationMode = overridingVoiceAllocationMode_;
-	}
-	else
-	{
-		lVoiceAllocationMode = voiceAllocationMode_; //  thisContainer->get_patch_manager()->getVoiceAllocationMode();
-	}
-
-	// Assign MIDI Chan/Key to Virtual Voice ID.
-	const int voiceId = MidiKeyNumber;
-	assert(voiceId >= 0 && voiceId < maxVoiceId);
-	bool monoMode = voice_allocation::isMonoMode(lVoiceAllocationMode); //(lVoiceAllocationMode & 0xff) >= VA_MONO;
-	bool sendTrigger = !monoMode || voice_allocation::isMonoRetrigger(lVoiceAllocationMode) || monoNotePlaying_ == -1;
-	monoNotePlaying_ = voiceId;
-	int notePriority = (lVoiceAllocationMode >> 8) & 0x03;
-
 	note_memory_idx++;
 	note_memory_idx %= MCV_NOTE_MEM_SIZE;
-	note_memory[note_memory_idx] = static_cast<char>(voiceId);
+	note_memory[note_memory_idx] = static_cast<char>(MidiKeyNumber);
 
-	if (monoMode && notePriority != NP_NONE)
+	// don't bother allocating overriden mono notes
 	{
-		switch (notePriority)
+		const int lVoiceAllocationMode = overridingVoiceAllocationMode_ != -1 ? overridingVoiceAllocationMode_ : voiceAllocationMode_;
+		const int notePriority = (lVoiceAllocationMode >> 8) & 0x03;
+		const bool monoMode = voice_allocation::isMonoMode(lVoiceAllocationMode);
+
+		if (monoMode && notePriority != NP_NONE)
 		{
-		case NP_LOWEST:
-			for (int i = 0; i < voiceId; ++i)
+			switch (notePriority)
 			{
-				// A lower note already held, no voice allocation needed.
-				if (note_status[i])
+			case NP_LOWEST:
+				for (int i = 0; i < MidiKeyNumber; ++i)
 				{
-					noteStack.pop(); // we handled this note, even if we didn't play it yet.
-					return;
+					// A lower note already held, no voice allocation needed.
+					if (note_status[i])
+					{						
+						return;
+					}
 				}
-			}
 
-			break;
+				break;
 
-		case NP_HIGHEST:
-			for (int i = 127; i > voiceId; --i)
-			{
-				// A higher note already held, no voice allocation needed.
-				if (note_status[i])
+			case NP_HIGHEST:
+				for (int i = 127; i > MidiKeyNumber; --i)
 				{
-					noteStack.pop(); // we handled this note, even if we didn't play it yet.
-					return;
+					// A higher note already held, no voice allocation needed.
+					if (note_status[i])
+					{
+						return;
+					}
 				}
-			}
+				break;
+			};
+		}
+	}
 
-			break;
+	noteStack.push(timestamp, MidiKeyNumber, usePhysicalVoice);
+
+	PlayWaitingNotes(timestamp);
+}
+
+void VoiceList::PlayWaitingNotes(timestamp_t timestamp)
+{
+	if(noteStack.empty())
+		return;
+
+#if defined( DEBUG_VOICE_ALLOCATION )
+	_RPT0(0, "PlayWaitingNotes()\n");
+#endif
+
+	// we probably already stole a voice and we're waiting for it to mute. (this is the usual case).
+	// so don't keep stealing more unless we have to.
+	int voicesPotentiallyAvailable = 0;
+	for (int i = 1; i < size(); ++i)
+	{
+		auto v = at(i);
+		if(v->voiceState_ != VS_ACTIVE)
+		{
+			++voicesPotentiallyAvailable;
 		};
 	}
 
-	Voice* voice;
+	while(!noteStack.empty())
+	{
+		// Usually the first failure to allocate will steal a voice, and we can grab it here.
+		// However it's possible for an unrelated note to sneak in and grab the stolen voice, leavin me with nothing (so we gotta steal *another* voice).
+		const bool no_voices_avail_do_some_stealing = voicesPotentiallyAvailable <= 0;
+
+		if (AttemptNoteOn(timestamp, noteStack.top().midiKeyNumber, noteStack.top().usePhysicalVoice, noteStack.top().canSteal || no_voices_avail_do_some_stealing))
+		{
+			noteStack.pop();
+			--voicesPotentiallyAvailable;
+		}
+		else
+		{
+			noteStack.top().canSteal = false;
+			break;
+		}
+	}
+}
+
+// try to allocate a voice and play a note.
+bool VoiceList::AttemptNoteOn(timestamp_t timestamp, int MidiKeyNumber, int usePhysicalVoice, bool steal)
+{
+	const int lVoiceAllocationMode = overridingVoiceAllocationMode_ != -1 ? overridingVoiceAllocationMode_ : voiceAllocationMode_;
+	const bool monoMode = voice_allocation::isMonoMode(lVoiceAllocationMode);
+
+	// Assign MIDI Chan/Key to Virtual Voice ID.
+	assert(MidiKeyNumber >= 0 && MidiKeyNumber < maxVoiceId);
+	const bool sendTrigger = !monoMode || voice_allocation::isMonoRetrigger(lVoiceAllocationMode) || monoNotePlaying_ == -1;
+
+	Voice* voice{};
 
 	if (usePhysicalVoice >= 0) // drum mode.
 	{
 		// When using drum-trigger, voice may not exist...
 		// when output connected only to Volt-Meter AND annother output connected to same voltmeter.
 		// drum trigger handles case when only one output conencted to meter OK.
-		//		if( usePhysicalVoice <= GetUpperBound() )
 		if (usePhysicalVoice < (int)size())
 		{
 			voice = at(usePhysicalVoice);
@@ -370,16 +395,19 @@ void VoiceList::PlayWaitingNotes(timestamp_t timestamp)
 	}
 	else
 	{
-		voice = allocateVoice(timestamp, /*channel,*/ voiceId, lVoiceAllocationMode);
+		voice = allocateVoice(timestamp, /*channel,*/ MidiKeyNumber, lVoiceAllocationMode, steal);
 	}
 
-		if (!voice)
-			break;
+	if (!voice)
+		return false;
 
-		noteStack.pop();
-		const bool autoGlide = keysHeldCount > 1; // because we have 2 or more keys held
-		DoNoteOn(timestamp, voice, voiceId, sendTrigger, autoGlide);
-	}
+	monoNotePlaying_ = MidiKeyNumber;
+
+	const bool autoGlide = keysHeldCount > 1; // because we have 2 or more keys held
+
+	DoNoteOn(timestamp, voice, MidiKeyNumber, sendTrigger, autoGlide);
+
+	return true;
 }
 
 void Voice::DoneCheck(timestamp_t timeStamp)
@@ -410,7 +438,6 @@ void Voice::DoneCheck(timestamp_t timeStamp)
 // MIDI-CV modules control the voices only in their own container. There may be several MIDI-CVs sharing a Patch Automator.
 // This is different than KeyBoard2 which controls all voices in the Patch Automator's container.
 // Since we can't use the Patch Automator, got to keep a list of param setters 'below' here.
-
 /*
 VoiceActive: 1.0 = note playing
              0.5 playing but only an secondary overlap (ignore hold-pedal)
@@ -526,9 +553,9 @@ void VoiceList::xNoteOff( timestamp_t p_clock, /*int midiChannel,*/ int MidiKeyN
 		}
 	}
 
-		//	_RPT0(_CRT_WARN, "NoteOff\n" );
-		NoteOff( p_clock, /*chan,*/ static_cast<short>(voiceId) );
-	}
+	//	_RPT0(_CRT_WARN, "NoteOff\n" );
+	NoteOff( p_clock, /*chan,*/ static_cast<short>(voiceId) );
+}
 
 void VoiceList::xAllNotesOff( timestamp_t /*p_clock*/ )
 {
@@ -1379,38 +1406,38 @@ bool isAvailable(Voice* v)
 	return v->IsSuspended() || v->IsRefreshing();
 }
 
-Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voiceId, int voiceAllocationMode )
+Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voiceId, int voiceAllocationMode, bool steal)
 {
 	/*
 	When benchwarmer (reserve voices) exausted - when Voice Stealing occurs the new note is "Held back"
 	to allow a very short Fade-Out of the old Voice (<10ms) before the new note steals the voice
 	*/
 #if defined( DEBUG_VOICE_ALLOCATION )
-		std::ostringstream debugAllocateReason;
-		std::ostringstream debugAllocateAdditional;
-		debugAllocateReason << "\nALLOCATE Note:" << voiceId << " :";
+	std::ostringstream debugAllocateReason;
+	std::ostringstream debugAllocateAdditional;
+	debugAllocateReason << "\nALLOCATE Note:" << voiceId << " :";
 
-		std::string allocatedCaret_before;
-		allocatedCaret_before.assign(size(), ' ');
-		for (int i = 1; i < size(); ++i)
+	std::string allocatedCaret_before;
+	allocatedCaret_before.assign(size(), ' ');
+	for (int i = 1; i < size(); ++i)
+	{
+		auto v = at(i);
+		switch (v->voiceState_)
 		{
-			auto v = at(i);
-			switch (v->voiceState_)
-			{
-			case VS_SUSPENDED:
-				allocatedCaret_before[v->m_voice_number] = '.';
-				break;
-			case VS_ACTIVE:
-				if(v->NoteNum == -1)
+		case VS_SUSPENDED:
+			allocatedCaret_before[v->m_voice_number] = '.';
+			break;
+		case VS_ACTIVE:
+			if(v->NoteNum == -1)
 				allocatedCaret_before[v->m_voice_number] = 'r'; // Refresh
-				else
+			else
 				allocatedCaret_before[v->m_voice_number] = 'a';
-				break;
-			case VS_MUTING:
-				allocatedCaret_before[v->m_voice_number] = 'm';
-				break;
-			};
-		}
+			break;
+		case VS_MUTING:
+			allocatedCaret_before[v->m_voice_number] = 'm';
+			break;
+		};
+	}
 #endif
 
 	Voice* allocatedVoice{};
@@ -1421,23 +1448,23 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 		constexpr int MONO_VOICE_NUMBER = 1;
 		allocatedVoice = at(MONO_VOICE_NUMBER);
 		
-#if defined( DEBUG_VOICE_ALLOCATION )
+		#if defined( DEBUG_VOICE_ALLOCATION )
 			debugAllocateReason << "V1 (mono mode)";
-#endif
+		#endif
 	}
 	else // allocate best voice
 	{
-
 		// cycle through voices (allows sample-playing voices to unload samples used by previous patch).
 		if (++nextCyclicVoice_ == size())
 			nextCyclicVoice_ = 1; // voice 0 reserved for mono modules.
-		
-		auto ncv = at(nextCyclicVoice_);
 
+		auto ncv = at(nextCyclicVoice_);
+		
 		// RULE 1: Allocate next cyclic voice (if available)
 		if ( isAvailable(ncv) )
 		{
 			allocatedVoice = ncv;
+
 			#if defined( DEBUG_VOICE_ALLOCATION )
 				debugAllocateReason << " [cyclic " << nextCyclicVoice_ << "]";
 			#endif
@@ -1480,9 +1507,9 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 				{
 					// RULE 3: In poly-soft mode, allocate any playing voice with same note number
 					allocatedVoice = v;
-					#if defined( DEBUG_VOICE_ALLOCATION )
+#if defined( DEBUG_VOICE_ALLOCATION )
 					debugAllocateReason << " [softsteal same note]";
-					#endif
+#endif
 				}
 				else if (mode == VA_POLY_OVERLAP)
 				{
@@ -1491,47 +1518,47 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 					if (v->isHeld()) // Not likely two same keys held unless receiving on two channels.
 					{
 						v->NoteOff(timestamp);
-			}
+					}
 
 					// Force gate off in case voice is held with sustain pedal.
 					SetVoiceParameters(timestamp, v, 0.5f);
 				}
 				else if (mode == VA_POLY_HARD)
-			{
+				{
 					// in hard steal mode, ensure previous voice is shut down (fast).
 					stealVoice = v;
 				}
 			}
 		}
-
+		
 		// count active voices, and overlapped voices.
 		int activeVoiceCount = 0;
 		unsigned char overlappedKeys[maxVoiceId]{};
 		for (auto it = begin() + 1; it != end(); ++it)
-					{
+		{
 			auto v = *it;
 			if (v == allocatedVoice) // the voice we just allocated (may not have it's note-number yet.
-						{
+			{
 				++activeVoiceCount;
 
 				assert(voiceId >= 0 && voiceId < std::size(overlappedKeys));
 				overlappedKeys[voiceId]++;
-						}
+			}
 			else if(v->voiceState_ == VS_ACTIVE && !v->IsRefreshing()) // a playing voice.
-						{
+			{
 				++activeVoiceCount;
 
 				assert(v->NoteNum >= 0 && v->NoteNum < std::size(overlappedKeys));
 				overlappedKeys[v->NoteNum]++;
-						}
-					}
+			}
+		}
 		
 		const float recipricolSampleRate = 1.0f / ((ug_container*)this)->AudioMaster()->SampleRate();
 
 		// Guy-overlap mode, allow up to 3 voices to play same note number naturally, older ones are more aggressivly cut off.
 		// Restrict number of overlaps on a given key.
 		if ((voiceAllocationMode & 0x07) == VA_POLY_OVERLAP_GUYR)
-					{
+		{
 			const int maxOverlapVoicesPerKey = 3;
 
 			if (overlappedKeys[voiceId] >= maxOverlapVoicesPerKey)
@@ -1554,12 +1581,12 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 				}
 
 				if (quietestVoice)
-							{
+				{
 					SetVoiceParameters(timestamp, quietestVoice, 0.5f); // VoiceActive 0.5 means it's a secondary overlap of another voice, don't steal but fade out despite sustain pedal.
 				}
 			}
-							}
-
+		}
+		
 #if defined( DEBUG_VOICE_ALLOCATION )
 		if (allocatedVoice)
 		{
@@ -1568,14 +1595,14 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 			if (ncv->IsRefreshing())
 				debugAllocateReason << " (Refreshing)";
 			else
-							{
+			{
 				if (allocatedVoice->voiceState_ != VS_ACTIVE)
 					debugAllocateReason << " (Suspended)";
-							}
+			}
 			
 			if (allocatedVoice == ncv)
 				debugAllocateReason << ". Cyclic priority";
-						}
+		}
 #endif
 		if (!stealVoice)
 		{
@@ -1594,20 +1621,21 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 				for (auto it = begin() + 1; it != end(); ++it)
 				{
 					auto v = *it;
+
 					// determine best voice to steal from active voices (not already stolen).
 					if (v == allocatedVoice || v->voiceState_ != VS_ACTIVE || v->IsRefreshing())
 						continue;
 
-						// steal the oldest/quetest voice.
+					// steal the oldest/quetest voice.
 					const float loudnessEstimate = (std::min)(1.0f, v->peakOutputLevel);
 					const float scoreQuietness = 1.0f - loudnessEstimate;
 
-						// Assume attack is clicky or perceptually significant to percieved loudness. Also compensates for 10ms lag updating peak level.
-						// attack will be more important up to 0.2 seconds into note, then loudness takes precedence.
+					// Assume attack is clicky or perceptually significant to percieved loudness. Also compensates for 10ms lag updating peak level.
+					// attack will be more important up to 0.2 seconds into note, then loudness takes precedence.
 					const float noteDuration = (timestamp - v->NoteOnTime) * recipricolSampleRate;
 					const float noteDuration_score = std::min(0.5f, 0.1f * noteDuration);
 
-						// note attack estimated at 0.2 seconds (1 / 5.0).
+					// note attack estimated at 0.2 seconds (1 / 5.0).
 					const float attack_boost = 0.5f * (std::max)(0.0f, 1.0f - noteDuration * 5.0f);
 
 					// Score increases 10% for each overlap.
@@ -1617,42 +1645,42 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 
 					_RPTN(0, "Voice %d, noteDuration %f Score %f\n", v->m_voice_number, noteDuration, totalScore);
 
-						if( v->NoteOffTime == SE_TIMESTAMP_MAX ) // Held Note
+					if (v->NoteOffTime == SE_TIMESTAMP_MAX) // Held Note
+					{
+						if (v->NoteOnTime < timestamp) // can't steal a voice that only *just* started.
 						{
-							if( v->NoteOnTime < timestamp ) // can't steal a voice that only *just* started.
+							if (bestHeldNoteScore < totalScore)
 							{
-								if (bestHeldNoteScore < totalScore)
-								{
-									best_on = v;
-									bestHeldNoteScore = totalScore;
-								}
-							}
-						}
-						else // released note.
-						{
-						if (bestReleasedNoteScore < totalScore)
-							{
-								best_off = v;
-								bestReleasedNoteScore = totalScore;
+								best_on = v;
+								bestHeldNoteScore = totalScore;
 							}
 						}
 					}
+					else // released note.
+					{
+						if (bestReleasedNoteScore < totalScore)
+						{
+							best_off = v;
+							bestReleasedNoteScore = totalScore;
+						}
+					}
+				}
 
-		// shutdown a voice if too many active.
-		// Not if voice allocation failed because note will be help-back till benchwarmer free. Unless no benchwarmers at all.
-			// Determine best note to 'steal'
+				// shutdown a voice if too many active.
+				// Not if voice allocation failed because note will be help-back till benchwarmer free. Unless no benchwarmers at all.
+				// Determine best note to 'steal'
 				if (best_off)
-			{
-				stealVoice = best_off;
-			}
-			else
-			{
-				stealVoice = best_on;
-			}
+				{
+					stealVoice = best_off;
+				}
+				else
+				{
+					stealVoice = best_on;
+				}
 
-			// Sometimes there's no voice available to steal because all the active voices started on
+				// Sometimes there's no voice available to steal because all the active voices started on
 				// exact same timestamp (can't steal those because voice-active signal timestamps would co-incide/cancel).
-			// In this case, we can't allocate any voice (even if benchwarmer free) because that would exceed polyphony.
+				// In this case, we can't allocate any voice (even if benchwarmer free) because that would exceed polyphony.
 				if (!stealVoice) // is available.
 				{
 					// no steal voice available.
@@ -1660,64 +1688,71 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 
 #if defined( DEBUG_VOICE_ALLOCATION )
 					loggingFile << "No Voice allocated - exceeded polyphony already on this timestamp.\n";
-				_RPT0(_CRT_WARN, "No Voice allocated - exceeded polyphony already on this timestamp.\n" );
+					_RPT0(_CRT_WARN, "No Voice allocated - exceeded polyphony already on this timestamp.\n");
 #endif
 				}
 			}
 		}
 
-		if( stealVoice ) // is available.
+		if (stealVoice) // is available.
 		{
 			// In Guy's mode is like overlap, except stolen voices are not held-back, just re-used as-is. (soft takeover).
-			if( allocatedVoice == 0 && ( voiceAllocationMode & 0x07 ) == VA_POLY_OVERLAP_GUYR )
+			if (allocatedVoice == 0 && (voiceAllocationMode & 0x07) == VA_POLY_OVERLAP_GUYR)
 			{
 				allocatedVoice = stealVoice;
 				stealVoice = nullptr;
 			}
 			else
 			{
-				// if we failed to allocate (no reserve voices), cut off stolen voice ASAP (-1.0), else can do so gently (0.0).
-				const float voiceActive = allocatedVoice ? 0.0f : -1.0f;
+				if (steal)
+				{
+					// if we failed to allocate (no reserve voices), cut off stolen voice ASAP (-1.0), else can do so gently (0.0).
+					const float voiceActive = allocatedVoice ? 0.0f : -1.0f;
 
 #if defined( DEBUG_VOICE_ALLOCATION )
-				debugAllocateAdditional << "    Stole V" << stealVoice->m_voice_number;
+					debugAllocateAdditional << "    Stole V" << stealVoice->m_voice_number;
 
-				if (voiceActive < 0.0f)
-				{
-					debugAllocateAdditional << " (fast)\n";
+					if (voiceActive < 0.0f)
+					{
+						debugAllocateAdditional << " (fast)\n";
+					}
+					else
+					{
+						debugAllocateAdditional << " (slow)\n";
+					}
+#endif
+
+					// Special case for two note-ons on same timestamp.
+					// Can't immediately mute voice because Voice-Muter hasn't had chance to get Voice/Active signal.
+					// increase timestamp a little.
+					timestamp_t ts = timestamp;
+
+					if (stealVoice->NoteOnTime == ts)
+					{
+						++ts;
+					}
+
+					// Set voice state to muting.
+					stealVoice->NoteMute(ts);
+
+					// de-allocate voice.
+					// replaced VoiceAllocationNoteOff() with DoNoteOff() to avoid affecting heldback notes in overlap mode. We need to be able to steal a voice without affecting a heldback note on the same key.
+					DoNoteOff(ts, stealVoice, voiceActive);
 				}
 				else
 				{
-					debugAllocateAdditional << " (slow)\n";
+					stealVoice = {};
 				}
-#endif
-
-				// Special case for two note-ons on same timestamp.
-				// Can't immediately mute voice because Voice-Muter hasn't had chance to get Voice/Active signal.
-				// increase timestamp a little.
-				timestamp_t ts = timestamp;
-
-				if( stealVoice->NoteOnTime == ts )
-				{
-					++ts;
-				}
-
-				// Set voice state to muting.
-				stealVoice->NoteMute(ts);
-
-				// de-allocate voice.
-				// replaced VoiceAllocationNoteOff() with DoNoteOff() to avoid affecting heldback notes in overlap mode. We need to be able to steal a voice without affecting a heldback note on the same key.
-				DoNoteOff(ts, stealVoice, voiceActive);
 			}
 		}
 	}
-
+	
 	if( allocatedVoice )
-		{
+	{
 		allocatedVoice->peakOutputLevel = 1.0f; // until actual value arrives.
 		allocatedVoice->outputSilentSince = std::numeric_limits<timestamp_t>::max();
-				}
-				
+	}
+	
 #if defined( DEBUG_VOICE_ALLOCATION )
 
 	if( allocatedVoice == 0 )
@@ -1779,7 +1814,6 @@ Voice* VoiceList::allocateVoice( timestamp_t timestamp, /*int channel,*/ int voi
 
 void VoiceList::DoNoteOn(timestamp_t timestamp, Voice* voice, int voiceId, bool sendTrigger, bool autoGlide)
 {
-
 	// mono-modes, and soft poly re-uses a playing voice of the same note-number without resetting it.
 	// hard poly resets every voice on every note.
 	// bool hardReset = ( (voiceAllocationMode & 0xff) == 1 /*PolyHard*/ ) || voice->IsSuspended();
@@ -1996,18 +2030,13 @@ void VoiceList::VoiceAllocationNoteOff( timestamp_t timestamp, /*int channel,*/ 
 
 			if( replacementVoiceId >= 0 )
 			{
-				// NOTE-ON for replacement note.
-//				note_status[replacementVoiceId] = true;
-//				assert(note_status[replacementVoiceId]); // below is redundant?
-
 				note_memory_idx++;
 				note_memory_idx %= MCV_NOTE_MEM_SIZE;
 				note_memory[note_memory_idx] = static_cast<char>(replacementVoiceId);
 
-//				bool sendTrigger = (lVoiceAllocationMode & 0xff) != 4;// || monoNotePlaying_ == -1;
 				const bool sendTrigger = !voice_allocation::isMonoMode(lVoiceAllocationMode) || voice_allocation::isMonoRetrigger(lVoiceAllocationMode);
 				monoNotePlaying_ = replacementVoiceId;
-				Voice* voice = allocateVoice(timestamp, /*channel,*/ replacementVoiceId, lVoiceAllocationMode);
+				Voice* voice = allocateVoice(timestamp, /*channel,*/ replacementVoiceId, lVoiceAllocationMode, true);
 				voice->voiceActive_ = 1.0f; // not sure.
 
 				const bool autoGlide = true; // because we had 2 or more keys held
@@ -2083,5 +2112,5 @@ void HostVoiceControl::sendValue( timestamp_t clock, ug_container* container, in
 		}
 
         plug->TransmitPolyphonic( timestamp, physicalVoiceNumber, size, data );
-    }
+	}
 }
