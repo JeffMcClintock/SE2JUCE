@@ -1,8 +1,6 @@
-//#include "pch.h"
 #include "GuiPatchAutomator3.h"
 #include "../SE_DSP_CORE/IGuiHost2.h"
 
-//using namespace SynthEdit2;
 using namespace gmpi;
 using namespace std;
 
@@ -37,11 +35,13 @@ void GuiPatchAutomator3::Sethost( class IGuiHost2* host)
 
 int32_t GuiPatchAutomator3::initialize()
 {
-	auto res = SeGuiInvisibleBase::initialize();
+	const auto res = SeGuiInvisibleBase::initialize();
 
-	for (auto& p : parameterToPinIndex_)
+	for (const auto& p : parameterToPinIndex_)
 	{
-		patchManager_->initializeGui(this, p.first.first, (gmpi::FieldType)p.first.second);
+		const auto parameterId = static_cast<int32_t>(p.first & 0xffffffff);
+		const auto fieldId = p.first >> 32;
+		patchManager_->initializeGui(this, parameterId, (gmpi::FieldType)fieldId);
 	}
 
 	return res;
@@ -49,44 +49,69 @@ int32_t GuiPatchAutomator3::initialize()
 
 int32_t GuiPatchAutomator3::setPin( int32_t pinId, int32_t voice, int32_t size, const void* data )
 {
-	assert( pinId >= 0 && pinId < (int) parameterToPinIndex_.size() );
+	assert(pinId >= 0 && pinId < (int)parameterToPinIndex_.size());
 
-#if 0 //def SE_TAR GET_PURE_UWP
-//	auto p = parameterToPinIndex_[pinId];
-	Presentor()->setParameterFromGui(container_json_, p.moduleHandle, p.moduleParamId, p.paramField, voice, size, data );
-#else
-	patchManager_->setParameterValue(RawView(data, size ), pinToParameterIndex_[pinId].first, (gmpi::FieldType) pinToParameterIndex_[pinId].second, voice);
+	patchManager_->setParameterValue(RawView(data, size), pinToParameterIndex_[pinId].first, (gmpi::FieldType) pinToParameterIndex_[pinId].second, voice);
 
-#endif
 	return GuiPinOwner::setPin2( pinId, voice, size, data );
 }
 
-// Host control indicated by negative parameter ID.
-int GuiPatchAutomator3::Register(int moduleHandle, int moduleParamId, ParameterFieldType paramField /*, ModuleView* module, int pinIdx, bool isPolyphonic*/)
+inline int64_t makePinIndexKey(int32_t parameterHandle, int32_t fieldId)
 {
-	auto parameterHandle = patchManager_->getParameterHandle(moduleHandle, moduleParamId);
+	return (((int64_t)fieldId) << 32) | (int64_t)parameterHandle;
+}
+
+// Host control indicated by negative parameter ID.
+int GuiPatchAutomator3::Register(int moduleHandle, int moduleParamId, ParameterFieldType paramField)
+{
+	int32_t parameterHandle = -1;
+	// avoid very slow lookup if possible.
+	if (cacheModuleHandle == moduleHandle && cacheModuleParamId == moduleParamId)
+	{
+		parameterHandle = cacheParamId;
+
+		assert(parameterHandle == patchManager_->getParameterHandle(moduleHandle, moduleParamId));
+	}
+	else
+	{
+		cacheModuleHandle = moduleHandle;
+		cacheModuleParamId = moduleParamId;
+		cacheParamId = parameterHandle = patchManager_->getParameterHandle(moduleHandle, moduleParamId);
+	}
+
 	if (parameterHandle == -1) // not available
 	{
 		return -1;
 	}
 
-	auto it = parameterToPinIndex_.find(std::pair<int32_t, int32_t>(parameterHandle, paramField));
-	if (it != parameterToPinIndex_.end())
+	// host-controls might already be registered.
+	if (moduleParamId < 0)
 	{
-		return (*it).second;
+		auto it = parameterToPinIndex_.find(makePinIndexKey(parameterHandle, paramField));
+		if (it != parameterToPinIndex_.end())
+		{
+			return (*it).second;
+		}
 	}
+#ifdef _DEBUG
+	else
+	{
+		// verify my assumption that only host controls will already be registered.
+		assert(parameterToPinIndex_.find(makePinIndexKey(parameterHandle, paramField)) == parameterToPinIndex_.end());
+	}
+#endif
 
 	auto pinId = (int) parameterToPinIndex_.size();
-	parameterToPinIndex_.insert(std::pair< std::pair< int32_t, int32_t>, int32_t >(std::pair< int32_t, int32_t>(parameterHandle, paramField), pinId));
+	parameterToPinIndex_[makePinIndexKey(parameterHandle, paramField)] = pinId;
 
-	pinToParameterIndex_.push_back(std::pair< int32_t, int32_t>(parameterHandle, paramField));
+	pinToParameterIndex_.push_back({ parameterHandle, paramField });
 
 	return pinId;
 }
 
 int32_t GuiPatchAutomator3::setParameter(int32_t parameterHandle, int32_t fieldId, int32_t voice, const void* data, int32_t size)
 {
-	auto it = parameterToPinIndex_.find(std::pair<int32_t, int32_t>(parameterHandle, fieldId));
+	auto it = parameterToPinIndex_.find(makePinIndexKey(parameterHandle, fieldId));
 	if (it != parameterToPinIndex_.end())
 	{
 		getHost()->pinTransmit((*it).second, size, data, voice);

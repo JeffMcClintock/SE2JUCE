@@ -4,6 +4,7 @@
 #include <iostream>
 #include "ViewBase.h"
 #include "ConnectorView.h"
+#include "ConnectorViewStruct.h"
 #include "modules/se_sdk3_hosting/Presenter.h"
 #include "ResizeAdorner.h"
 #include "GuiPatchAutomator3.h"
@@ -265,6 +266,47 @@ namespace SynthEdit2
 								auto& default_element = pin_element["default"];
 								if(!default_element.empty())
 								{
+									InterfaceObject* pinInfo{};
+
+									// find the pin description for this pin.
+									for(auto& pd : moduleInfo->gui_plugs)
+									{
+										if (pd.second->getPlugDescID({}) == pinId)
+										{
+											pinInfo = pd.second;
+											break;
+										}
+									}
+
+									// Can't find desc? assume it's an auto-duplicating pin.
+									if(!pinInfo && !moduleInfo->gui_plugs.empty())
+									{
+										auto& last = *moduleInfo->gui_plugs.rbegin();
+
+										if (last.second->autoDuplicate({}))
+										{
+											pinInfo = last.second;
+										}
+									}
+
+									if (pinInfo)
+									{
+										assert(pinInfo->GetDirection() == DR_OUT || !wrapper->isPinConnected(pinId) || !wrapper->isPinConnectionActive(pinId)); // can be connected to muted/unavailable module.
+
+										auto dt = pinInfo->GetDatatype();
+										if (dt == DT_ENUM) // special hack for enum lists on properties of GUI modules.
+										{
+											dt = DT_INT;
+										}
+
+										auto raw = ParseToRaw(dt, default_element.asString());
+
+										wrapper->setPin(0, 0, pinId, 0, (int32_t)raw.size(), (void*)(&raw[0]));
+
+										alreadSetDefault.push_back(pinId);
+									}
+
+#if 0
 									auto def = default_element.asString();
 									for(auto it2 = moduleInfo->gui_plugs.begin(); it2 != moduleInfo->gui_plugs.end(); ++it2)
 									{
@@ -279,13 +321,14 @@ namespace SynthEdit2
 
 											auto raw = ParseToRaw(dt, def);
 
-											assert(!wrapper->isPinConnected(pinId) || !wrapper->isPinConnectionActive(pinId)); // can be connected to muted/unavailable module.
+											assert(pinInfo.GetDirection() == DR_OUT || !wrapper->isPinConnected(pinId) || !wrapper->isPinConnectionActive(pinId)); // can be connected to muted/unavailable module.
 											wrapper->setPin(0, 0, pinInfo.getPlugDescID(0), 0, (int)raw.size(), (void*)(&raw[0]));
 
 											alreadSetDefault.push_back(pinId);
 											break;
 										}
 									}
+#endif
 								}
 
 								++pinId; // Allows pinIdx to default to 1 + prev Idx. TODO, only used by slider2, could add this to exportXml.
@@ -624,7 +667,7 @@ namespace SynthEdit2
 		{
 			auto& m = *it;
 
-			if (m->hitTest(flags, selectionRect))
+			if (m->hitTestR(flags, selectionRect))
 			{
 				modulesToSelect.push_back(m->getModuleHandle());
 			}

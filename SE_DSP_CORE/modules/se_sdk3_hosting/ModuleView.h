@@ -51,6 +51,7 @@ namespace SynthEdit2
 			if(!resourcePtr)
 			{
 				resourcePtr = std::make_shared<T>(factory);
+				resourceStructs[factory.Get()] = resourcePtr;
 			}
 
 			return resourcePtr;
@@ -383,6 +384,8 @@ namespace SynthEdit2
 		GmpiDrawing::TextFormat tf_plugs_left;
 		GmpiDrawing::TextFormat tf_plugs_right;
 		GmpiDrawing::TextFormat tf_header;
+
+		std::unordered_map< std::string, gmpi_sdk::mp_shared_ptr<GmpiDrawing_API::IMpPathGeometry> > outlineCache;
 	};
 
 	class ModuleViewStruct : public ModuleView
@@ -468,6 +471,8 @@ namespace SynthEdit2
 		{
 			return pluginGraphics.get() != nullptr;
 		}
+		bool hitTestR(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override;
+
 		bool isShown() override;
 		bool isDraggable(bool editEnabled) override;
 

@@ -410,8 +410,11 @@ namespace SynthEdit2
 
 		if (!object)
 		{
-#if defined( _DEBUG)
-			_RPTN(0, "FAILED TO LOAD: %S\n", mi->UniqueId().c_str() );
+#if defined( SE_EDIT_SUPPORT ) && defined( _DEBUG)
+			if (mi->hasGuiModule())
+			{
+				_RPTN(0, "FAILED TO LOAD: %S\n", mi->UniqueId().c_str());
+			}
 			mi->load_failed_gui = true;
 #endif
 
@@ -1298,6 +1301,8 @@ namespace SynthEdit2
 				rPlugNamesTemp.append(pin.name);
 			}
 		}
+		rPlugNames = rPlugNamesTemp;
+		lPlugNames = lPlugNamesTemp;
 
 		// Add entry for embedded graphics.
 		float clientHight = 0.0f;
@@ -1329,13 +1334,37 @@ namespace SynthEdit2
 			filteredChildren.push_back(info);
 		}
 
-		rPlugNames = rPlugNamesTemp;
-		lPlugNames = lPlugNamesTemp;
+		// cache copies of the same shape
+		std::string outlineSpecification;
+		{
+			for (const auto& vc : filteredChildren)
+			{
+				if (vc.direction == -1) // indicates embedded gfx, not pin.
+				{
+					outlineSpecification += std::to_string(clientHight); // include client height in spec
+				}
+				else
+				{
+					outlineSpecification += vc.direction == DR_IN ? 'B' : 'F';
+				}
+			}
+			outlineSpecification += ':' + std::to_string(bounds_.getWidth()); // add width to specification
+
+			auto& outlineCache = getDrawingResources(factory)->outlineCache;
+			if (auto it = outlineCache.find(outlineSpecification); it != outlineCache.end())
+			{
+				it->second->addRef();
+				auto refcount = it->second->release();
+
+//				_RPT1(_CRT_WARN, "Saved one! refCount %d\n", refcount);
+
+				return PathGeometry(it->second);
+			}
+		}
 
 		auto geometry = factory.CreatePathGeometry();
 		auto sink = geometry.Open();
 
-//		const float outlineThickness = 1;
 		const float radius = plugDiameter * 0.5f;
 
 		const float leftX = radius - 0.5f; //XX
@@ -1371,34 +1400,16 @@ namespace SynthEdit2
 		int childCount = (int)filteredChildren.size();
 
 		// Pin coloring.
-//		bool hasGuiPins = false;
-//		bool hasDspPins = false;
 		bool startedFigure = false;
 
 		enum { EBump, EFlat, EPlugingraphics };
 
 		int edgeType = EFlat;
 		int prevEdgeType = EFlat;
-		//		float top = -0.5;
 		float edgeX = leftX;
 		float plugY = -0.5f; // top
-//		float x = 0;
 		float y = -0.5;
 
-/*
-		{
-			// counter-clockwise
-			sink.BeginFigure(0, 0, FigureBegin::Filled);
-			sink.AddLine(GmpiDrawing::Point(0, 60));
-			sink.AddLine(GmpiDrawing::Point(60, 60));
-			sink.AddLine(GmpiDrawing::Point(60, 0));
-			sink.EndFigure();
-
-			sink.Close();
-
-			return geometry;
-		}
-*/
 		if (NEW_LOOK_CURVES)
 		{
 			// Down left side
@@ -1526,7 +1537,6 @@ namespace SynthEdit2
 			// right side.
 			edgeX = rightX;
 			y += childHeight;
-		//	smallCurveYIntersect = -smallCurveYIntersect;
 
 			// up right side.
 			for( auto it = filteredChildren.rbegin() ; it != filteredChildren.rend() ; ++it)
@@ -1873,6 +1883,8 @@ namespace SynthEdit2
 		sink.EndFigure();
 
 		sink.Close();
+
+		getDrawingResources(factory)->outlineCache[outlineSpecification] = geometry.Get();
 
 		return geometry;
 	}
@@ -2994,6 +3006,30 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 	{
 		return parent->isShown();
 	}
+
+	bool ModuleViewPanel::hitTestR(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect)
+	{
+		if (!isVisable())
+			return false;
+
+		if(!ModuleView::hitTestR(flags, selectionRect))
+			return false;
+
+		gmpi_sdk::mp_shared_ptr<ISubView> subView;
+		if (pluginGraphics)
+		{
+			pluginGraphics->queryInterface(SE_IID_SUBVIEW, subView.asIMpUnknownPtr());
+		}
+
+		// ignore hidden panels when selecting by lasso
+		if (subView)
+		{
+			return subView->isVisible();
+		}
+
+		return true;
+	}
+
 	bool ModuleViewPanel::isDraggable(bool editEnabled)
 	{
 		// default is that anything can be dragged in the editor.

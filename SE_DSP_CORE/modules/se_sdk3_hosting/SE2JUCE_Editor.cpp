@@ -181,7 +181,7 @@ void JuceDrawingFrame::open(void* parentWnd, int width, int height)
         initTooltip();
 
 		StartTimer(15); // 16.66 = 60Hz. 16ms timer seems to miss v-sync. Faster timers offer no improvement to framerate.
-	}
+    }
 }
 #else
 

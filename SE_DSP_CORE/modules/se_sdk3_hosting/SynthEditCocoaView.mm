@@ -457,7 +457,7 @@ GmpiDrawing::Point mouseToGmpi(NSView* view, NSEvent* theEvent)
     auto window = [self window];
     if(window)
     {
-        drawingFrame.drawingFactory.setBestColorSpace(window);
+        drawingFrame.drawingFactory.setBestColorSpace();//window);
     }
 }
 
@@ -643,7 +643,8 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerMove(flags, mouseToGmpi(self, theEvent));
+    mousePos = mouseToGmpi(self, theEvent);
+    drawingFrame.getView()->onPointerMove(flags, mousePos);
 }
 
 - (void)scrollWheel:(NSEvent *)theEvent {
@@ -679,7 +680,9 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     
     ApplyKeyModifiers(flags, theEvent);
     
-    drawingFrame.getView()->onPointerMove(flags, mouseToGmpi(self, theEvent));
+    mousePos = mouseToGmpi(self, theEvent);
+    
+    drawingFrame.getView()->onPointerMove(flags, mousePos);
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {

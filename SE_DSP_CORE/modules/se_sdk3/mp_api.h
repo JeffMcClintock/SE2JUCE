@@ -438,7 +438,7 @@ public:
 	virtual void process(int32_t count, const MpEvent* events) = 0;
 };
 
-// IMpHost - The audio host interface. 
+// IMpHost - The audio host interface.
 
 enum MP_PinDirection{ MP_IN, MP_OUT };
 

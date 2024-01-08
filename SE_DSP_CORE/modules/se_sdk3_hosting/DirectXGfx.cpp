@@ -749,9 +749,10 @@ D3D11 ERROR: ID3D11Device::CreateTexture2D: The Dimensions are invalid. For feat
 			// If image was not loaded from a WicBitmap (i.e. was created from device context), then need to write it to WICBitmap first.
 			if (diBitmap_ == nullptr)
 			{
+
 				if(!nativeBitmap_)
 				{
-					return gmpi::MP_FAIL;
+					return gmpi::MP_FAIL; // seems not possible
 				}
 
 return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
@@ -1111,27 +1112,54 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 			*returnObject = nullptr;
 
 			gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
-			b2.Attach(new BitmapRenderTarget(this, desiredSize, factory));
+			b2.Attach(new BitmapRenderTarget(this, *desiredSize, factory));
 			return b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_RENDERTARGET_MPGUI, reinterpret_cast<void **>(returnObject));
+		}
+
+		// new version supports drawing on CPU bitmaps
+		int32_t GraphicsContext::CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject)
+		{
+			*returnObject = nullptr;
+
+			GmpiDrawing_API::MP1_SIZE sizef{ desiredSize.width, desiredSize.height };
+
+			gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
+			b2.Attach(new BitmapRenderTarget(this, sizef, factory, enableLockPixels));
+			return b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_RENDERTARGET_MPGUI, reinterpret_cast<void**>(returnObject));
 		}
 
 		int32_t BitmapRenderTarget::GetBitmap(GmpiDrawing_API::IMpBitmap** returnBitmap)
 		{
 			*returnBitmap = nullptr;
 
-			ID2D1Bitmap* nativeBitmap;
-			auto hr = nativeBitmapRenderTarget->GetBitmap(&nativeBitmap);
-
-			if (hr == 0)
+			HRESULT hr{ E_FAIL };
+#if 0 // testing
+			if (wikBitmapRenderTarget)
 			{
 				gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
-				b2.Attach(new Bitmap(factory, context_, nativeBitmap));
-				nativeBitmap->Release();
+				b2.Attach(new Bitmap(factory, wicBitmap));
 
-				b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_MPGUI, reinterpret_cast<void **>(returnBitmap));
+				b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_MPGUI, reinterpret_cast<void**>(returnBitmap));
+
+				hr = S_OK;
+			}
+#endif
+			if (gpuBitmapRenderTarget)
+			{
+				ID2D1Bitmap* nativeBitmap{};
+				hr = gpuBitmapRenderTarget->GetBitmap(&nativeBitmap);
+
+				if (hr == S_OK)
+				{
+					gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
+					b2.Attach(new Bitmap(factory, context_, nativeBitmap));
+					nativeBitmap->Release();
+
+					b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_MPGUI, reinterpret_cast<void**>(returnBitmap));
+				}
 			}
 
-			return hr == 0 ? (gmpi::MP_OK) : (gmpi::MP_FAIL);
+			return hr == S_OK ? gmpi::MP_OK : gmpi::MP_FAIL;
 		}
 
 		void GraphicsContext::PushAxisAlignedClip(const GmpiDrawing_API::MP1_RECT* clipRect/*, GmpiDrawing_API::MP1_ANTIALIAS_MODE antialiasMode*/)

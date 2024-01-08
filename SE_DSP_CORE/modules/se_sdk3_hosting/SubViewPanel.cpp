@@ -211,7 +211,6 @@ int32_t SubView::measure(GmpiDrawing_API::MP1_SIZE availableSize, GmpiDrawing_AP
 			}
 			*/
 			GmpiDrawing::Rect moduleRect(m->getLayoutRect().left, m->getLayoutRect().top, m->getLayoutRect().left + actualSize.width, m->getLayoutRect().top + actualSize.height);
-			//m->arrange(GmpiDrawing::Rect(m->getLayoutRect().left, m->getLayoutRect().top, m->getLayoutRect().left + actualSize.width, m->getLayoutRect().top + actualSize.height));
 
 			// Typically only when new object inserted.
 			viewBounds.left = (std::min)(viewBounds.left, moduleRect.left);
@@ -515,47 +514,6 @@ void SubView::calcBounds(GmpiDrawing::Rect& returnLayoutRect, GmpiDrawing::Rect&
 		returnLayoutRect.left = returnLayoutRect.top = 0;
 		returnLayoutRect.right = returnLayoutRect.bottom = 10;
 	}
-
-#if 0
-	//returnLayoutRect.width = (std::max)(0.0f, viewBounds.getWidth());
-	//returnLayoutRect.height = (std::max)(0.0f, viewBounds.getHeight());
-
-	// On first open, need to calc offset relative to view.
-	// ref control_group_auto_size::RecalcBounds()
-	if (offset_.width == -99999.f)
-	{
-		offset_.width = -FastRealToIntFloor(viewBounds.left);
-		offset_.height = -FastRealToIntFloor(viewBounds.top);
-
-		auto module = dynamic_cast<SynthEdit2::ViewChild*> (getGuiHost());
-
-		Presenter()->SetViewScroll(offset_.width + module->bounds_.left, offset_.height + module->bounds_.top);
-	}
-	else
-	{
-		/* moved to OnChildMoved()
-		// if top-left coords have changed last opened.
-		// then shift sub-panel to compensate (panel view only).
-		int32_t parentAdjustX(offset_.width + FastRealToIntFloor(viewBounds.left));
-		int32_t parentAdjustY(offset_.height + FastRealToIntFloor(viewBounds.top));
-
-		if (parentAdjustX != 0 || parentAdjustY != 0)
-		{
-			offset_.width -= parentAdjustX;
-			offset_.height -= parentAdjustY;
-
-			// Adjust module top-left.
-			auto parent = dynamic_cast<SynthEdit2::ViewChild*> (getGuiHost());
-
-			if (parent->parent->getViewType() == CF_PANEL_VIEW)
-				parent->Presenter()->ResizeModule(parent->handle, 0, 0, GmpiDrawing::Size(parentAdjustX, parentAdjustY));
-		}
-		*/
-
-		//		if(parent->get)
-	}
-	return gmpi::MP_OK;
-#endif
 
 	returnLayoutRect.left = floorf(returnLayoutRect.left);
 	returnLayoutRect.top = floorf(returnLayoutRect.top);

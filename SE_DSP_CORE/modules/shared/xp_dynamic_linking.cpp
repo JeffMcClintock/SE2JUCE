@@ -16,7 +16,6 @@ namespace gmpi_dynamic_linking
 #if defined(_WIN32)
 	typedef HINSTANCE MP_DllHandle;
 #else
-//	typedef CFBundleRef MP_DllHandle;
 	typedef void* MP_DllHandle;
 #endif
 

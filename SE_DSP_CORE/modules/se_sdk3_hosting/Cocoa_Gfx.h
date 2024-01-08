@@ -239,7 +239,7 @@ namespace gmpi
 #endif
         }
         
-        void setBestColorSpace(NSWindow* window)
+        void setBestColorSpace(/*NSWindow* window*/)
         {
             /* even non-wide displays benifit from kCGColorSpaceExtendedLinearSRGB, they appear to dither to approximate it
 
@@ -1537,7 +1537,7 @@ return gmpi::MP_FAIL;
 			GMPI_REFCOUNT;
 		};
 
-		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext
+		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext2
 		{
 		protected:
 			std::wstring_convert<std::codecvt_utf8<wchar_t>>* stringConverter; // cached, as constructor is super-slow.
@@ -2074,6 +2074,7 @@ return gmpi::MP_FAIL;
 			}
 
 			int32_t MP_STDCALL CreateCompatibleRenderTarget(const GmpiDrawing_API::MP1_SIZE* desiredSize, GmpiDrawing_API::IMpBitmapRenderTarget** bitmapRenderTarget) override;
+            int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject) override;
 
 			void MP_STDCALL DrawRoundedRectangle(const GmpiDrawing_API::MP1_ROUNDED_RECT* roundedRect, const GmpiDrawing_API::IMpBrush* brush, float strokeWidth, const GmpiDrawing_API::IMpStrokeStyle* strokeStyle) override
 			{
@@ -2197,8 +2198,18 @@ return gmpi::MP_FAIL;
 */
 			//	void MP_STDCALL InsetNewMethodHere(){}
 
-			GMPI_QUERYINTERFACE1(GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI, GmpiDrawing_API::IMpDeviceContext);
-			GMPI_REFCOUNT_NO_DELETE;
+            int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
+            {
+                *returnInterface = 0;
+                if (iid == GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI || iid == GmpiDrawing_API::IMpDeviceContext2::guid || iid == MP_IID_UNKNOWN)
+                {
+                    *returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContext2*>(this);
+                    addRef();
+                    return gmpi::MP_OK;
+                }
+                return MP_NOSUPPORT;
+            }
+            GMPI_REFCOUNT_NO_DELETE;
 		};
 
 		// https://stackoverflow.com/questions/10627557/mac-os-x-drawing-into-an-offscreen-nsgraphicscontext-using-cgcontextref-c-funct
@@ -2272,7 +2283,11 @@ return gmpi::MP_FAIL;
 
 			return b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_RENDERTARGET_MPGUI, reinterpret_cast<void **>(bitmapRenderTarget));
 		}
-
+        int32_t GraphicsContext::CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject)
+        {
+            GmpiDrawing_API::MP1_SIZE sizef{ desiredSize.width, desiredSize.height };
+            return CreateCompatibleRenderTarget(&sizef, returnObject);
+        }
     
         inline int32_t MP_STDCALL DrawingFactory::CreateTextFormat(const char* fontFamilyName, void* unused /* fontCollection */, GmpiDrawing_API::MP1_FONT_WEIGHT fontWeight, GmpiDrawing_API::MP1_FONT_STYLE fontStyle, GmpiDrawing_API::MP1_FONT_STRETCH fontStretch, float fontSize, void* unused2 /* localeName */, GmpiDrawing_API::IMpTextFormat** textFormat)
         {

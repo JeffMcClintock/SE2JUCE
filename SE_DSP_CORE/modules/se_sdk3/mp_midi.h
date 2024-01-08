@@ -1036,14 +1036,14 @@ namespace gmpi
 
 						if (incoming_rpn[header.channel] != NULL_RPN)
 						{
-						const auto msgout = gmpi::midi_2_0::makeRpnRaw(
-							incoming_rpn[header.channel],
+							const auto msgout = gmpi::midi_2_0::makeRpnRaw(
+								incoming_rpn[header.channel],
 								gmpi::midi::utils::scaleUp(incoming_rpn_value, 14, 32), // 14 bit value converted to 32-bit value.
-							header.channel
-						);
+								header.channel
+							);
 
-						sink({ msgout.m }, timestamp);
-					}
+							sink({ msgout.m }, timestamp);
+						}
 						else
 						{
 							const auto msgout = gmpi::midi_2_0::makeNrpnRaw(
@@ -1145,6 +1145,7 @@ namespace gmpi
 
 			// for not specifically MPE stuff, just use a normal MIDI 1.0 -> 2.0 converter
 			MidiConverter2 midiConverter2;
+
 		public:
 			MpeConverter(std::function<void(const midi::message_view, int)> psink) :
 				sink(psink),
@@ -1403,20 +1404,24 @@ namespace gmpi
 						if (0 == header.channel)
 						{
 							lower_zone_size = rpn.value >> 7; // MSB only
-							upper_zone_size = (std::min)(upper_zone_size, 15 - lower_zone_size);
 
 							if (lower_zone_size)
+							{
 								lowerZoneMasterChannel = header.channel;
+								upper_zone_size = (std::min)(upper_zone_size, 14 - lower_zone_size);
+							}
 							else
 								lowerZoneMasterChannel = -1;
 						}
 						else
 						{
 							upper_zone_size = rpn.value >> 7;
-							lower_zone_size = (std::min)(lower_zone_size, 15 - upper_zone_size);
 
 							if (upper_zone_size)
+							{
 								upperZoneMasterChannel = header.channel;
+								lower_zone_size = (std::min)(lower_zone_size, 14 - upper_zone_size);
+							}
 							else
 								upperZoneMasterChannel = -1;
 						}
@@ -1435,7 +1440,9 @@ namespace gmpi
 					return;
 				}
 
-				if (header.channel >= lower_zone_size && header.channel <= 15 - upper_zone_size)
+				const bool isLowerZone = lower_zone_size > 0 && header.channel <= lower_zone_size;
+				const bool isUpperZone = upper_zone_size > 0 && header.channel >= 15 - upper_zone_size;
+				if (!isUpperZone && !isLowerZone)
 				{
 					// no conversion.
 					sink(msg, timestamp);
@@ -1632,12 +1639,16 @@ namespace gmpi
 				{
 				case 1: // force Off
 					lowerZoneMasterChannel = -1;
+					upperZoneMasterChannel = -1;
 					lower_zone_size = 0;
+					upper_zone_size = 0;
 					break;
 
-				case 2: // force On
+				case 2: // force On (one zone)
 					lowerZoneMasterChannel = 0;
 					lower_zone_size = 15;
+					upperZoneMasterChannel = -1;
+					upper_zone_size = 0;
 					break;
 
 				default:
@@ -2009,4 +2020,3 @@ namespace gmpi
 		*/
 	}
 }
-

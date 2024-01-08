@@ -13,6 +13,7 @@ class DECLSPEC_NOVTABLE ISubView : public gmpi::IMpUnknown
 public:
 	virtual void MP_STDCALL OnCableDrag(SynthEdit2::ConnectorViewBase* dragline, GmpiDrawing::Point dragPoint, float& bestDistance, SynthEdit2::IViewChild*& bestModule, int& bestPinIndex) = 0;
 	virtual bool MP_STDCALL hitTest(int32_t flags, GmpiDrawing_API::MP1_POINT* point) = 0;
+	virtual bool MP_STDCALL isVisible() = 0;
 };
 
 // GUID for ISubView
@@ -115,6 +116,10 @@ public:
 	// ISubView
 	void OnCableDrag(SynthEdit2::ConnectorViewBase* dragline, GmpiDrawing::Point dragPoint, float& bestDistance, SynthEdit2::IViewChild*& bestModule, int& bestPinIndex) override;
 	bool MP_STDCALL hitTest(int32_t flags, GmpiDrawing_API::MP1_POINT* point) override;
+	bool MP_STDCALL isVisible() override
+	{
+		return isShown();
+	}
 
 	void OnPatchCablesVisibilityUpdate() override;
 

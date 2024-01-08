@@ -34,7 +34,7 @@ inline std::string WStringToUtf8(const std::wstring& p_cstring )
 
         res.resize(expected_utf8words);
 
-        simdutf::convert_utf16le_to_utf8((const char16_t*) p_cstring.data(), p_cstring.size(), (char*) res.data());
+        [[maybe_unused]] const auto r = simdutf::convert_utf16le_to_utf8((const char16_t*) p_cstring.data(), p_cstring.size(), (char*) res.data());
     }
     else
     {
@@ -44,7 +44,7 @@ inline std::string WStringToUtf8(const std::wstring& p_cstring )
 
         res.resize(expected_utf8words);
 
-        simdutf::convert_utf32_to_utf8((const char32_t*) p_cstring.data(), p_cstring.size(), (char*) res.data());
+        [[maybe_unused]] const auto r = simdutf::convert_utf32_to_utf8((const char32_t*) p_cstring.data(), p_cstring.size(), (char*) res.data());
     }
 #else
 #if defined(_WIN32)

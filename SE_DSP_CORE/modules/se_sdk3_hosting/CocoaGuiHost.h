@@ -268,7 +268,7 @@ namespace GmpiGuiHosting
 
             completionHandler = pCompletionHandler;
             
-			textField = [[NSTextField alloc] initWithFrame:NSMakeRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top)];
+			textField = [[NSTextField alloc] initWithFrame:gmpiRectToViewRect(view.bounds, rect)];
             
             [textField setFont:[NSFont systemFontOfSize:textHeight]];
             

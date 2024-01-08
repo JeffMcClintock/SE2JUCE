@@ -64,9 +64,11 @@ enum ug_event_type {
 #define IO_FILENAME				16
 // ALLOW USER TO SET THE VALUE OF THIS OUTPUt eg on 'constant value' ug
 #define IO_SETABLE_OUTPUT		32
+
 // plugs which can be duplicated/deleted by CUG
 // DEPRECATED. NOT STORED IN XML BECAUSE DUPLICATES 'IO_AUTODUPLICATE'. Remove after 2022 (once we're sure)
 #define IO_CUSTOMISABLE			64
+
 // plugs which handle multiple inputs, must belong to an Adder ug
 #define IO_ADDER				128
 // plugs which are private or obsolete, but are enabled on load if connected somewhere

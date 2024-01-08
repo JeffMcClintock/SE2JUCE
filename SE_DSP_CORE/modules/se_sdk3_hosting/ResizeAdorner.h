@@ -246,7 +246,7 @@ namespace SynthEdit2
 			return !innerRect.ContainsPoint(point);
 		}
 
-		bool hitTest(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override
+		bool hitTestR(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override
 		{
 			return isOverlapped(GmpiDrawing::Rect(selectionRect), GmpiDrawing::Rect(GetOutlineRect()));
 		}
@@ -452,7 +452,7 @@ namespace SynthEdit2
 			return hitNodeX >= 0 || hitNodeY >= 0;
 		}
 
-		bool hitTest(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override
+		bool hitTestR(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override
 		{
 			return isOverlapped(GmpiDrawing::Rect(selectionRect), GmpiDrawing::Rect(GetOutlineRect()));
 		}

@@ -155,13 +155,13 @@ class MpParameter_native : public MpParameter_base
 
 public:
 	int hostTag = -1;	// index as set in SE, not nesc sequential.
-	int hostIndex = -1;	// strict sequential index, no gaps.
+//	int hostIndex = -1;	// strict sequential index, no gaps.
 
 	MpParameter_native(MpController* controller) : MpParameter_base(controller)
 	{}
 
 	int getNativeTag() override { return hostTag; } // -1 = not exported to DAW.
-	int getNativeIndex() { return hostIndex; }
+//	int getNativeIndex() { return hostIndex; }
 
 	bool isPolyPhonic() override {
 		return false;

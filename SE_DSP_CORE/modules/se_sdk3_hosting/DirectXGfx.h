@@ -960,6 +960,10 @@ namespace gmpi
 			{
 				return writeFactory;
 			}
+			auto getWicFactory()
+			{
+				return pIWICFactory;
+			}
 			auto getFactory()
 			{
 				return m_pDirect2dFactory;
@@ -1030,7 +1034,7 @@ namespace gmpi
 			GMPI_REFCOUNT_NO_DELETE;
 		};
 
-		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext
+		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext2
 		{
 		protected:
 			ID2D1DeviceContext* context_;
@@ -1213,6 +1217,7 @@ namespace gmpi
 			}
 
 			int32_t MP_STDCALL CreateCompatibleRenderTarget(const GmpiDrawing_API::MP1_SIZE* desiredSize, GmpiDrawing_API::IMpBitmapRenderTarget** bitmapRenderTarget) override;
+			int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject) override;
 
 			void MP_STDCALL DrawRoundedRectangle(const GmpiDrawing_API::MP1_ROUNDED_RECT* roundedRect, const GmpiDrawing_API::IMpBrush* brush, float strokeWidth, const GmpiDrawing_API::IMpStrokeStyle* strokeStyle) override
 			{
@@ -1278,33 +1283,105 @@ namespace gmpi
 				return factory->getPlatformPixelFormat() == GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB;
 			}
 
-			GMPI_QUERYINTERFACE1(GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI, GmpiDrawing_API::IMpDeviceContext);
+			int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
+			{
+				*returnInterface = 0;
+				if (iid == GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI || iid == GmpiDrawing_API::IMpDeviceContext2::guid || iid == MP_IID_UNKNOWN)
+				{
+					*returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContext2*>(this);
+					addRef();
+					return gmpi::MP_OK;
+				}
+				return MP_NOSUPPORT;
+			}
 			GMPI_REFCOUNT_NO_DELETE;
 		};
 
 		class BitmapRenderTarget : public GraphicsContext
 		{
-			ID2D1BitmapRenderTarget* nativeBitmapRenderTarget = {};
+			ID2D1BitmapRenderTarget* gpuBitmapRenderTarget = {};
+
+			IWICBitmap* wicBitmap{};
+			ID2D1RenderTarget* wikBitmapRenderTarget{};
 
 		public:
+#if 0
+			// Create on GPU only
 			BitmapRenderTarget(GraphicsContext* g, const GmpiDrawing_API::MP1_SIZE* desiredSize, Factory* pfactory) :
 				GraphicsContext(pfactory)
 			{
-				/* auto hr = */ g->native()->CreateCompatibleRenderTarget(*(D2D1_SIZE_F*)desiredSize, &nativeBitmapRenderTarget);
-				nativeBitmapRenderTarget->QueryInterface(IID_ID2D1DeviceContext, (void**)&context_);
+#if 1
+				// Create a render target on the GPU. Not modifyable by CPU.
+				/* auto hr = */ g->native()->CreateCompatibleRenderTarget(*(D2D1_SIZE_F*)desiredSize, &gpuBitmapRenderTarget);
+				gpuBitmapRenderTarget->QueryInterface(IID_ID2D1DeviceContext, (void**)&context_);
+#else
+				// Create a WIC render target. Modifyable by CPU (lock pixels).
+
+				// First create the WIC bitmap
+				D2D1_RENDER_TARGET_PROPERTIES props{
+					D2D1_RENDER_TARGET_TYPE_DEFAULT,
+					{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+					{},
+					{},
+					D2D1_RENDER_TARGET_USAGE_NONE,
+					D2D1_FEATURE_LEVEL_DEFAULT
+				};
+
+				auto hr = pfactory->getWicFactory()->CreateBitmap((UINT)desiredSize->width, (UINT)desiredSize->height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnLoad, &wicBitmap);
+				pfactory->getD2dFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &wikBitmapRenderTarget);
+				wikBitmapRenderTarget->QueryInterface(IID_ID2D1DeviceContext, (void**)&context_);
+#endif
 
 				clipRectStack.push_back({ 0, 0, desiredSize->width, desiredSize->height });
+			}
+#endif
+			// Create on GPU only
+			BitmapRenderTarget(GraphicsContext* g, GmpiDrawing_API::MP1_SIZE desiredSize,Factory* pfactory, bool enableLockPixels = false) :
+				GraphicsContext(pfactory)
+			{
+				if (enableLockPixels)
+				{
+					// Create a WIC render target. Modifyable by CPU (lock pixels). More expensive.
+
+					// First create the WIC bitmap
+					D2D1_RENDER_TARGET_PROPERTIES props{
+						D2D1_RENDER_TARGET_TYPE_DEFAULT,
+						{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+						{},
+						{},
+						D2D1_RENDER_TARGET_USAGE_NONE,
+						D2D1_FEATURE_LEVEL_DEFAULT
+					};
+
+					auto hr = pfactory->getWicFactory()->CreateBitmap((UINT)desiredSize.width, (UINT)desiredSize.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnLoad, &wicBitmap);
+					pfactory->getD2dFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &wikBitmapRenderTarget);
+					wikBitmapRenderTarget->QueryInterface(IID_ID2D1DeviceContext, (void**)&context_);
+				}
+				else
+				{
+					// Create a render target on the GPU. Not modifyable by CPU.
+					/* auto hr = */ g->native()->CreateCompatibleRenderTarget(*(D2D1_SIZE_F*)&desiredSize, &gpuBitmapRenderTarget);
+					gpuBitmapRenderTarget->QueryInterface(IID_ID2D1DeviceContext, (void**)&context_);
+				}
+
+				clipRectStack.push_back({ 0, 0, desiredSize.width, desiredSize.height });
 			}
 
 			~BitmapRenderTarget()
 			{
-				if(nativeBitmapRenderTarget)
-				{
-					nativeBitmapRenderTarget->Release();
-				}
+				if (gpuBitmapRenderTarget)
+					gpuBitmapRenderTarget->Release();
+
+				if (wikBitmapRenderTarget)
+					wikBitmapRenderTarget->Release();
 			}
 
 			virtual int32_t MP_STDCALL GetBitmap(GmpiDrawing_API::IMpBitmap** returnBitmap);
+
+			int32_t CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, class IMpBitmapRenderTarget** bitmapRenderTarget)
+			{
+				return gmpi::MP_FAIL; // not supported ATM.
+			}
 
 			int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
 			{

@@ -391,18 +391,14 @@ void MpController::Initialize()
 		}
 	}
 
-	// JUCE does not have a preset folder at present. Prevent errors inside vst3 helper
-	if (auto presetsFolder = toPlatformString(BundleInfo::instance()->getPresetFolder()); !presetsFolder.empty())
-	{
-		fileWatcher.Start(
-			presetsFolder,
-			[this]()
-		{
-			// note: called from background thread.
-			presetsFolderChanged = true;
-		}
-		);
-	}
+	fileWatcher.Start(
+		toPlatformString(BundleInfo::instance()->getPresetFolder()),
+		[this]()
+			{
+				// note: called from background thread.
+				presetsFolderChanged = true;
+			}
+	);
     
 	undoManager.initial(this);
 
@@ -574,7 +570,10 @@ std::vector< MpController::presetInfo > MpController::scanPresetFolder(platform_
                 xml = loadNativePreset(ToWstring(sourceFilename));
 			}
 
-			returnValues.push_back(parsePreset(ToWstring(sourceFilename), xml));
+			if (!xml.empty())
+			{
+				returnValues.push_back(parsePreset(ToWstring(sourceFilename), xml));
+			}
 		}
 	}
 
@@ -1288,6 +1287,15 @@ bool MpController::onQueMessageReady(int recievingHandle, int recievingMessageId
 			OnLatencyChanged();
 		}
 		break;
+
+#if defined(_DEBUG) && defined(_WIN32)
+		default:
+		{
+			const char* msgstr = (const char*)&recievingMessageId;
+			_RPT1(_CRT_WARN, "MpController::onQueMessageReady() Unhandled message id %c%c%c%c\n", msgstr[3], msgstr[2], msgstr[1], msgstr[0] );
+		}
+		break;
+#endif
 		}
 	}
 	return false;

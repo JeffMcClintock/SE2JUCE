@@ -28,7 +28,7 @@ namespace SynthEdit2
 		virtual GmpiDrawing::Rect GetClipRect() = 0;
 		virtual void OnRender(GmpiDrawing::Graphics& g) = 0;
 		virtual bool hitTest(int32_t flags, GmpiDrawing_API::MP1_POINT point) = 0;
-		virtual bool hitTest(int32_t flags, GmpiDrawing_API::MP1_RECT rect) = 0;
+		virtual bool hitTestR(int32_t flags, GmpiDrawing_API::MP1_RECT rect) = 0;
 		virtual int32_t onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point) = 0;
 		virtual int32_t onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point) = 0;
 		virtual int32_t onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point) = 0;
@@ -135,7 +135,7 @@ namespace SynthEdit2
 		{
 			return getLayoutRect().ContainsPoint(point);
 		}
-		bool hitTest(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override
+		bool hitTestR(int32_t flags, GmpiDrawing_API::MP1_RECT selectionRect) override
 		{
 			return isOverlapped(GmpiDrawing::Rect(selectionRect), getLayoutRect());
 		}
