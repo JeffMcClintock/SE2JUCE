@@ -126,6 +126,7 @@ static const HostControlStruct lookup[] =
 	{L"Presets/CanUndo"			,HC_CAN_UNDO					, DT_BOOL, ControllerType::None},
 	{L"Presets/CanRedo"			,HC_CAN_REDO					, DT_BOOL, ControllerType::None },
 	{ L"Processor/ClearTails"	, HC_CLEAR_TAILS				, DT_INT, ControllerType::None }, // a 'trigger' style HC. Actual value don't matter, only that it changed.
+	L"Processor/DiagnosticFlags", HC_DIAGNOSTIC_FLAGS			, DT_INT,  ControllerType::None,
 	
 	// MAINTAIN ORDER TO PRESERVE OLDER WAVES EXPORTS DSP.XML consistancy
 };

@@ -68,6 +68,8 @@ enum HostControls { HC_NONE=-1, HC_PATCH_COMMANDS, HC_MIDI_CHANNEL, HC_PROGRAM_N
 					HC_CAN_REDO,
 
 					HC_CLEAR_TAILS,	// effect has restarted after being disabled for a while, try to clear tails.
+
+					HC_DIAGNOSTIC_FLAGS,
 					// leave last
 					HC_NUM_HOST_CONTROLS,
 };

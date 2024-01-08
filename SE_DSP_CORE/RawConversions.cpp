@@ -153,10 +153,15 @@ std::string ParseToRaw( int datatype, const std::wstring& s )
 		break;
 
 	case DT_INT:
-		result.resize( sizeof( int32_t ) );
-		*(int32_t*) ( &result[0] ) = wcstol( s.c_str(), 0, 10 );
+		result.resize(sizeof(int32_t));
+		*(int32_t*)(&result[0]) = wcstol(s.c_str(), 0, 10);
 		break;
 
+	case DT_INT64:
+		result.resize(sizeof(int64_t));
+		*(int64_t*)(&result[0]) = wcstol(s.c_str(), 0, 10);
+		break;
+		
 	case DT_TEXT:
 		result.resize( sizeof(wchar_t) * s.size() );
 		memcpy( &result[0], s.data(), result.size() );
@@ -212,6 +217,11 @@ std::string ParseToRaw( int datatype, const std::string& s )
 	case DT_INT:
 		result.resize( sizeof( int32_t ) );
 		*(int32_t*) ( &result[0] ) = strtol( s.c_str(), 0, 10 );
+		break;
+
+	case DT_INT64:
+		result.resize(sizeof(int64_t));
+		*(int64_t*)(&result[0]) = strtoll(s.c_str(), 0, 10);
 		break;
 
 	case DT_TEXT:
@@ -289,12 +299,16 @@ std::string RawToUtf8B(int datatype, const void* data, size_t size)
 		result = RawToUtf8<int32_t>(data, size);
 		break;
 
-		case DT_TEXT:
-		{
-			std::wstring v((wchar_t*)data, size / sizeof(wchar_t));
-			result = WStringToUtf8(v);
-		}
+	case DT_INT64:
+		result = RawToUtf8<int64_t>(data, size);
 		break;
+
+	case DT_TEXT:
+	{
+		std::wstring v((wchar_t*)data, size / sizeof(wchar_t));
+		result = WStringToUtf8(v);
+	}
+	break;
 
 	case DT_STRING_UTF8:
 		result.assign((const char*)data, (size_t) size);

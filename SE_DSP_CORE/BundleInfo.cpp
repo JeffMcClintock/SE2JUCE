@@ -353,6 +353,12 @@ std::string BundleInfo::getResource( const char* resourceId )
 		// Open the stream to 'lock' the file.
 		std::ifstream f(path, std::ios::in | std::ios::binary);
 
+        if (f.fail())
+        {
+            _RPTN(_CRT_WARN, "BundleInfo::getResource() failed to open file '%s' : %s\n", resourceId, strerror(errno));
+            return {};
+        }
+
 		// Obtain the size of the file.
 		f.seekg(0, std::ios::end);
 		const size_t fileSize = f.tellg();
