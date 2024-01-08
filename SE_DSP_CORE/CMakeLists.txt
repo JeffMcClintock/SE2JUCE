@@ -418,7 +418,7 @@ modules/EnvelopeAdsr/envelope.cpp
 modules/EnvelopeAdsr/Adsr.cpp
 modules/ControlsXp/ListEntry.cpp
 modules/ControlsXp/Scope3.cpp
-modules/Converters/FloatScaler2Gui
+modules/Converters/FloatScaler2Gui.cpp
 modules/Converters/FloatToText.cpp
 modules/Converters/VoltsToMidiCc.cpp
 
