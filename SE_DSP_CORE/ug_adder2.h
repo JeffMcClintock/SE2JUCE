@@ -73,7 +73,7 @@ public:
 		assert(currentActiveVoiceNumber < 0);
 
 #ifdef GMPI_SSE_AVAILABLE
-		while (reinterpret_cast<intptr_t>(output) & 0x0f)
+		while (sampleFrames > 0 && reinterpret_cast<intptr_t>(output) & 0x0f)
 		{
 			*output++ = 0.0f;
 			--sampleFrames;
@@ -109,7 +109,7 @@ public:
 		float* output = plugs[0]->GetSamplePtr() + start_pos;
 
 #ifdef GMPI_SSE_AVAILABLE
-		while (reinterpret_cast<intptr_t>(output) & 0x0f)
+		while (sampleFrames > 0 && reinterpret_cast<intptr_t>(output) & 0x0f)
 		{
 			*output++ = *input++;
 			--sampleFrames;

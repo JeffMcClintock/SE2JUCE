@@ -4,6 +4,7 @@
 
 #include "module_register.h"
 #include "ug_container.h"
+#include "UgDatabase.h"
 
 SE_DECLARE_INIT_STATIC_FILE(ug_adder2)
 
@@ -106,7 +107,7 @@ void ug_adder2::sub_process_static(int start_pos, int sampleframes)
 	auto s = sampleframes;
 
 	// Use SSE instructions.
-	while (reinterpret_cast<intptr_t>(o) & 0x0f)
+	while (s > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 	{
 		*o++ = ss;
 		--s;
@@ -123,6 +124,16 @@ void ug_adder2::sub_process_static(int start_pos, int sampleframes)
 	}
 #endif
 
+#if 0 //def _DEBUG
+	{
+		auto outPtr = output_ptr + start_pos;
+		for(int s = 1 ; s < sampleframes; s++)
+		{
+			assert(outPtr[0] == outPtr[s]);
+		}
+	}
+#endif
+
 	// mechanism to switch to idle after one block filled staticaly
 	SleepIfOutputStatic(sampleframes);
 }
@@ -130,7 +141,7 @@ void ug_adder2::sub_process_static(int start_pos, int sampleframes)
 void ug_adder2::sub_process_mixed(int start_pos, int sampleframes)
 {
 	// process fiddly non-sse-aligned prequel.
-	float* i = running_inputs[0] + start_pos;
+	const float* i = running_inputs[0] + start_pos;
 	float* o = output_ptr + start_pos;
 
 	const float ss = static_input_sum;
@@ -139,14 +150,14 @@ void ug_adder2::sub_process_mixed(int start_pos, int sampleframes)
 	// do some SSE.
 
 	auto lSampleFrames = sampleframes;
-	while (reinterpret_cast<intptr_t>(o) & 0x0f)
+	while (lSampleFrames > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 	{
 		*o++ = *i++ + ss;
 		--lSampleFrames;
 	}
 
 	// SSE intrinsics
-	__m128* pSource = (__m128*) i;
+	const __m128* pSource = (__m128*) i;
 	__m128* pDest = (__m128*) o;
 	const __m128 staticSum = _mm_set_ps1( ss );
 
@@ -164,13 +175,13 @@ void ug_adder2::sub_process_mixed(int start_pos, int sampleframes)
 		o = output_ptr + start_pos;
 
 		auto lSampleFrames = sampleframes;
-		while (reinterpret_cast<intptr_t>(o) & 0x0f)
+		while (lSampleFrames > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 		{
 			*o++ += *i++;
 			--lSampleFrames;
 		}
 
-		pSource = (__m128*) i;
+		pSource = (const __m128*) i;
 		pDest = (__m128*) o;
 
 		while (lSampleFrames > 0)
@@ -300,18 +311,19 @@ void ug_adder2::sub_process(int start_pos, int sampleframes)
 
 #else
 	// process fiddly non-sse-aligned prequel.
-	float* i = running_inputs[0] + start_pos;
+	const float* i = running_inputs[0] + start_pos;
 	float* o = output_ptr + start_pos;
 
 	auto lSampleFrames = sampleframes;
-	while (reinterpret_cast<intptr_t>(o) & 0x0f)
+	while (lSampleFrames > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 	{
 		*o++ = *i++;
 		--lSampleFrames;
 	}
+	assert(lSampleFrames >= 0);
 
 	// SSE intrinsics
-	__m128* pSource = (__m128*) i;
+	const __m128* pSource = (const __m128*) i;
 	__m128* pDest = (__m128*) o;
 
 	// move first runing input plus static sum.
@@ -328,7 +340,7 @@ void ug_adder2::sub_process(int start_pos, int sampleframes)
 		o = output_ptr + start_pos;
 
 		auto lSampleFrames = sampleframes;
-		while (reinterpret_cast<intptr_t>(o) & 0x0f)
+		while (lSampleFrames > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 		{
 			*o++ += *i++;
 			--lSampleFrames;

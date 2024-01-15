@@ -257,6 +257,7 @@ VoiceList::VoiceList( ) :
 	}
 	
 	#if defined( DEBUG_VOICE_ALLOCATION )
+	!!! can open 100's of log files !!!!
 		loggingFile.open("c:\\temp\\log.txt");
 		loggingFile << "SynthEdit" << std::endl;
 	#endif

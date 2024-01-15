@@ -971,7 +971,7 @@ unsigned, can't handle negative points. not much practical use.
 	static const gmpi::MpGuid SE_IID_DEVICECONTEXT_MPGUI =
 	{ 0xa1d9751d, 0xc43, 0x4f57,{ 0x89, 0x58, 0xe0, 0xbc, 0xe3, 0x59, 0xb2, 0xfd } };
 
-	struct DECLSPEC_NOVTABLE IMpDeviceContext2 : public IMpDeviceContext
+	struct DECLSPEC_NOVTABLE IMpDeviceContextExt : public gmpi::IMpUnknown
 	{
 		virtual int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, class IMpBitmapRenderTarget** bitmapRenderTarget) = 0;
 

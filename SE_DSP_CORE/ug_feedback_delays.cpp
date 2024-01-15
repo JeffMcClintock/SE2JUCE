@@ -149,7 +149,7 @@ void ug_feedback_delay::sub_process(int start_pos, int sampleframes)
 #if 1
 
 	// process fiddly non-sse-aligned prequel.
-	while(reinterpret_cast<intptr_t>(output) & 0x0f )
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(output) & 0x0f)
 	{
 		*output++ = *signal++;
 		--sampleframes;

@@ -8,6 +8,7 @@
 #include "./SeAudioMaster.h"
 #include "modules/shared/xplatform.h"
 #include "IProcessorMessageQues.h"
+#include "tinyxml/tinyxml.h"
 
 class my_output_stream_temp : public my_output_stream
 {
@@ -149,6 +150,7 @@ private:
 	int32_t currentPluginLatency = {}; // as at previous initialise
 	std::mutex generatorLock;
 	bool runsRealtimeCurrent = true;
+	TiXmlDocument currentDspXml;
 };
 
 #endif

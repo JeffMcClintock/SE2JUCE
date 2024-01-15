@@ -14,7 +14,7 @@ public:
 	virtual ~PatchStorageBase() {}
 	// returns true if value has changed.
 	virtual bool SetValue(const void* data, size_t size, int patch = 0) = 0;
-	virtual void SetValue(class my_input_stream& p_stream, int patch = 0) = 0;
+	virtual bool SetValue(class my_input_stream& p_stream, int patch = 0) = 0;
 	virtual RawView GetValueRaw(int patch = 0) = 0;
 	void SetValueRaw(RawView& val, int patch = 0)
 	{
@@ -59,7 +59,7 @@ public:
 	PatchStorageVariableSize( int patchCount );
 	~PatchStorageVariableSize();
 	virtual bool SetValue(const void* data, size_t size, int patch = 0) override;
-	virtual void SetValue(my_input_stream& p_stream, int patch = 0) override;
+	virtual bool SetValue(my_input_stream& p_stream, int patch = 0) override;
 	virtual RawView GetValueRaw(int patch = 0) override;
 	virtual void setPatchCount(int newPatchCount) override;
 
@@ -74,7 +74,7 @@ public:
 	PatchStorageFixedSize( int patchCount, int size );
 	~PatchStorageFixedSize();
 	virtual bool SetValue(const void* data, size_t size, int patch = 0) override;
-	virtual void SetValue(my_input_stream& p_stream, int patch = 0) override;
+	virtual bool SetValue(my_input_stream& p_stream, int patch = 0) override;
 	virtual RawView GetValueRaw(int patch = 0) override;
 	virtual void setPatchCount(int newPatchCount) override;
 

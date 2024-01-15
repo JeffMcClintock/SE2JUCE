@@ -224,7 +224,6 @@ bool CModuleFactory::RegisterModule( get_module_properties_func mod_func, get_pi
 	return true;
 }
 
-// REGISTER_MODULE_INTERNAL macro
 void Module_Info::Register( struct module_description& mod, get_pin_properties_func get_pin_properties) // GUI
 {
 	flags			|= mod.flags;
@@ -350,6 +349,17 @@ void Module_Info::Register(module_description_dsp& p_module_desc)
 	}
 
 	m_dsp_registered = true;
+}
+
+// allow modules to register here without pulling in the entire UgDatabase or ModuleInfo header.
+bool ModuleFactory_RegisterModule(const wchar_t* p_unique_id, int p_sid_name, int p_sid_group_name, class CDocOb* (*cug_create)(Module_Info*), class ug_base* (*ug_create)(), int p_flags)
+{
+	return CModuleFactory::Instance()->RegisterModule(new Module_Info(p_unique_id, p_sid_name, p_sid_group_name, cug_create, ug_create, p_flags));
+}
+
+bool ModuleFactory_RegisterModule(const wchar_t* p_unique_id, const wchar_t* name, const wchar_t* group_name, class CDocOb* (*cug_create)(Module_Info*), class ug_base* (*ug_create)(), int p_flags)
+{
+	return CModuleFactory::Instance()->RegisterModule(new Module_Info(p_unique_id, name, group_name, cug_create, ug_create, p_flags));
 }
 
 // using older macros - REGISTER_MODULE_1_BC

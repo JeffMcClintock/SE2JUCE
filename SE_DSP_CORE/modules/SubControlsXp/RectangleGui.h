@@ -9,18 +9,13 @@ class RectangleGui : public gmpi_gui::MpGuiGfxBase
 public:
 	RectangleGui();
 
+	void onChangeRadius();
+	void onChangeTopCol();
+	void onChangeBotCol();
+
 	// overrides.
-	virtual int32_t MP_STDCALL OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext ) override;
-/*
-	bool drawTestNext;
-	virtual int32_t MP_STDCALL onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
-	{
-		drawTestNext = true;
-		GmpiDrawing::Rect r(0, 0, 20, 20);
-		getGuiHost()->invalidateRect(&r);
-		return gmpi::MP_UNHANDLED;
-	}
-*/
+	int32_t MP_STDCALL arrange(GmpiDrawing_API::MP1_RECT finalRect) override;
+	int32_t MP_STDCALL OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext ) override;
 
 private:
 	void onRedraw();
@@ -32,6 +27,11 @@ private:
  	BoolGuiPin pinBottomRight;
  	StringGuiPin pinTopColor;
  	StringGuiPin pinBottomColor;
+
+	GmpiDrawing::Color topColor;
+	GmpiDrawing::Color bottomColor;
+
+	GmpiDrawing::PathGeometry geometry;
 };
 
 #endif

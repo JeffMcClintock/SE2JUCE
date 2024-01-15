@@ -344,6 +344,7 @@ SeAudioMaster::~SeAudioMaster()
 #endif
 }
 
+#if 0
 void SeAudioMaster::BuildDspGraph(
 	const char* structureXml,
 	std::vector< std::pair<int32_t, std::string> >& pendingPresets,
@@ -384,6 +385,7 @@ void SeAudioMaster::BuildDspGraph(
 		BuildDspGraph(&doc, pendingPresets, mutedContainers);
 	}
 }
+#endif
 
 void SeAudioMaster::BuildDspGraph(
 	TiXmlDocument* doc,
@@ -1775,10 +1777,62 @@ void AudioMasterBase::CheckForOutputOverwrite()
 	}
 }
 
+bool CheckOverwrite(const float* m_samples, int debugBlocksize_, bool simdMightOverwrite)
+{
+	constexpr int simdSize = 4;
+
+	// buffers are allocated to the next SIMD boundary.
+	const int paddedBufferSize = (debugBlocksize_ + simdSize - 1) & ~(simdSize - 1);
+
+	// some modules ask for permission to (harmlessly) write over the extra bytes.
+	const int writableSize = simdMightOverwrite ? paddedBufferSize : debugBlocksize_;
+
+#ifdef _DEBUG
+	// in debug mode, we allocate and extra 4 bytes to check for misbehaving modules.
+	constexpr int overwriteCheckSize = simdSize;
+	const int totalBufferSize = paddedBufferSize + overwriteCheckSize;
+#else
+	const int totalBufferSize = paddedBufferSize;
+#endif
+
+	for(int i = writableSize ; i < totalBufferSize ; ++i)
+	{
+		if(m_samples[i] != magic_guard_number)
+		{
+			return true;
+		}
+	}
+
+	return false;
+#if 0
+
+	const float* past_end = m_samples + debugBlocksize_;
+
+
+#ifdef _DEBUG
+//	const auto custom_guard_number = magic_guard_number + (((intptr_t)m_samples >> 10) & 0xff);
+	const auto simdFriendlyBufferSize = overwriteCheckSize + (debugBlocksize_ + simdSize - 1) & ~(simdSize - 1);
+	const auto safetyZoneSize = simdMightOverwrite ? overwriteCheckSize : simdFriendlyBufferSize - debugBlocksize_;
+
+	const float* past_end = m_samples + debugBlocksize_;
+
+	for (int i = /*USAMPLEBLOCK_SAFETY_ZONE_SIZE*/safetyZoneSize - 1; i >= 0; --i)
+	{
+		if (past_end[i] != magic_guard_number)
+		{
+			return i + 1;
+		}
+	}
+#endif
+
+	return 0;
+#endif
+}
+
 // debug routines to check that ug only writes data to correct portion of output block
 void AudioMasterBase::copy_buffers(ug_base* ug)
 {
-	//	assert( dynamic_cast<ug_io_mod *>( ug ) == 0 );
+	const auto blockSize = BlockSize();
 	bool block_ok = true;
 	std::wstring msg;
 	//	assert( ug->GetNumOutputs() < 40 ); // max supported ( in constructor )
@@ -1791,11 +1845,10 @@ void AudioMasterBase::copy_buffers(ug_base* ug)
 
 	for( int p = 0 ; p < blocks ; p++ )
 	{
-#if 0 // TODO
 		UPlug* plg = ug->plugs[p];
 		if( plg->DataType == DT_FSAMPLE )
 		{
-			USampBlock* block_ptr = plg->GetSampleBlock();
+			const auto* block_ptr = plg->GetSamplePtr();
 
 			if( block_ptr ) // IO Mod's Uparameters don't use sample block pointers
 			{
@@ -1803,30 +1856,23 @@ void AudioMasterBase::copy_buffers(ug_base* ug)
 
 				if( plg->Direction == DR_IN )
 				{
-					int overwrittenSampleCount = plg->GetSampleBlock()->CheckOverwrite();
-
-					if( overwrittenSampleCount > 0 )
+					if( !plg->connections.empty() )
 					{
 						// Modules using SSE are allowed to overwrite up to 4 samples off end of buffer.
 						// This simplifies the SSE logic. SE reserves extra samples for this purpose.
-						bool usesSse = false;
+						auto upstreamUg = plg->connections.front()->UG;
+						const auto usesSse = (upstreamUg->flags & UGF_SSE_OVERWRITES_BUFFER_END) != 0;
+						const auto blockCorrupted = CheckOverwrite(block_ptr, blockSize, usesSse);
 
-						if( !plg->connections.empty() )
+						if(blockCorrupted)
 						{
-							ug_base* ug = plg->connections.front()->UG;
-							usesSse = (ug->flags & UGF_SSE_OVERWRITES_BUFFER_END) != 0;
-
-							if( overwrittenSampleCount > 3 || !usesSse )
-							{
-								block_ok = false;
-								msg = (L"pre-check: input buffer corrupted (off end)");
-							}
+							block_ok = false;
+							msg = (L"pre-check: input buffer corrupted (off end)");
 						}
 					}
 				}
 			}
 		}
-#endif
 	}
 
 	if( block_ok == false && (ug->flags & UGF_OVERWRITING_BUFFERS) == 0)
@@ -1841,10 +1887,11 @@ void AudioMasterBase::copy_buffers(ug_base* ug)
 
 void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframes)
 {
-#if 0 // !!! TODO
+#if 1 // !!! TODO
 	std::wstring msg;
 	bool block_ok = true;
-	int end_pos = BlockSize();// + USAMPLEBLOCK_SAFETY_ZONE_SIZE;//1; // check into safty zone
+	const auto blockSize = BlockSize();
+	int end_pos = blockSize;// + USAMPLEBLOCK_SAFETY_ZONE_SIZE;//1; // check into safty zone
 	int blocks = (int) ug->plugs.size();
 
 	if( blocks > MAX_DEBUG_BUFFERS )
@@ -1858,12 +1905,12 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 		{
 			if( plg->Direction == DR_OUT )
 			{
-				USampBlock* block_ptr = plg->GetSampleBlock();
+				const auto* block_ptr = plg->GetSamplePtr();
 
 				if( block_ptr ) // IO Mod's Uparameters don't use sample block pointers
 				{
 					// Module must never overwrite previous samples.
-					if( false == dbg_copy_output_array[p]->Compare( plg->GetSampleBlock(), 0, start_pos ) )
+					if( false == dbg_copy_output_array[p]->Compare(block_ptr, 0, start_pos ) )
 					{
 						block_ok = false;
 						std::wostringstream oss;
@@ -1879,7 +1926,7 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 						future_samples = (future_samples + 3) & 0xfffffc;
 					}
 
-					if( false == dbg_copy_output_array[p]->Compare( plg->GetSampleBlock(), future_samples, end_pos ) )
+					if( false == dbg_copy_output_array[p]->Compare(block_ptr, future_samples, end_pos ) )
 					{
 						block_ok = false;
 						std::wostringstream oss;
@@ -1887,17 +1934,14 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 						msg = oss.str();
 					}
 
-					// Samples completely off end of buffer. Should never be written, with small leniency fo SSE modules.
-					int overwrittenSampleCount = plg->GetSampleBlock()->CheckOverwrite();
-					if( overwrittenSampleCount > 0 )
+					// Samples completely off end of buffer. Should never be written, with small leniency for SSE modules.
+					auto blockCorrupted = CheckOverwrite(block_ptr, blockSize, (ug->flags & UGF_SSE_OVERWRITES_BUFFER_END) != 0);
+					if( blockCorrupted )
 					{
 						// Modules using SSE are allowed to overwrite up to 4 samples off end of buffer.
 						// This simplifies the SSE logic. SE reserves extra samples for this purpose.
-						if( overwrittenSampleCount > 3 || (ug->flags & UGF_SSE_OVERWRITES_BUFFER_END) == 0 )
-						{
-							block_ok = false;
-							msg = (L"Writting past end of output buffers");
-						}
+						block_ok = false;
+						msg = (L"Writting past end of output buffers");
 					}
 				}
 			}
@@ -1905,7 +1949,7 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 			{
 				//				if( ( plg->flags & PF_ADDER) == 0 )
 				{
-					USampBlock* sb = plg->GetSampleBlock();
+					const auto* sb = plg->GetSamplePtr();
 
 					if( sb != 0 ) // IO mod inputs don't have block
 					{
@@ -1915,21 +1959,17 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 							msg = (L"Corrupting in buffers. See debug Window..");
 						}
 
-						int overwrittenSampleCount = plg->GetSampleBlock()->CheckOverwrite();
-
-						if( overwrittenSampleCount > 0 )
+						if( !plg->connections.empty() )
 						{
-							if( !plg->connections.empty() )
-							{
-								ug_base* ug2 = plg->connections.front()->UG;
+							ug_base* ug2 = plg->connections.front()->UG;
+							// Modules using SSE are allowed to overwrite up to 4 samples off end of buffer.
+							// This simplifies the SSE logic. SE reserves extra samples for this purpose.
+							const auto blockCorrupted = CheckOverwrite(sb, blockSize, (ug2->flags & UGF_SSE_OVERWRITES_BUFFER_END) != 0);
 
-								// Modules using SSE are allowed to overwrite up to 4 samples off end of buffer.
-								// This simplifies the SSE logic. SE reserves extra samples for this purpose.
-								if( overwrittenSampleCount > 3 || (ug2->flags & UGF_SSE_OVERWRITES_BUFFER_END) == 0 )
-								{
-									block_ok = false;
-									msg = (L"Writting past end of INPUT buffers");
-								}
+							if(blockCorrupted)
+							{
+								block_ok = false;
+								msg = (L"Writting past end of INPUT buffers");
 							}
 						}
 					}
@@ -2195,6 +2235,9 @@ int SeAudioMaster::CalcBlockSize(int p_buffersize)
 	}
 
 #ifdef _DEBUG
+
+//	actual_block_size--; // stress TESTING non-SSE buffer sizes !!!!!!!!!
+
 	int blocks_per_buffer = p_buffersize / actual_block_size; //(p_buffersize + ideal_block_size - 1 ) / ideal_block_size;
 	bool not_multiple_of_buffer = 0 != (p_buffersize % actual_block_size);
 
@@ -2622,18 +2665,36 @@ void SeAudioMaster::AssignPinBuffers()
 	const auto bufferSizeForDriver = BlockSize();
 
 	// if needed, allocate a few extra to ensure all buffers are aligned nicely for SIMD (4 floats)
-	const int simdSize = 4;
-	const auto simdFriendlyBufferSize = (bufferSizeForDriver + simdSize - 1) & ~(simdSize - 1);
+	constexpr int simdSize = 4;
+
+#ifdef _DEBUG
+	constexpr int overwriteCheckSize = simdSize;
+#else
+	constexpr int overwriteCheckSize = 0;
+#endif
+
+	const auto simdFriendlyBufferSize = overwriteCheckSize + (bufferSizeForDriver + simdSize - 1) & ~(simdSize - 1);
 
 	const size_t audioBufferCount = audioPinConstants.size() + audioPins.size();
 
 	audioBuffers.resize(audioBufferCount * simdFriendlyBufferSize);
 
+#ifdef _DEBUG
+	// fill safety bytes with magic_guard_number
+	for (int j = 0; j < audioBufferCount; ++j)
+	{
+		for (int i = bufferSizeForDriver; i < simdFriendlyBufferSize; ++i)
+		{
+			audioBuffers[simdFriendlyBufferSize * j + i] = magic_guard_number;
+		}
+	}
+#endif
+
 	float* dest = audioBuffers.data();
 	for (auto cst : audioPinConstants)
 	{
 		// initialize buffer values.
-		for (int i = 0; i < simdFriendlyBufferSize; ++i)
+		for (int i = 0; i < bufferSizeForDriver; ++i)
 		{
 			dest[i] = cst.first;
 		}

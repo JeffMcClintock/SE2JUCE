@@ -188,7 +188,7 @@ void ug_switch::sub_process(int start_pos, int sampleframes)
 		}
 	}
 #endif
-	while (reinterpret_cast<intptr_t>(o) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 	{
 		*o++ = *i++;
 		--sampleframes;
@@ -356,7 +356,7 @@ void ug_switch2::sub_process(int start_pos, int sampleframes)
 	////		*out++ = *in1++ + 1.f; // deliberate fail passthru test
 	//	}
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(o) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
 	{
 		*o++ = *i++;
 		--sampleframes;

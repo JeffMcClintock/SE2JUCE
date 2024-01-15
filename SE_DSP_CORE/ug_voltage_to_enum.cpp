@@ -5,6 +5,7 @@
 #include "modules/se_sdk3/it_enum_list.h"
 #include "module_register.h"
 #include "tinyxml/tinyxml.h"
+#include "conversion.h"
 
 SE_DECLARE_INIT_STATIC_FILE(ug_voltage_to_enum)
 

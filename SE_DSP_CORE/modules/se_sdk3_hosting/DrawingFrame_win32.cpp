@@ -188,7 +188,7 @@ void DrawingFrameBase::TooltipOnMouseActivity()
 
 void DrawingFrameBase::ShowToolTip()
 {
-	_RPT0(_CRT_WARN, "YEAH!\n");
+//	_RPT0(_CRT_WARN, "YEAH!\n");
 
 	//UTF8StringHelper tooltipText(tooltip);
 	//if (platformObject)
@@ -217,7 +217,7 @@ void DrawingFrameBase::ShowToolTip()
 void DrawingFrameBase::HideToolTip()
 {
 	toolTipShown = false;
-	_RPT0(_CRT_WARN, "NUH!\n");
+//	_RPT0(_CRT_WARN, "NUH!\n");
 
 	if (tooltipWindow)
 	{
@@ -1097,7 +1097,7 @@ void DrawingFrameBase::CreateDevice()
 
 	if (DrawingFactory.getPlatformPixelFormat() == GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB) // DX_support_sRGB)
 	{
-		context.reset(new gmpi::directx::GraphicsContext(mpRenderTarget, &DrawingFactory));
+		context.reset(new gmpi::directx::GraphicsContext2(mpRenderTarget, &DrawingFactory));
 	}
 	else
 	{

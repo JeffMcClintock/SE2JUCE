@@ -85,10 +85,10 @@ int32_t VoiceMute::open()
 #if defined( _DEBUG )
 	// Determine physical voice number.
 	gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> com_object;
-	int32_t r = getHost()->createCloneIterator( com_object.asIMpUnknownPtr() );
+	int32_t res = getHost()->createCloneIterator( com_object.asIMpUnknownPtr() );
 
 	gmpi_sdk::mp_shared_ptr<gmpi::IMpCloneIterator> cloneIterator;
-	r = com_object->queryInterface(gmpi::MP_IID_CLONE_ITERATOR, cloneIterator.asIMpUnknownPtr() );
+	res = com_object->queryInterface(gmpi::MP_IID_CLONE_ITERATOR, cloneIterator.asIMpUnknownPtr() );
 
 	gmpi::IMpUnknown* clone;
 	cloneIterator->first();
@@ -218,11 +218,7 @@ void VoiceMute::subProcess(int bufferOffset, int sampleFrames)
 	{
 		for (int s = 1; s < sampleFrames; ++s) // consistant?
 		{
-			if (in1[0] != in1[s])
-			{
-				assert(false);
-				break;
-			}
+			assert(in1[0] == in1[s]);
 		}
 	}
 #endif
@@ -237,16 +233,16 @@ void VoiceMute::subProcess(int bufferOffset, int sampleFrames)
 	// Use SSE instructions.
 	// ..or copy aside extra values, and restore later.
 	// process fiddly non-aligned prequel.
-	while (((intptr_t)out1) & 0x0f)
+	while (sampleFrames > 0 && reinterpret_cast<intptr_t>(out1) & 0x0f)
 	{
 		*out1++ = *in1++;
 		--sampleFrames;
 	}
 
-	assert( (((intptr_t)in1) & 0xf) == 0 ); // correct alignment?
+	assert( (((intptr_t)in1) & 0x0f) == 0 || sampleFrames == 0); // correct alignment?
 
 	// SSE intrinsics
-	__m128* pSource = (__m128*) in1;
+	const __m128* pSource = (__m128*) in1;
 	__m128* pDest = (__m128*) out1;
 
 	while (sampleFrames > 0)
@@ -275,7 +271,7 @@ void VoiceMute::subProcessSilence(int bufferOffset, int sampleFrames)
 #else
 
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out1) & 0x0f)
+	while (sampleFrames > 0 && reinterpret_cast<intptr_t>(out1) & 0x0f)
 	{
 		*out1++ = 0.0f;
 		--sampleFrames;

@@ -339,13 +339,13 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 				{
 					const auto note = gmpi::midi_2_0::decodeNote(msg);
 
-					_RPTN(0, "PM Note-on %d\n", note.noteNumber);
+					// _RPTN(0, "PM Note-on %d\n", note.noteNumber);
 					if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType) // !! this is only for th ecurrent note!!! not apermanet tuning change !!! TODO
 					{
 						const auto timestamp_oversampled = voiceState->voiceControlContainer_->CalculateOversampledTimestamp(Container(), timestamp);
 
 						const auto semitones = note.attributeValue;
-						_RPTN(0, "      ..pitch = %f\n", semitones);
+						// _RPTN(0, "      ..pitch = %f\n", semitones);
 
 						voiceState->SetKeyTune(note.noteNumber, semitones);
 						voiceState->OnKeyTuningChangedA(timestamp_oversampled, note.noteNumber, 0);
@@ -371,7 +371,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 						const auto timestamp_oversampled = voiceState->voiceControlContainer_->CalculateOversampledTimestamp(Container(), timestamp);
 
 						const auto semitones = gmpi::midi_2_0::decodeNotePitch(msg);
-						_RPTN(0, "      .. bender pitch = %f\n", semitones);
+						// _RPTN(0, "      .. bender pitch = %f\n", semitones);
 
 						// voiceState->OnMidiTuneMessageA(timestamp_oversampled, midiMessage);
 						voiceState->SetKeyTune(polyController.noteNumber, semitones);

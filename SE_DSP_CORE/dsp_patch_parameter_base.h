@@ -41,7 +41,7 @@ public:
 #endif
 	virtual void SerialiseValue( my_output_stream& p_stream, int voice, int patch );
 	virtual void SerialiseMetaData( my_input_stream& p_stream ) = 0;
-	virtual void SerialiseValue( my_input_stream& p_stream, int voice, int patch );
+	virtual bool SerialiseValue( my_input_stream& p_stream, int voice, int patch );
 	virtual void CopyPlugValue( int voice, UPlug* p_plug) = 0;
 	const void* SerialiseForEvent(int voice, int& size);
 	void OnUiMsg(int p_msg_id, my_input_stream& p_stream);

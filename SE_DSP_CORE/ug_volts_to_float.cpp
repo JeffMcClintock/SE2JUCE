@@ -3,6 +3,7 @@
 #include "ug_volts_to_float.h"
 #include "conversion.h"
 #include "module_register.h"
+#include "UgDatabase.h"
 
 SE_DECLARE_INIT_STATIC_FILE(ug_volts_to_float)
 
@@ -23,14 +24,14 @@ static pin_description plugs[] =
 
 static module_description_dsp mod =
 {
-	"VoltsToFloat", IDS_VOLTS_TO_FLOAT, IDS_MG_OLD , &ug_volts_to_float::CreateObject, CF_STRUCTURE_VIEW,plugs, sizeof(plugs)/sizeof(pin_description)
+	"VoltsToFloat", IDS_VOLTS_TO_FLOAT, IDS_MG_OLD , &ug_volts_to_float::CreateObject, CF_STRUCTURE_VIEW,plugs, std::size(plugs)
 };
 
 bool res = ModuleFactory()->RegisterModule( mod );
 
 static module_description_dsp mod2 =
 {
-	"VoltsToFloat2", IDS_VOLTS_TO_FLOAT2, IDS_MG_CONVERSION , &ug_volts_to_float2::CreateObject, CF_STRUCTURE_VIEW,plugs, sizeof(plugs)/sizeof(pin_description)
+	"VoltsToFloat2", IDS_VOLTS_TO_FLOAT2, IDS_MG_CONVERSION , &ug_volts_to_float2::CreateObject, CF_STRUCTURE_VIEW,plugs, std::size(plugs)
 };
 
 bool res2 = ModuleFactory()->RegisterModule( mod2 );
@@ -377,7 +378,7 @@ void ug_volts_to_float::monitor()
 // SSE instructions for getting signal peak. not significantly faster, but could be improved further.
 
 // process fiddly non-sse-aligned prequel.
-while (reinterpret_cast<intptr_t>(input) & 0x0f)
+while (sampleFrames > 0 && reinterpret_cast<intptr_t>(input) & 0x0f)
 {
 values[index] = (std::max)(values[index], abs(*input));
 ++input;

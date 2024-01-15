@@ -594,7 +594,7 @@ namespace GmpiGuiHosting
 		void OnRender(NSView* frame, GmpiDrawing_API::MP1_RECT* dirtyRect)
 		{
 			gmpi::cocoa::DrawingFactory cocoafactory;
-			gmpi::cocoa::GraphicsContext context(frame, &cocoafactory);
+			gmpi::cocoa::GraphicsContext2 context(frame, &cocoafactory);
 
 			context.PushAxisAlignedClip(dirtyRect);
 

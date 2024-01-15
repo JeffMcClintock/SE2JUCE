@@ -3,6 +3,7 @@
 #include "module_register.h"
 #include "ug_container.h"
 #include "ug_patch_param_setter.h"
+#include "Module_Info.h"
 
 SE_DECLARE_INIT_STATIC_FILE(ug_voice_monitor)
 

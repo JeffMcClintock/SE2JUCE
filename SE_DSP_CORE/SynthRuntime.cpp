@@ -48,11 +48,41 @@ void SynthRuntime::prepareToPlay(
 	{
 		ModuleFactory()->RegisterExternalPluginsXmlOnce(nullptr);
 
-		auto bundleinfo = BundleInfo::instance();
-		auto dspXml = bundleinfo->getResource("dsp.se.xml");
-		if (!dspXml.empty() && '<' != dspXml[0])
+		// cache xml document to save time re-parsing on every restart.
+		if (!currentDspXml.RootElement())
 		{
-			Scramble(dspXml);
+			auto bundleinfo = BundleInfo::instance();
+			auto dspXml = bundleinfo->getResource("dsp.se.xml");
+			if (!dspXml.empty() && '<' != dspXml[0])
+			{
+				Scramble(dspXml);
+			}
+
+			currentDspXml.Parse(dspXml.c_str());
+			if (currentDspXml.Error())
+			{
+#if defined( SE_EDIT_SUPPORT )
+				std::wostringstream oss;
+				oss << L"Module XML Error: [SynthEdit.exe]" << currentDspXml.ErrorDesc() << L"." << currentDspXml.Value();
+				getShell()->SeMessageBox(oss.str().c_str(), L"", MB_OK | MB_ICONSTOP);
+#else
+#if defined (_DEBUG)
+				// Get error information and break.
+				TiXmlNode* e = currentDspXml.FirstChildElement();
+				while (e)
+				{
+					_RPT1(_CRT_WARN, "%s\n", e->Value());
+					TiXmlElement* pElem = e->FirstChildElement("From");
+					if (pElem)
+					{
+						const char* from = pElem->Value();
+					}
+					e = e->LastChild();
+				}
+				assert(false);
+#endif
+#endif
+			}
 		}
 
 		std::lock_guard<std::mutex> x(generatorLock);
@@ -69,6 +99,11 @@ void SynthRuntime::prepareToPlay(
 			// In this case, we need to ensure Processor has latest preset from DAW.
 			// Action any waiting parameter updates on GUI->DSP queue.
 			ServiceDspRingBuffers();
+
+			// ensure preset from DAW is up-to-date.
+			generator->HandleInterrupt();
+
+			assert(!generator->interrupt_setchunk_);
 
 			//const bool saveExtraState = true;
 			//generator->getPresetState(presetChunk, saveExtraState);
@@ -88,7 +123,7 @@ void SynthRuntime::prepareToPlay(
 		generator->setBlockSize(generator->CalcBlockSize(maxBlockSize));
 
 		std::vector<int32_t> mutedContainers; // unused at preset. (Waves thing).
-		generator->BuildDspGraph(dspXml.c_str(), pendingPresets, mutedContainers);
+		generator->BuildDspGraph(&currentDspXml, pendingPresets, mutedContainers);
 
 #if 0
 		// Apply preset before Open(), else gets delayed by 1 block causing havok with BPM Clock (receives BPM=0 for 1st block).
@@ -255,7 +290,7 @@ void SynthRuntime::getPresetState(std::string& chunk, bool processorActive)
 
 void SynthRuntime::setPresetStateFromUiThread(const std::string& chunk, bool processorActive)
 {
-	std::lock_guard<std::mutex> x(generatorLock);
+	std::lock_guard<std::mutex> x(generatorLock); // protect against setting preset during a restart of the processor (else preset gets lost).
 	if (generator) // Can be null during AU validation.
 	{
 		generator->setPresetState_UI_THREAD(chunk, processorActive);

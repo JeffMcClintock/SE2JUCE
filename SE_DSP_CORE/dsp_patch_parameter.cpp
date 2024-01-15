@@ -191,9 +191,9 @@ void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 
 		// Processor has only one patch, regardless of what patch the UI is using.
 		constexpr int processorPatch = 0;
-		SerialiseValue( p_stream, voice, processorPatch);
+		const auto changed = SerialiseValue( p_stream, voice, processorPatch);
 
-		if( EffectivePatch() == processorPatch)
+		if(changed && EffectivePatch() == processorPatch)
 		{
 			OnValueChangedFromGUI( due_to_program_change, voice );
 		}
@@ -628,11 +628,11 @@ void dsp_patch_parameter_base::SerialiseValue(my_output_stream& strm, int voice,
 	strm.Write(data, size);
 }
 
-void dsp_patch_parameter_base::SerialiseValue( my_input_stream& p_stream, int voice, int patch )
+bool dsp_patch_parameter_base::SerialiseValue( my_input_stream& p_stream, int voice, int patch )
 {
 	assert( voice >= 0 && voice < 128 );
 	assert( patch >= 0 && patch < 128 );
-	patchMemory[voice]->SetValue( p_stream, patch );
+	return patchMemory[voice]->SetValue( p_stream, patch );
 }
 
 const void* dsp_patch_parameter_base::SerialiseForEvent(int voice, int& size)

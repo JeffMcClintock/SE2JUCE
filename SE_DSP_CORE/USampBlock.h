@@ -155,9 +155,18 @@ public:
 	void Copy(USampBlock* from)
 	{
 		//	_RPT3(_CRT_WARN, "USampBlock::Copy %x->%x, first val=%f\n", from,this, m_samples[0]);
-		for( int b = USAMPLEBLOCK_SAFETY_ZONE_SIZE + debugBlocksize_ - 1 ; b >= 0 ; b-- )
+		for (int b = USAMPLEBLOCK_SAFETY_ZONE_SIZE + debugBlocksize_ - 1; b >= 0; b--)
 		{
 			m_samples[b] = from->m_samples[b];
+		}
+	}
+
+	void Copy(const float* from)
+	{
+		//	_RPT3(_CRT_WARN, "USampBlock::Copy %x->%x, first val=%f\n", from,this, m_samples[0]);
+		for (int b = USAMPLEBLOCK_SAFETY_ZONE_SIZE + debugBlocksize_ - 1; b >= 0; b--)
+		{
+			m_samples[b] = from[b];
 		}
 	}
 
@@ -184,7 +193,31 @@ public:
 		else
 			return true;
 	}
-	#endif
+
+	bool Compare(const float* other, int from, int to)
+	{
+		int first_corrupt = 10000;
+		int last_corrupt = -1;
+
+		for (int b = from; b < to; b++)
+		{
+			if (((int*)m_samples)[b] != ((int*)other)[b]) // bitwise compare (avoids fail on #INF)
+			{
+				first_corrupt = (std::min)(first_corrupt, b);
+				last_corrupt = (std::max)(first_corrupt, b);
+				_RPT3(_CRT_WARN, "    buffer[%3d] was %f -> %f\n", b, m_samples[b], other[b]);
+			}
+		}
+
+		if (last_corrupt > -1)
+		{
+			_RPT2(_CRT_WARN, "Overwrote %d -> %d\n", first_corrupt, last_corrupt);
+			return false;
+		}
+		else
+			return true;
+	}
+#endif
 
 	#ifdef _DEBUG
 	bool CheckAllSame()

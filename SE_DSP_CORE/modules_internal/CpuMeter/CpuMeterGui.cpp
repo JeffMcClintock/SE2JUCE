@@ -12,6 +12,7 @@
 #endif
 
 SE_DECLARE_INIT_STATIC_FILE(CpuMeterGui);
+
 using namespace gmpi;
 using namespace GmpiDrawing;
 
@@ -35,7 +36,6 @@ public:
 	{
 		auto r = getRect();
 		Graphics g(drawingContext);
-
 		ClipDrawingToBounds cd(g, r);
 
 		auto textFormat = GetGraphicsFactory().CreateTextFormat();

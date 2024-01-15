@@ -376,11 +376,14 @@ public:
 	void setInputSilent(int input, bool isSilent);
 	uint64_t updateSilenceFlags(int output, int count);
 
+#if 0
 	void BuildDspGraph(
 		const char* structureXml,
 		std::vector< std::pair<int32_t, std::string> >& pendingPresets,
 		std::vector<int32_t>& mutedContainers
 	);
+#endif
+
 	void BuildDspGraph(
 		class TiXmlDocument* doc,
 		std::vector< std::pair<int32_t, std::string> >& pendingPresets,

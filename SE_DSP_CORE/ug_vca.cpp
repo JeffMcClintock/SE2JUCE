@@ -257,7 +257,7 @@ void ug_vca::process_both_run_linear(int start_pos, int sampleframes)
 	// Use SSE instructions.
 
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		float gain = *in2++;
 		*out++ = *in1++ * max( gain, 0.f ); //limit to >= 0
@@ -329,7 +329,7 @@ void ug_vca::process_vol_fixed(int start_pos, int sampleframes)
 	}
 	*/
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = *in1++ * gain;
 		--sampleframes;
@@ -365,7 +365,7 @@ void ug_vca::process_bypass(int start_pos, int sampleframes)
 	// Use SSE instructions.
 
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = *in++;
 		--sampleframes;
@@ -403,7 +403,7 @@ void ug_vca::process_both_stop(int start_pos, int sampleframes)
 
 	// Use SSE instructions.
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (s > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = out_val;
 		--s;

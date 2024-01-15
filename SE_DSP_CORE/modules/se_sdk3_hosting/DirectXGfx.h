@@ -691,18 +691,38 @@ namespace gmpi
 
 			virtual GmpiDrawing_API::MP1_SIZE MP_STDCALL GetSizeF() override
 			{
-				GmpiDrawing_API::MP1_SIZE returnSize;
-				UINT w, h;
-				diBitmap_->GetSize(&w, &h);
-				returnSize.width = (float)w;
-				returnSize.height = (float)h;
+				if (diBitmap_)
+				{
+					UINT width{}, height{};
+					diBitmap_->GetSize(&width, &height);
+					return { (float)width, (float)height };
+				}
+				else if (nativeBitmap_)
+				{
+					const auto sizef = nativeBitmap_->GetSize();
+					return { sizef.width, sizef.height };
+				}
 
-				return returnSize;
+				return {};
 			}
 
 			int32_t MP_STDCALL GetSize(GmpiDrawing_API::MP1_SIZE_U* returnSize) override
 			{
+				if (diBitmap_)
+				{
 				diBitmap_->GetSize(&returnSize->width, &returnSize->height);
+				}
+				else if (nativeBitmap_)
+				{
+					const auto sizef = nativeBitmap_->GetSize();
+					returnSize->width = (uint32_t)sizef.width;
+					returnSize->height = (uint32_t)sizef.height;
+				}
+				else
+				{
+					*returnSize = {};
+					return gmpi::MP_FAIL;
+				}
 
 				return gmpi::MP_OK;
 			}
@@ -1034,7 +1054,7 @@ namespace gmpi
 			GMPI_REFCOUNT_NO_DELETE;
 		};
 
-		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext2
+		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext
 		{
 		protected:
 			ID2D1DeviceContext* context_;
@@ -1217,7 +1237,6 @@ namespace gmpi
 			}
 
 			int32_t MP_STDCALL CreateCompatibleRenderTarget(const GmpiDrawing_API::MP1_SIZE* desiredSize, GmpiDrawing_API::IMpBitmapRenderTarget** bitmapRenderTarget) override;
-			int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject) override;
 
 			void MP_STDCALL DrawRoundedRectangle(const GmpiDrawing_API::MP1_ROUNDED_RECT* roundedRect, const GmpiDrawing_API::IMpBrush* brush, float strokeWidth, const GmpiDrawing_API::IMpStrokeStyle* strokeStyle) override
 			{
@@ -1283,17 +1302,36 @@ namespace gmpi
 				return factory->getPlatformPixelFormat() == GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB;
 			}
 
+			GMPI_QUERYINTERFACE1(GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI, GmpiDrawing_API::IMpDeviceContext);
+			GMPI_REFCOUNT_NO_DELETE;
+		};
+
+		class GraphicsContext2 : public GraphicsContext, public GmpiDrawing_API::IMpDeviceContextExt
+		{
+		public:
+			GraphicsContext2(ID2D1DeviceContext* deviceContext, Factory* pfactory) : GraphicsContext(deviceContext, pfactory) {}
+			GraphicsContext2(Factory* pfactory) : GraphicsContext(pfactory) {}
+
+			int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject) override;
+
 			int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
 			{
 				*returnInterface = 0;
-				if (iid == GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI || iid == GmpiDrawing_API::IMpDeviceContext2::guid || iid == MP_IID_UNKNOWN)
+				if (iid == GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI || iid == MP_IID_UNKNOWN)
 				{
-					*returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContext2*>(this);
+					*returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContext*>(this);
+					addRef();
+					return gmpi::MP_OK;
+				}
+				if (iid == GmpiDrawing_API::IMpDeviceContextExt::guid)
+				{
+					*returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContextExt*>(this);
 					addRef();
 					return gmpi::MP_OK;
 				}
 				return MP_NOSUPPORT;
 			}
+
 			GMPI_REFCOUNT_NO_DELETE;
 		};
 
@@ -1353,7 +1391,7 @@ namespace gmpi
 						D2D1_FEATURE_LEVEL_DEFAULT
 					};
 
-					auto hr = pfactory->getWicFactory()->CreateBitmap((UINT)desiredSize.width, (UINT)desiredSize.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnLoad, &wicBitmap);
+					[[maybe_unused]] auto hr = pfactory->getWicFactory()->CreateBitmap((UINT)desiredSize.width, (UINT)desiredSize.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnLoad, &wicBitmap);
 					pfactory->getD2dFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &wikBitmapRenderTarget);
 					wikBitmapRenderTarget->QueryInterface(IID_ID2D1DeviceContext, (void**)&context_);
 				}
@@ -1377,11 +1415,6 @@ namespace gmpi
 			}
 
 			virtual int32_t MP_STDCALL GetBitmap(GmpiDrawing_API::IMpBitmap** returnBitmap);
-
-			int32_t CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, class IMpBitmapRenderTarget** bitmapRenderTarget)
-			{
-				return gmpi::MP_FAIL; // not supported ATM.
-			}
 
 			int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
 			{

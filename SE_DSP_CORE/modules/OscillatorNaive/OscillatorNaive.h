@@ -179,14 +179,14 @@ public:
 		float* audioOut = getBuffer(pinAudioOut);
 
 		float* phaseMod;
-		if(phaseModulationPolicy::Active || SyncModulationPolicy::Active) // Need phase available for sync also.
+		if constexpr (phaseModulationPolicy::Active || SyncModulationPolicy::Active) // Need phase available for sync also.
 			phaseMod = getBuffer(pinPhaseMod);
 
 		for (int s = sampleFrames; s > 0; --s)
 		{
 			PitchModulationPolicy::Calculate(pitchTable, pitch, increment);
 
-			if (phaseModulationPolicy::Active)
+			if constexpr (phaseModulationPolicy::Active)
 			{
 				double delataPhase = prevPhase - *phaseMod;
 				prevPhase = *phaseMod;
@@ -196,7 +196,7 @@ public:
 			}
 
 			// trigger sync?
-			if (SyncModulationPolicy::Active)
+			if constexpr (SyncModulationPolicy::Active)
 			{
 				if ((*sync > 0.0f) != syncState)
 				{

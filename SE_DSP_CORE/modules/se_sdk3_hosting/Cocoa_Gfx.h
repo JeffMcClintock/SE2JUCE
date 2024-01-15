@@ -1537,7 +1537,7 @@ return gmpi::MP_FAIL;
 			GMPI_REFCOUNT;
 		};
 
-		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext2
+		class GraphicsContext : public GmpiDrawing_API::IMpDeviceContext
 		{
 		protected:
 			std::wstring_convert<std::codecvt_utf8<wchar_t>>* stringConverter; // cached, as constructor is super-slow.
@@ -2074,7 +2074,6 @@ return gmpi::MP_FAIL;
 			}
 
 			int32_t MP_STDCALL CreateCompatibleRenderTarget(const GmpiDrawing_API::MP1_SIZE* desiredSize, GmpiDrawing_API::IMpBitmapRenderTarget** bitmapRenderTarget) override;
-            int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject) override;
 
 			void MP_STDCALL DrawRoundedRectangle(const GmpiDrawing_API::MP1_ROUNDED_RECT* roundedRect, const GmpiDrawing_API::IMpBrush* brush, float strokeWidth, const GmpiDrawing_API::IMpStrokeStyle* strokeStyle) override
 			{
@@ -2163,14 +2162,10 @@ return gmpi::MP_FAIL;
 
 			void MP_STDCALL BeginDraw() override
 			{
-				//		context_->BeginDraw();
 			}
 
 			int32_t MP_STDCALL EndDraw() override
 			{
-				//		auto hr = context_->EndDraw();
-
-				//		return hr == S_OK ? (gmpi::MP_OK) : (gmpi::MP_FAIL);
 				return gmpi::MP_OK;
 			}
    
@@ -2198,17 +2193,35 @@ return gmpi::MP_FAIL;
 */
 			//	void MP_STDCALL InsetNewMethodHere(){}
 
+			GMPI_QUERYINTERFACE1(GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI, GmpiDrawing_API::IMpDeviceContext);
+			GMPI_REFCOUNT_NO_DELETE;
+		};
+
+        class GraphicsContext2 : public GraphicsContext, public GmpiDrawing_API::IMpDeviceContextExt
+        {
+        public:
+            GraphicsContext2(NSView* pview, gmpi::cocoa::DrawingFactory* pfactory) : GraphicsContext(pview, pfactory){}
+
+            int32_t MP_STDCALL CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject) override;
+
             int32_t MP_STDCALL queryInterface(const gmpi::MpGuid& iid, void** returnInterface) override
             {
                 *returnInterface = 0;
-                if (iid == GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI || iid == GmpiDrawing_API::IMpDeviceContext2::guid || iid == MP_IID_UNKNOWN)
+                if (iid == GmpiDrawing_API::SE_IID_DEVICECONTEXT_MPGUI || iid == MP_IID_UNKNOWN)
                 {
-                    *returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContext2*>(this);
+                    *returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContext*>(this);
+                    addRef();
+                    return gmpi::MP_OK;
+                }
+                if (iid == GmpiDrawing_API::IMpDeviceContextExt::guid)
+                {
+                    *returnInterface = static_cast<GmpiDrawing_API::IMpDeviceContextExt*>(this);
                     addRef();
                     return gmpi::MP_OK;
                 }
                 return MP_NOSUPPORT;
             }
+
             GMPI_REFCOUNT_NO_DELETE;
 		};
 
@@ -2229,10 +2242,19 @@ return gmpi::MP_FAIL;
 
             void MP_STDCALL BeginDraw() override
             {
+#if USE_BACKING_BUFFER
+                [image lockFocus];
+
+                // draw upside down
+                NSAffineTransform* transform = [NSAffineTransform transform];
+                [transform scaleXBy:1 yBy:-1];
+                [transform translateXBy:0 yBy:-[image size].height];
+                [transform concat];
+#else
                 // To match Flipped View, Flip Bitmap Context too.
                 // (Alternative is [image setFlipped:TRUE] in constructor, but that method is deprected).
                 [image lockFocusFlipped:TRUE];
-
+#endif
                 GraphicsContext::BeginDraw();
             }
             
@@ -2283,9 +2305,9 @@ return gmpi::MP_FAIL;
 
 			return b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_RENDERTARGET_MPGUI, reinterpret_cast<void **>(bitmapRenderTarget));
 		}
-        int32_t GraphicsContext::CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject)
+        int32_t GraphicsContext2::CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject)
         {
-            GmpiDrawing_API::MP1_SIZE sizef{ desiredSize.width, desiredSize.height };
+            GmpiDrawing_API::MP1_SIZE sizef{ static_cast<float>(desiredSize.width), static_cast<float>(desiredSize.height) };
             return CreateCompatibleRenderTarget(&sizef, returnObject);
         }
     

@@ -69,7 +69,7 @@ bool PatchStorageVariableSize::SetValue( const void* data, size_t size, int patc
 {
 	assert( patch >= 0 && patch < patchCount_ );
 	char* dest = patchMemory_[patch].second;
-	bool isChanged = (dest == 0) || size != patchMemory_[patch].first || 0 != memcmp(dest, data, size);
+	const bool isChanged = size != patchMemory_[patch].first || (size != 0 && (0 == dest || 0 != memcmp(dest, data, size)));
 
 	// Avoid memory allocation if at all possible.
 	if( patchMemory_[patch].first != size )
@@ -83,22 +83,39 @@ bool PatchStorageVariableSize::SetValue( const void* data, size_t size, int patc
 	return isChanged;
 };
 
-void PatchStorageVariableSize::SetValue(my_input_stream& p_stream, int patch )
+bool PatchStorageVariableSize::SetValue(my_input_stream& p_stream, int patch )
 {
+	assert( patch >= 0 && patch < patchCount_ );
+	const auto originalSize = patchMemory_[patch].first;
+
 	int size;
 	p_stream >> size;
-	assert( patch >= 0 && patch < patchCount_ );
+
 	char* dest = patchMemory_[patch].second;
 
+	char temp[8];
+
 	// Avoid memory allocation if at all possible.
-	if( patchMemory_[patch].first < size )
+	if(originalSize < size)
 	{
 		delete [] dest;
 		dest = patchMemory_[patch].second = new char[size];
 	}
+	else
+	{
+		// copy the current value (up to 8 bytes) in order to dertermin if the value changed.
+		if (originalSize == size && size <= (int)sizeof(temp))
+		{
+			memcpy(temp, dest, size);
+		}
+	}
+
 	patchMemory_[patch].first = size;
 
 	p_stream.Read(dest,size);
+
+	// return true if the value changed. (or value was too big to compare properly)
+	return originalSize != size || size > (int)sizeof(temp) || 0 != memcmp(temp, dest, size);
 }
 
 RawView PatchStorageVariableSize::GetValueRaw(int patch)
@@ -167,17 +184,28 @@ bool PatchStorageFixedSize::SetValue(const void* data, size_t size, int patch)
 };
 
 
-void PatchStorageFixedSize::SetValue(my_input_stream& p_stream, int patch )
+bool PatchStorageFixedSize::SetValue(my_input_stream& p_stream, int patch )
 {
 	// when upgrading pre 1.1 files, all patches are loaded, even if 'Ignore PC' is set.
 	// This gives user chance to recitfy bug where IPC don't work for CControl-based classes.
 	// When DSP patch mem is created however, only one patch is allocated. Need to check GUI
 	// ain't updating a patch we don't have.  Happens when loading fxb banks etc.
-	if( patch >= 0 && patch < getPatchCount())
+	if (patch < 0 || patch >= getPatchCount())
+		return false;
+
+	char* dest = patchMemory_ + patch * size_;
+
+	// copy the current value (up to 8 bytes) in order to dertermin if the value changed.
+	char temp[8];
+	if (size_ <= (int)sizeof(temp))
 	{
-		char* dest = patchMemory_ + patch * size_;
-		p_stream.Read(dest,size_);
+		memcpy(temp, dest, size_);
 	}
+
+	p_stream.Read(dest,size_);
+
+	// return true if the value changed. (or value was too big to compare properly)
+	return size_ > (int) sizeof(temp) || 0 != memcmp(temp, dest, size_);
 }
 
 RawView PatchStorageFixedSize::GetValueRaw(int patch)

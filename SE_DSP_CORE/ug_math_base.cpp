@@ -72,6 +72,8 @@ ug_math_base::ug_math_base() :
 // call the derived class once, to get it's output value
 void ug_math_base::process_both_stop1(int start_pos, int sampleframes)
 {
+	assert(sampleframes > 0);
+
 	process_A_run( start_pos, 1 ); // calculate one output value
 	static_output_val = *(out1_ptr + start_pos);
 	SET_CUR_FUNC( &ug_math_base::process_both_stop2 );
@@ -102,7 +104,7 @@ void ug_math_base::process_both_stop2(int start_pos, int sampleframes)
 	auto counter = sampleframes;
 
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (counter > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = out_val;
 		--counter;
@@ -201,7 +203,7 @@ void ug_math_mult::process_both_run(int start_pos, int sampleframes)
 	// Use SSE instructions.
 
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = 10.0f * *in1++ * *in2++;
 		--sampleframes;
@@ -242,7 +244,7 @@ void ug_math_mult::process_A_run(int start_pos, int sampleframes)
 #else
 	// Use SSE instructions.
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = *in1++ * gain;
 		--sampleframes;
@@ -280,7 +282,7 @@ void ug_math_mult::process_B_run(int start_pos, int sampleframes)
 #else
 
 	// process fiddly non-sse-aligned prequel.
-	while (reinterpret_cast<intptr_t>(out) & 0x0f)
+	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 	{
 		*out++ = *in2++ * gain;
 		--sampleframes;

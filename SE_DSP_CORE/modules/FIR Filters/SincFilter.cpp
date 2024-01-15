@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <algorithm>
+#include <numeric>
 #include "Sinc.h"
 #include "../shared/xp_simd.h"
 #include "./SincFilter.h"
@@ -22,12 +23,12 @@ void SincFilterLpHp::subProcess(int sampleFrames)
 {
 	// get pointers to in/output buffers.
 	const float* signal = getBuffer(pinSignal);
-	float* output = getBuffer(pinOutput);
+	float* __restrict output = getBuffer(pinOutput);
 
 	const auto numCoefs = coefs.size();
 
 	// maintain history as contiguous samples by shifting left each time.
-	memcpy(&(hist[numCoefs]), signal, sizeof(float) * sampleFrames);
+	std::copy(signal, signal + sampleFrames, hist.begin() + numCoefs);
 
 #ifndef GMPI_SSE_AVAILABLE
 
@@ -52,8 +53,77 @@ void SincFilterLpHp::subProcess(int sampleFrames)
 	}
 
 #else
-	// Process 4 samples at a time.
+#if 1
 
+	// Process first coefs (copy to output).
+	const float* __restrict h = hist.data();
+#if 0
+	{
+		float* out = output;
+		float* hi = h;
+
+		// process fiddly non-sse-aligned prequel.
+		int s{};
+		for (; s < sampleFrames && reinterpret_cast<intptr_t>(out) & 0x0f ; ++s)
+		{
+			*out++ = *hi++ * coefs[0];
+		}
+
+		const __m128 tap = _mm_set_ps1(coefs[0]);
+		for (; s < sampleFrames; s += 4)
+		{
+			_mm_storeu_ps(out, _mm_mul_ps(_mm_loadu_ps(hi), tap));
+			hi += 4;
+			out += 4;
+		}
+	}
+#else
+	{
+		const auto coef = coefs[0];
+		std::transform(h, h + sampleFrames, output, [coef](auto& n) {return coef * n; });
+	}
+#endif
+
+	// Process remaining coefs (add to output).
+	{
+		for (unsigned int t = 1; t < numCoefs; ++t)
+		{
+			++h; // shift window right
+
+#if 0
+			// 1.5% CPU
+			const auto& coef = coefs[t];
+			std::transform(h, h + sampleFrames, output, output, [coef](const float& n, const float& o) {return o + coef * n; });
+#else
+			// 0.26% CPU
+			const float* hi = h;
+			float* out = output;
+
+			// process fiddly non-sse-aligned prequel.
+			int s{};
+			for (; s < sampleFrames && reinterpret_cast<intptr_t>(out) & 0x0f; ++s)
+			{
+				*out++ = *hi++ * coefs[t];
+				s++;
+			}
+
+			const __m128 tap = _mm_set_ps1(coefs[t]);
+
+			for (; s < sampleFrames; s += 4)
+			{
+				// output[s] += h[s] * taps[t];
+				_mm_storeu_ps(out, _mm_add_ps(_mm_loadu_ps(out), _mm_mul_ps(_mm_loadu_ps(hi), tap)));
+				hi += 4;
+				out += 4;
+			}
+#endif
+		}
+	}
+
+#else
+	// FAULTY: WRITES OVER END OF BUFFER becuase it does not align writes to SSE boundary, just goes to the last sample plus (up to) 3 more. which is too far when buffer ALREADY aligns on SSE
+	// 
+	// Process 4 samples at a time.
 	float* h = hist.data();
 
 	// Process first coefs (copy).
@@ -66,6 +136,7 @@ void SincFilterLpHp::subProcess(int sampleFrames)
 		h2 += 4;
 		out += 4;
 	}
+
 
 	// Process remaining coefs (add).
 	for (unsigned int t = 1; t < numCoefs; ++t)
@@ -83,9 +154,10 @@ void SincFilterLpHp::subProcess(int sampleFrames)
 	}
 
 #endif
+#endif
 
 	// shift history.
-	memcpy(hist.data(), &hist[sampleFrames], sizeof(float) * numCoefs);
+	std::copy(hist.begin() + sampleFrames, hist.begin() + sampleFrames + numCoefs, hist.begin());
 }
 
 void SincFilterLpHp::subProcessStatic(int sampleFrames)

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ug_float_to_volts.h"
 #include "module_register.h"
+#include "UgDatabase.h"
 
 SE_DECLARE_INIT_STATIC_FILE(ug_float_to_volts)
 

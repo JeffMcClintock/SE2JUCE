@@ -91,7 +91,7 @@ inline std::wstring Utf8ToWstring(const char* pstr, size_t psize)
 
         res.resize(expected_utf16words);
 
-        simdutf::convert_utf8_to_utf16le(pstr, psize, (char16_t*) res.data());
+        [[maybe_unused]] const auto r = simdutf::convert_utf8_to_utf16le(pstr, psize, (char16_t*) res.data());
     }
     else
     {
@@ -99,7 +99,7 @@ inline std::wstring Utf8ToWstring(const char* pstr, size_t psize)
 
         res.resize(expected_utfwords);
 
-        simdutf::convert_utf8_to_utf32(pstr, psize, (char32_t*) res.data());
+        [[maybe_unused]] const auto r = simdutf::convert_utf8_to_utf32(pstr, psize, (char32_t*) res.data());
     }
 #else
 

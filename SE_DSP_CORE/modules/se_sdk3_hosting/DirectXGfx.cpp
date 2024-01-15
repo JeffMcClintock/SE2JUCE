@@ -1117,11 +1117,11 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 		}
 
 		// new version supports drawing on CPU bitmaps
-		int32_t GraphicsContext::CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject)
+		int32_t GraphicsContext2::CreateBitmapRenderTarget(GmpiDrawing_API::MP1_SIZE_L desiredSize, bool enableLockPixels, GmpiDrawing_API::IMpBitmapRenderTarget** returnObject)
 		{
 			*returnObject = nullptr;
 
-			GmpiDrawing_API::MP1_SIZE sizef{ desiredSize.width, desiredSize.height };
+			GmpiDrawing_API::MP1_SIZE sizef{ static_cast<float>(desiredSize.width),  static_cast<float>(desiredSize.height) };
 
 			gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
 			b2.Attach(new BitmapRenderTarget(this, sizef, factory, enableLockPixels));
@@ -1133,17 +1133,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 			*returnBitmap = nullptr;
 
 			HRESULT hr{ E_FAIL };
-#if 0 // testing
-			if (wikBitmapRenderTarget)
-			{
-				gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
-				b2.Attach(new Bitmap(factory, wicBitmap));
 
-				b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_MPGUI, reinterpret_cast<void**>(returnBitmap));
-
-				hr = S_OK;
-			}
-#endif
 			if (gpuBitmapRenderTarget)
 			{
 				ID2D1Bitmap* nativeBitmap{};
@@ -1157,6 +1147,15 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 
 					b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_MPGUI, reinterpret_cast<void**>(returnBitmap));
 				}
+			}
+			else if (wikBitmapRenderTarget)
+			{
+				gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
+				b2.Attach(new Bitmap(factory, wicBitmap));
+
+				b2->queryInterface(GmpiDrawing_API::SE_IID_BITMAP_MPGUI, reinterpret_cast<void**>(returnBitmap));
+
+				hr = S_OK;
 			}
 
 			return hr == S_OK ? gmpi::MP_OK : gmpi::MP_FAIL;

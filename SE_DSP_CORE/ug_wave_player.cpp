@@ -3,6 +3,7 @@
 #include "module_register.h"
 #include "iseshelldsp.h"
 #include "BundleInfo.h"
+#include "conversion.h"
 
 // how many samples used during interpolation (4 each side)
 #define GUARD_ZONE 8

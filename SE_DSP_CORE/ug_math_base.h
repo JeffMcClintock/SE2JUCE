@@ -35,7 +35,7 @@ public:
 		// Use SSE instructions.
 #if 1
 		// process fiddly non-sse-aligned prequel.
-		while (reinterpret_cast<intptr_t>(out) & 0x0f)
+		while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
 		{
 			*out++ = *in++;
 			--sampleframes;

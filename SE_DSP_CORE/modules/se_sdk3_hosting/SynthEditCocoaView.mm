@@ -104,7 +104,7 @@ public:
 #endif
         // context must be disposed (via RIAA) before restoring state, because its destructor also restores state
         {
-	        gmpi::cocoa::GraphicsContext context(frame, &drawingFactory);
+	        gmpi::cocoa::GraphicsContext2 context(frame, &drawingFactory);
 
             // draw the absolute minimum.
             for( auto& r : dirtyRects.rects )
@@ -120,7 +120,7 @@ public:
 #else
         // context must be disposed before restoring state, because it's destructor also restores state
         {
-	        gmpi::cocoa::GraphicsContext context(frame, &drawingFactory);
+	        gmpi::cocoa::GraphicsContext2 context(frame, &drawingFactory);
         
             // JUCE standalone tends to draw over window non-client area on macOS. clip drawing.
             const auto r = [frame bounds];

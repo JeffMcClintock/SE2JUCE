@@ -2,13 +2,8 @@
 #include "ug_midi_keyboard.h"
 #include "midi_defs.h"
 #include "module_register.h"
+#include "conversion.h"
 #include "my_input_stream.h"
-
-#if defined(_WIN32)
-#include "mmsystem.h"
-#undef max
-#undef min
-#endif
 
 namespace
 {

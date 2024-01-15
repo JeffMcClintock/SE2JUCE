@@ -10,6 +10,7 @@
 #include "iseshelldsp.h"
 #include "math.h"
 #include "BundleInfo.h"
+#include "UgDatabase.h"
 
 using namespace std;
 
@@ -38,7 +39,7 @@ namespace
 		, &ug_patch_automator::CreateObject	// create function
 		, CF_DONT_EXPAND_CONTAINER|CF_STRUCTURE_VIEW					// flags CF_WHATEVER
 		,plugs
-		, sizeof(plugs)/sizeof(pin_description)
+		, std::size(plugs)
 	};
 
 	bool res = ModuleFactory()->RegisterModule( mod );

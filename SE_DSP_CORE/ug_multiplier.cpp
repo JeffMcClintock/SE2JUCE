@@ -26,8 +26,8 @@ IMPLEMENT_UG_INFO_FUNC2(ug_multiplier)
 
 void ug_multiplier::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p_state)
 {
-	state_type input1_status = GetPlug(PN_INPUT1)->getState();
-	state_type input2_status = GetPlug(PN_INPUT2)->getState();
+	const state_type input1_status = GetPlug(PN_INPUT1)->getState();
+	const state_type input2_status = GetPlug(PN_INPUT2)->getState();
     state_type out_stat = (std::max)(input1_status, input2_status);
 
 	bypassPlug = -1;
@@ -105,8 +105,8 @@ void ug_multiplier::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p
 
 void ug_multiplier::process_both_run(int start_pos, int sampleframes)
 {
-	float* in1 = in_ptr[0] + start_pos;
-	float* in2 = in_ptr[1] + start_pos;
+	const float* in1 = in_ptr[0] + start_pos;
+	const float* in2 = in_ptr[1] + start_pos;
 	float* out = out1_ptr + start_pos;
 
 	for( int s = sampleframes ; s > 0 ; s-- )
@@ -117,10 +117,10 @@ void ug_multiplier::process_both_run(int start_pos, int sampleframes)
 
 void ug_multiplier::process_A_run(int start_pos, int sampleframes)
 {
-	float* in1 = in_ptr[0] + start_pos;
-	float* in2 = in_ptr[1] + start_pos;
+	const float* in1 = in_ptr[0] + start_pos;
+	const float* in2 = in_ptr[1] + start_pos;
 	float* out = out1_ptr + start_pos;
-	float gain = *in2;
+	const float gain = *in2;
 
 	for( int s = sampleframes ; s > 0 ; s-- )
 	{
@@ -130,8 +130,8 @@ void ug_multiplier::process_A_run(int start_pos, int sampleframes)
 
 void ug_multiplier::process_B_run(int start_pos, int sampleframes)
 {
-	float* in1 = in_ptr[0] + start_pos;
-	float* in2 = in_ptr[1] + start_pos;
+	const float* in1 = in_ptr[0] + start_pos;
+	const float* in2 = in_ptr[1] + start_pos;
 	float* out = out1_ptr + start_pos;
 	float gain = *in1;
 
