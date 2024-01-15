@@ -41,7 +41,7 @@ open project from SE2JUCE_Plugins/PD303/SE_Project/PD303.se1
 
 close SE
 
-Open Cmake
+Open CMake GUI
 
 Under "where is the source code" enter location of SE2JUCE_Plugins folder
 
@@ -49,7 +49,7 @@ Under "where to build the binaries" enter something like C:\build_SE2JUCE_Plugin
 
 Click 'Configure", choose whatever IDE you prefer. Ignore the error message.
 
-enter the correct JUCE folder, and the correct SE2JUCE folder
+Look for the variables 'JUCE_FOLDER_HERE' and 'SE2JUCE_FOLDER_HERE' . Browse for your actual JUCE folder, and the correct SE2JUCE folder
 
 click 'generate'
 

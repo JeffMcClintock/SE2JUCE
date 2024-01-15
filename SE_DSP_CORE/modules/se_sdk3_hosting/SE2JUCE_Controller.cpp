@@ -8,8 +8,6 @@ MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterInde
 	,juceController(controller)
 	, isInverted_(isInverted)
 {
-	hostIndex = ParameterIndex;
-//	isInverted_ = normalisedToReal(0.0) > normalisedToReal(1.0);
 }
 
 SeJuceController::SeJuceController() :
@@ -134,7 +132,7 @@ void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param, gmpi::Fie
 	{
 	case gmpi::MP_FT_GRAB:
 		{
-			auto juceParameter = processor->getParameters()[param->getNativeIndex()];
+			auto juceParameter = processor->getParameters()[param->getNativeTag()];
 			if (juceParameter)
 			{
 				if (param->isGrabbed())
@@ -149,7 +147,7 @@ void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param, gmpi::Fie
 //	case gmpi::MP_FT_NORMALIZED:
 		{
 			// update JUCE parameter
-			auto juceParameter = processor->getParameters()[param->getNativeIndex()];
+			auto juceParameter = processor->getParameters()[param->getNativeTag()];
 			if (juceParameter)
 			{
 				const bool handleGrabMyself = !param->isGrabbed();

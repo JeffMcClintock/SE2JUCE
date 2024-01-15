@@ -116,6 +116,8 @@ modules/se_sdk3_hosting/MpParameter.h
 modules/se_sdk3_hosting/MpParameter.cpp
 modules/se_sdk3_hosting/ConnectorView.h
 modules/se_sdk3_hosting/ConnectorView.cpp
+modules/se_sdk3_hosting/ConnectorViewStruct.h
+modules/se_sdk3_hosting/ConnectorViewStruct.cpp
 modules/se_sdk3_hosting/ModuleView.h
 modules/se_sdk3_hosting/ModuleView.cpp
 modules/se_sdk3_hosting/GmpiResourceManager.h
