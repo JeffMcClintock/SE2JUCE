@@ -8,6 +8,7 @@ using namespace GmpiDrawing_API;
 using namespace se_sdk;
 
 GMPI_REGISTER_GUI(MP_SUB_TYPE_GUI2, ImageTinted2Gui, L"SE ImageTinted XP" );
+SE_DECLARE_INIT_STATIC_FILE(ImageTinted2Gui);
 
 inline void clamp_normalised(float& f)
 {
