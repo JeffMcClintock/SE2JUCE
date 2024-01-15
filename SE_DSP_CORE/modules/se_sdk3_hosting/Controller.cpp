@@ -391,14 +391,20 @@ void MpController::Initialize()
 		}
 	}
 
-	fileWatcher.Start(
-		toPlatformString(BundleInfo::instance()->getPresetFolder()),
-		[this]()
-			{
-				// note: called from background thread.
-				presetsFolderChanged = true;
-			}
-	);
+	{
+		auto presetFolderPath = toPlatformString(BundleInfo::instance()->getPresetFolder());
+		if (!presetFolderPath.empty())
+		{
+			fileWatcher.Start(
+				presetFolderPath,
+				[this]()
+				{
+					// note: called from background thread.
+					presetsFolderChanged = true;
+				}
+			);
+		}
+	}
     
 	undoManager.initial(this);
 
