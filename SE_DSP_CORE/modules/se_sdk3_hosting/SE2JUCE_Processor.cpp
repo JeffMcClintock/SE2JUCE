@@ -306,10 +306,3 @@ void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
     const std::string chunk(static_cast<const char*>(data), sizeInBytes);
 	controller.setPresetFromDaw(chunk, true);
 }
-
-//==============================================================================
-// This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new SE2JUCE_Processor();
-}
