@@ -183,10 +183,10 @@ public:
 			GetPlug(1)->Transmit(SampleClock(), sizeof(zero), &zero); // should work for float and int.
 		}
 
-		// Only add latency to events if help module is actually upstream.
+		// Only add latency to events if helper module is actually upstream.
 		if (DIRECTION == DR_IN) // Feedback-in module
 		{
-			feedbackLatency = mate->SortOrder2 > SortOrder2 ? AudioMaster()->BlockSize() : 0;
+			feedbackLatency = mate->SortOrder2 < SortOrder2 ? AudioMaster()->BlockSize() : 0;
 		}
 
 		return 0;

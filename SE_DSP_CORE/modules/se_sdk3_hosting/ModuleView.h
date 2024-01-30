@@ -316,7 +316,7 @@ namespace SynthEdit2
 		gmpi_sdk::mp_shared_ptr<gmpi::IMpUserInterface2B> pluginParameters2B;
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics> pluginGraphics;
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics2> pluginGraphics2;
-		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics3> pluginGraphics3;
+		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics4> pluginGraphics4; // includes pluginGraphics3
 
 		GmpiDrawing::Rect pluginGraphicsPos;
 
@@ -465,6 +465,8 @@ namespace SynthEdit2
 		virtual void OnRender(GmpiDrawing::Graphics& g) override;
 		virtual int32_t measure(GmpiDrawing::Size availableSize, GmpiDrawing::Size* returnDesiredSize) override;
 		virtual int32_t arrange(GmpiDrawing::Rect finalRect) override;
+		GmpiDrawing::Rect GetClipRect() override;
+
 		bool EndCableDrag(GmpiDrawing_API::MP1_POINT point, ConnectorViewBase* dragline) override;
 
 		bool isVisable() override

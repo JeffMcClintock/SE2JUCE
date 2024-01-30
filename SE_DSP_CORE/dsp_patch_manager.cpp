@@ -1391,10 +1391,20 @@ void DspPatchManager::ConnectHostControl2(HostControls hostConnect, UPlug* toPlu
 		container = toPlug->UG->parent_container->getVoiceControlContainer();
 		parameter = GetParameter(container, hostConnect);
 	}
-	else if (AttachesToParentContainer((HostControls)hostConnect)) // oversampling
+	else if (AttachesToParentContainer((HostControls)hostConnect)) // oversampling only
 	{
-		container = toPlug->UG->parent_container;
-		parameter = GetParameter(container, hostConnect);
+		// for oversampling, we can't use the modules parent-container handle to identify the parameter, this only works when oversampling is 'on'
+		// otherwise the 'toPlug->UG->parent_container' is some parent OF the oversampler container. i.e. the container was simply expanded into it's parent/s
+		// it seems safe enough to assume that *any* oversampling parameter must apply to any child module.
+		for (auto p : m_parameters)
+		{
+			if (p->getHostControlId() == hostConnect)
+			{
+				parameter = p;
+				container = Container();
+				break;
+			}
+		}
 	}
 	else
 	{

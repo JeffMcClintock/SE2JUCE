@@ -56,6 +56,14 @@ void LadderFilter::onSetPins()
 	initSettling(); // must be last.
 }
 
+void LadderFilter::StabilityCheck()
+{
+	if (!filter.isStable())
+	{
+		filter.initialize(getSampleRate());
+	}
+}
+
 LadderFilter_test::LadderFilter_test()
 {
 	// Register pins.

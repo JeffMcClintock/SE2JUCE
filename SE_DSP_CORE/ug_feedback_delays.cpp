@@ -80,18 +80,29 @@ void BypassFeedbackModule(ug_base* u, int voice)
 	// Bypass signal in -> signal-out
 	auto helperModule = dummyPin->connections[PN_IN1]->UG;
 	auto moduleInputPin = u->plugs[PN_IN1];
-	auto fromPin = moduleInputPin->connections.front();
+
+	// remove connection to the feedback_in
+	std::vector<UPlug*> fromPins(moduleInputPin->connections);
+	for (auto fromPin : fromPins)
+	{
 	auto it = std::find(fromPin->connections.begin(), fromPin->connections.end(), moduleInputPin);
 	fromPin->connections.erase(it);
+	}
 
 	{
 		auto outgoingPin = helperModule->plugs[PN_OUT1];
 		for (auto toPin : outgoingPin->connections)
 		{
-			it = std::find(toPin->connections.begin(), toPin->connections.end(), outgoingPin);
+			auto it = std::find(toPin->connections.begin(), toPin->connections.end(), outgoingPin);
+
+			// erase connection from feedback_out => some_module
 			toPin->connections.erase(it);
 
+			// connect the upstream module/s directly
+			for (auto fromPin : fromPins)
+			{
 			u->connect(fromPin, toPin);
+		}
 		}
 		outgoingPin->connections.clear();
 	}
@@ -100,7 +111,7 @@ void BypassFeedbackModule(ug_base* u, int voice)
 		auto outgoingPin = helperModule->plugs[PN_OUT2];
 		for (auto toPin : outgoingPin->connections)
 		{
-			it = std::find(toPin->connections.begin(), toPin->connections.end(), outgoingPin);
+			auto it = std::find(toPin->connections.begin(), toPin->connections.end(), outgoingPin);
 			toPin->connections.erase(it);
 
 			if (toPin->connections.empty())

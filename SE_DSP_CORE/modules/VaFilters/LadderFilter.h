@@ -15,6 +15,7 @@ public:
 	LadderFilter( );
 
 	// FilterBase support
+	void StabilityCheck() override;
 	bool isFilterSettling() override
 	{
 		return !pinSignal.isStreaming();
@@ -28,6 +29,8 @@ public:
 //	template< class PitchModulationPolicy, class ResonanceModulationPolicy, class FilterModePolicy >
 	void subProcess(int sampleFrames)
 	{
+		doStabilityCheck(); // must be first
+
 		// get pointers to in/output buffers.
 		float* signal = getBuffer(pinSignal);
 		float* pitch = getBuffer(pinPitch);
@@ -35,6 +38,8 @@ public:
 		float* output = getBuffer(pinOutput);
 
 		float hz = 440.f * powf(2.f, ( 10.0f * *pitch ) - 5.f);
+		hz = (std::min)(hz, 21000.f);
+
 		filter.calculateTPTCoeffs(hz, *resonance * 25);
 
 		for( int s = sampleFrames; s > 0; --s )

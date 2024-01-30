@@ -9,7 +9,7 @@ class FreqAnalyserGui :
 {
 	GmpiDrawing::Bitmap cachedBackground_;
 	float GraphXAxisYcoord;
-	float currentBackgroundSampleRate;
+	float currentBackgroundSampleRate = 0.f;
 	GmpiDrawing::PathGeometry geometry;
 	GmpiDrawing::PathGeometry lineGeometry;
 

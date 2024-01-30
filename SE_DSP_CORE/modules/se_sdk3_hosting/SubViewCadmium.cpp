@@ -77,42 +77,7 @@ void CalcSortOrder2(std::map<int32_t, moduleInfo>& allModules, moduleInfo& m, in
 				if (order == -1) // Found an unsorted path, go down it.
 				{
 					/*auto e = */ CalcSortOrder2(allModules, to, maxSortOrderGlobal);
-#if 0
-					if (e) // Downstream module encountered feedback.
-					{
-						// Not all modules have valid moduleType, e.g. oversampler_in
-						if (moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 && p->DataType == DT_MIDI) // dummy pin
-						{
-							// User has inserted a feedback module, activate it by removing dummy connection.
-							auto dummy = plugs.back();
-							dummy->connections.front()->connections.clear();
-							dummy->connections.clear();
 
-							// Feedback fixed, remove feedback trace.
-							delete e;
-							e = nullptr;
-
-							// Continue as if nothing happened.
-							goto done;
-						}
-						else
-						{
-							SetSortOrder(-1); // Allow this to be re-sorted after feedback (potentially) compensated.
-
-							// If downstream module has feedback, add trace information.
-							e->AddLine(p, to);
-							if (e->feedbackConnectors.front().second->UG == this) // only reconstruct feedback loop as far as nesc.
-							{
-#if defined( _DEBUG )
-								e->DebugDump();
-#endif
-								throw e;
-							}
-							return e;
-						}
-					}
-					else
-#endif
 					{
 						order = to.sort;// ->UG->GetSortOrder(); // now sorted. take into account.
 					}

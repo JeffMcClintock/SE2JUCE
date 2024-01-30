@@ -1357,7 +1357,8 @@ int32_t MpController::resolveFilename(const wchar_t* shortFilename, int32_t maxC
     
 	if (!has_root_path && !isUrl)
 	{
-		auto default_path = BundleInfo::instance()->getImbeddedFileFolder();
+//		auto default_path = BundleInfo::instance()->getImbedded FileFolder();
+		const auto default_path = BundleInfo::instance()->getResourceFolder();
 
 		l_filename = combine_path_and_file(default_path, l_filename);
 	}

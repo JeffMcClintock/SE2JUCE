@@ -42,7 +42,7 @@ namespace GmpiGuiHosting
 		ID2D1DeviceContext* mpRenderTarget = {};
 		IDXGISwapChain1* m_swapChain = {};
 
-		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics3> gmpi_gui_client; // usually a ContainerView at the topmost level
+		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics4> gmpi_gui_client; // usually a ContainerView at the topmost level
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpKeyClient> gmpi_key_client;
 
 		// Paint() uses Direct-2d which block on vsync. Therefore all invalid rects should be applied in one "hit", else windows message queue chokes calling WM_PAINT repeately and blocking on every rect.
@@ -122,7 +122,7 @@ namespace GmpiGuiHosting
 		void CreateDevice();
 		void CreateDeviceSwapChainBitmap();
 
-		void AddView(gmpi_gui_api::IMpGraphics3* pcontainerView)
+		void AddView(gmpi_gui_api::IMpGraphics4* pcontainerView)
 		{
 			gmpi_gui_client = pcontainerView;
 			pcontainerView->queryInterface(IGraphicsRedrawClient::guid, frameUpdateClient.asIMpUnknownPtr());

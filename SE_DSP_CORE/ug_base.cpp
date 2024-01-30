@@ -2098,13 +2098,17 @@ FeedbackTrace* ug_base::CalcSortOrder3(int& maxSortOrderGlobal)
 		if (p->Direction != DR_IN)
 			continue;
 
-		for (auto to : p->connections)
+		for (auto from : p->connections)
 		{
-			const int order = to->UG->SortOrder2;
+			const int order = from->UG->SortOrder2;
 			if (order == -2) // Found an feedback path, report it.
 			{
 				// feedback-out encounters feedback on it's own helper.
-				if (moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 && p->DataType == DT_MIDI) // dummy pin
+				if (
+					moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0
+					&& p->UniqueId() == 0
+					&& from->UG->moduleType && (from->UG->moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 // ensure this is the 'OUT' module
+					)
 				{
 					activateFeedbackModule(this);
 					// we have invalidated the iterator over 'p->connections'.
@@ -2115,19 +2119,23 @@ FeedbackTrace* ug_base::CalcSortOrder3(int& maxSortOrderGlobal)
 				{
 					SortOrder2 = -1; // Allow this to be re-sorted after feedback (potentially) compensated.
 					auto e = new FeedbackTrace(SE_FEEDBACK_PATH);
-					e->AddLine(p, to);
+					e->AddLine(p, from);
 					return e;
 				}
 			}
 
 			if (order == -1) // Found an unsorted path, go up it.
 			{
-				auto e = to->UG->CalcSortOrder3(maxSortOrderGlobal);
+				auto e = from->UG->CalcSortOrder3(maxSortOrderGlobal);
 
 				if (e) // Upstream module encountered feedback.
 				{
 					// Not all modules have valid moduleType, e.g. oversampler_in
-					if (moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 && p->DataType == DT_MIDI) // dummy pin
+					if (
+						moduleType && (moduleType->GetFlags() & CF_IS_FEEDBACK) != 0
+						&& p->UniqueId() == 0
+						&& from->UG->moduleType && (from->UG->moduleType->GetFlags() & CF_IS_FEEDBACK) != 0 // ensure this is the 'OUT' module
+						)
 					{
 						activateFeedbackModule(this);
 
@@ -2143,7 +2151,7 @@ FeedbackTrace* ug_base::CalcSortOrder3(int& maxSortOrderGlobal)
 						SortOrder2 = -1; // Allow this to be re-sorted after feedback (potentially) compensated.
 
 						// If downstream module has feedback, add trace information.
-						e->AddLine(p, to);
+						e->AddLine(p, from);
 						if (e->feedbackConnectors.front().second.moduleHandle == Handle()) // only reconstruct feedback loop as far as nesc.
 						{
 #if defined( _DEBUG )

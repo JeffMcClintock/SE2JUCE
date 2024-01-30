@@ -139,6 +139,20 @@ namespace gmpi_gui_api
 	static const gmpi::MpGuid SE_IID_GRAPHICS_MPGUI3 =
 	{ 0xce4448e5, 0x5dbc, 0x426a, { 0xa9, 0x63, 0xe8, 0xce, 0xe, 0x2c, 0x25, 0x33 } };
 
+	class DECLSPEC_NOVTABLE IMpGraphics4 : public IMpGraphics3
+	{
+	public:
+		virtual int32_t MP_STDCALL getClipArea(MP1_RECT* returnRect) = 0;
+
+		// {D5A0A608-97F7-4FFA-9162-060EE19760BF}
+		inline static const gmpi::MpGuid guid =
+		{ 0xd5a0a608, 0x97f7, 0x4ffa, { 0x91, 0x62, 0x6, 0xe, 0xe1, 0x97, 0x60, 0xbf } };
+	};
+
+	// {D5A0A608-97F7-4FFA-9162-060EE19760BF}
+	static const gmpi::MpGuid SE_IID_GRAPHICS_MPGUI4 =
+	{ 0xd5a0a608, 0x97f7, 0x4ffa, { 0x91, 0x62, 0x6, 0xe, 0xe1, 0x97, 0x60, 0xbf } };
+
 	class IMpKeyClient : public gmpi::IMpUnknown
 	{
 	public:
@@ -298,7 +312,7 @@ namespace gmpi_gui
 
 
 	class MpGuiGfxBase :
-		public MpGuiBase2, public gmpi_gui_api::IMpGraphics3
+		public MpGuiBase2, public gmpi_gui_api::IMpGraphics4
 	{
 		using MpGuiBase2::getToolTip; // silence compiler warning. Allows user to call deprecated version of 'getToolTip'.
 
@@ -389,6 +403,13 @@ namespace gmpi_gui
 		int32_t MP_STDCALL setHover(bool isMouseOverMe) override
 		{
 			return gmpi::MP_UNHANDLED;
+		}
+
+		// IMpGraphics4 interface
+		int32_t MP_STDCALL getClipArea(GmpiDrawing_API::MP1_RECT* returnRect) override
+		{
+			*returnRect = rect_;
+			return gmpi::MP_OK;
 		}
 
 		void setCapture()
@@ -491,9 +512,9 @@ namespace gmpi_gui
 		{
 			*returnInterface = nullptr;
 
-			if (iid == gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3)
+			if (iid == gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3 || iid == gmpi_gui_api::SE_IID_GRAPHICS_MPGUI4)
 			{
-				*returnInterface = static_cast<IMpGraphics3*>(this);
+				*returnInterface = static_cast<IMpGraphics4*>(this);
 				addRef();
 				return gmpi::MP_OK;
 			}

@@ -1553,7 +1553,7 @@ namespace GmpiDrawing
 	class RoundedRect : public GmpiDrawing_API::MP1_ROUNDED_RECT
 	{
 	public:
-		inline RoundedRect(GmpiDrawing_API::MP1_ROUNDED_RECT native) :
+		inline RoundedRect(GmpiDrawing_API::MP1_ROUNDED_RECT native = {}) :
 			GmpiDrawing_API::MP1_ROUNDED_RECT(native)
 		{
 		}
@@ -2909,7 +2909,6 @@ namespace GmpiDrawing
 			sink.Close();
 			DrawGeometry(geometry, brush, strokeWidth);
 		}
-
 	};
 /*
 	class TessellationSink : public GmpiSdk::Internal::Object

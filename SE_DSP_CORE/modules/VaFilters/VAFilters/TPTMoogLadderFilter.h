@@ -56,4 +56,10 @@ public:
 	}
 
 	float doTPTMoogLPF(float xn);
+
+	bool isStable()
+	{
+		const auto z = filter1.getStorageRegisterValue();
+		return !isnan(z) && isfinite(z);
+	}
 };

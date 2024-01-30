@@ -337,7 +337,7 @@ namespace SynthEdit2
 		{
 			auto r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2, pluginParameters.asIMpUnknownPtr());
 			r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2B, pluginParameters2B.asIMpUnknownPtr());
-			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3, pluginGraphics3.asIMpUnknownPtr());
+			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI4, pluginGraphics4.asIMpUnknownPtr());
 			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI2, pluginGraphics2.asIMpUnknownPtr());
 			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI, pluginGraphics.asIMpUnknownPtr());
 
@@ -367,7 +367,7 @@ namespace SynthEdit2
 			r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN2B, pluginParameters2B.asIMpUnknownPtr());
 			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI, pluginGraphics.asIMpUnknownPtr());
 			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI2, pluginGraphics2.asIMpUnknownPtr());
-			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3, pluginGraphics3.asIMpUnknownPtr());
+			r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI4, pluginGraphics4.asIMpUnknownPtr());
 
 			pluginParameters->setHost(static_cast<gmpi::IMpUserInterfaceHost2*>(this));
 		}
@@ -426,7 +426,7 @@ namespace SynthEdit2
 		r = object->queryInterface(gmpi::MP_IID_GUI_PLUGIN, pluginParametersLegacy.asIMpUnknownPtr());
 		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI, pluginGraphics.asIMpUnknownPtr());
 		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI2, pluginGraphics2.asIMpUnknownPtr());
-		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3, pluginGraphics3.asIMpUnknownPtr());
+		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI4, pluginGraphics4.asIMpUnknownPtr());
 
 		if (!pluginParameters.isNull())
 		{
@@ -621,6 +621,21 @@ namespace SynthEdit2
 #endif
 	}
 
+	GmpiDrawing::Rect ModuleViewPanel::GetClipRect()
+	{
+		auto clipArea = ModuleView::GetClipRect();
+
+		if (pluginGraphics4)
+		{
+			GmpiDrawing::Rect clientClipArea{};
+			pluginGraphics4->getClipArea(&clientClipArea);
+			clientClipArea.Offset(bounds_.left + pluginGraphicsPos.left, bounds_.top + pluginGraphicsPos.top);
+			clipArea.Union(clientClipArea);
+		}
+
+		return clipArea;
+	}
+
 	int32_t ModuleViewPanel::arrange(GmpiDrawing::Rect finalRect)
 	{
 		bounds_ = finalRect; // TODO put in base class.
@@ -709,6 +724,14 @@ namespace SynthEdit2
 	GmpiDrawing::Rect ModuleViewStruct::GetClipRect()
 	{
 		auto r = clipArea;
+
+		if (pluginGraphics4)
+		{
+			GmpiDrawing::Rect clientClipArea{};
+			pluginGraphics4->getClipArea(&clientClipArea);
+			clientClipArea.Offset(bounds_.left + pluginGraphicsPos.left, bounds_.top + pluginGraphicsPos.top);
+			r.Union(clientClipArea);
+		}
 
 #if defined(SE_EDIT_SUPPORT)
 		if (showCpu())
@@ -2613,9 +2636,9 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 
 	void ModuleView::setHover(bool mouseIsOverMe)
 	{
-		if (pluginGraphics3) // TODO: implement a static dummy pluginGraphics2 to avoid all the null tests.
+		if (pluginGraphics4) // TODO: implement a static dummy pluginGraphics2 to avoid all the null tests.
 		{
-			pluginGraphics3->setHover(mouseIsOverMe);
+			pluginGraphics4->setHover(mouseIsOverMe);
 		}
 	}
 
@@ -3064,11 +3087,11 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 
 	int32_t ModuleView::onMouseWheel(int32_t flags, int32_t delta, GmpiDrawing_API::MP1_POINT point)
 	{
-		if (!pluginGraphics3)
+		if (!pluginGraphics4)
 			return gmpi::MP_UNHANDLED;
 
 		const auto local = PointToPlugin(point);
-		return pluginGraphics3->onMouseWheel(flags, delta, local);
+		return pluginGraphics4->onMouseWheel(flags, delta, local);
 	}
 
 	// legacy crap forwarded to new members..

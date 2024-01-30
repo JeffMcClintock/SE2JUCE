@@ -31,15 +31,14 @@ public:
 	int32_t MP_STDCALL getSize(int64_t* returnValue) override
 	{
 		// Save current pos.
-		fpos_t curPos;
-		curPos = ftell(fileObject);
+		const auto curPos = ftell(fileObject);
 
 		// Query end pos.
 		fseek(fileObject, 0, SEEK_END);
-		*returnValue = ftell(fileObject);
+		*returnValue = static_cast<int64_t>(ftell(fileObject));
 
 		// return to current pos.
-		fseek(fileObject, (long) curPos, SEEK_SET);
+		fseek(fileObject, curPos, SEEK_SET);
 
 		return gmpi::MP_OK;
 	}
@@ -55,7 +54,12 @@ public:
 
 	int32_t MP_STDCALL seek(int64_t distanceToMove, int32_t moveMethod, int64_t* newStreamPosition) override
 	{
-		long from;
+		if (newStreamPosition)
+		{
+			newStreamPosition = 0;
+		}
+
+		int from;
 		switch (moveMethod)
 		{
 		case gmpi::PFST_BEGIN:
@@ -75,7 +79,6 @@ public:
 		fseek(fileObject, (long) distanceToMove, from);
 		if (newStreamPosition)
 		{
-//			*newStreamPosition = newPos;
 			*newStreamPosition = ftell(fileObject);
 		}
 		return gmpi::MP_OK;

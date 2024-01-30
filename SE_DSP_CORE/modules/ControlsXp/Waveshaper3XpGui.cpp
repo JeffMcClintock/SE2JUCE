@@ -464,6 +464,7 @@ public:
 			}
 		}
 	}
+
 	void OnRender(GmpiDrawing::Graphics& g) override
 	{
 		const auto originalTransform = g.GetTransform();
@@ -649,7 +650,11 @@ private:
 	void onSetShape()
 	{
 		if( widgets.size() > 0 )
-			dynamic_cast<WsGraphWidget*>(widgets[1].get())->shape = JmUnicodeConversions::WStringToUtf8(pinShape.getValue());
+		{
+			const auto textU = JmUnicodeConversions::WStringToUtf8(pinShape.getValue());
+			dynamic_cast<WsGraphWidget*>(widgets[1].get())->shape = textU;
+			dynamic_cast<EditWidget*>(widgets[2].get())->SetText(textU);
+		}
 
         invalidateRect(); // required on mac because update is async
 	}

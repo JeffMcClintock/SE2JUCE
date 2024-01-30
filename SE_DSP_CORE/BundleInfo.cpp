@@ -113,7 +113,7 @@ std::wstring BundleInfo::getSemFolder()
     }
 
     if(semFolder.empty())
-        return getImbeddedFileFolder(); // On Windows plugins, SEM folder and resources folder are the same.
+        return getImbeddedFileFolder();
 
     return semFolder; // ref CSynthEditApp::InitInstance()
 #else
@@ -155,7 +155,6 @@ std::wstring BundleInfo::getResourceFolder()
         return path.substr(0, path.find(L"Contents")) + L"Contents/Resources/";
     }
 
-    // On Windows, SEM folder and resources folder are the same.
     return getImbeddedFileFolder();
 #else
     std::string result;
