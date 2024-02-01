@@ -154,15 +154,14 @@ class MpParameter_native : public MpParameter_base
 	bool dawGrabbed = false; // the grabbed state we last sent to the DAW (logical OR of all grabbers)
 
 public:
-	int hostTag = -1;	// index as set in SE, not nesc sequential.
-//	int hostIndex = -1;	// strict sequential index, no gaps.
+	int hostTag = -1;	// index as set in SE, not nesc sequential in SE.
+						// but for JUCE, it's a strict sequential index, no gaps.
 
 	MpParameter_native(MpController* controller, int idx) : MpParameter_base(controller)
 		, hostTag(idx)
 	{}
 
 	int getNativeTag() override { return hostTag; } // -1 = not exported to DAW.
-//	int getNativeIndex() { return hostIndex; }
 
 	bool isPolyPhonic() override {
 		return false;

@@ -29,10 +29,9 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
     processor.connectPeer(&controller);
     controller.Initialize(this);
 
-    for(auto& itp : controller.nativeParameters())
+    int sequentialIndex = 0;
+    for(auto& p : controller.nativeParameters())
     {
-        auto p = itp.second;
-
 //        _RPTW2(0, L"%2d: %s\n", index, p->name_.c_str());
 
         juce::AudioProcessorParameter* juceParameter = {};
@@ -50,10 +49,19 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
 
             juceParameter =
                 new juce::AudioParameterChoice(
-                    {std::to_string(itp.first), 1},       // parameterID/versionhint
+                    {std::to_string(sequentialIndex), 1},       // parameterID/versionhint
                     WStringToUtf8(p->name_).c_str(),      // parameter name
                     choices,
                     defaultItemIndex
+                );
+        }
+        else if (p->datatype_ == gmpi::MP_BOOL)
+        {
+            juceParameter =
+                new juce::AudioParameterBool(
+                    { std::to_string(sequentialIndex), 1 },       // parameterID/versionhint
+                    WStringToUtf8(p->name_).c_str(),      // parameter name
+                    false
                 );
         }
         else
@@ -66,7 +74,7 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
 
             juceParameter =
                 new juce::AudioParameterFloat(
-                    {std::to_string(itp.first), 1},       // parameterID/versionhint
+                    {std::to_string(sequentialIndex), 1},       // parameterID/versionhint
                     WStringToUtf8(p->name_).c_str(),                // parameter name
                     minimumReal,   // minimum value
                     maximumReal,   // maximum value
@@ -77,6 +85,7 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
         addParameter(juceParameter);
 
         juceParameter->addListener(this);
+        sequentialIndex++;
     }
 }
 
