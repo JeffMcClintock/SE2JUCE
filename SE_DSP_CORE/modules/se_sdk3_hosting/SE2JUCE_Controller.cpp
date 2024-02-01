@@ -4,7 +4,7 @@
 #include "tinyxml/tinyxml.h"
 
 MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterIndex, bool isInverted) :
-	MpParameter_native(controller)
+	MpParameter_native(controller, ParameterIndex)
 	,juceController(controller)
 	, isInverted_(isInverted)
 {

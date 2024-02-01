@@ -157,7 +157,8 @@ public:
 	int hostTag = -1;	// index as set in SE, not nesc sequential.
 //	int hostIndex = -1;	// strict sequential index, no gaps.
 
-	MpParameter_native(MpController* controller) : MpParameter_base(controller)
+	MpParameter_native(MpController* controller, int idx) : MpParameter_base(controller)
+		, hostTag(idx)
 	{}
 
 	int getNativeTag() override { return hostTag; } // -1 = not exported to DAW.
