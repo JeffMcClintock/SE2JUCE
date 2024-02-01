@@ -99,6 +99,7 @@ struct SeParameterAttachmentSlider : SeParameterAttachment
     }
 };
 
+// Attach JUCE button to a GMPI enum or int parameter
 struct SeParameterAttachmentButton : SeParameterAttachment
 {
     juce::Button& button;
@@ -158,6 +159,38 @@ struct SeParameterAttachmentButton : SeParameterAttachment
                 // we're assuming switch is wired to an enum parameter, where the first two values are (0 1)
                 button.setToggleState(newVal != offVal, juce::NotificationType::dontSendNotification);
             }
+        }
+
+        return gmpi::MP_OK;
+    }
+};
+
+// Attach JUCE button to a GMPI bool parameter
+struct SeParameterAttachmentBoolButton : SeParameterAttachment
+{
+    juce::Button& button;
+
+    SeParameterAttachmentBoolButton(
+        IGuiHost2* pcontroller
+        , juce::Button& pbutton
+        , int32_t pparameterHandle
+    )
+        : SeParameterAttachment(pcontroller, pparameterHandle)
+        , button(pbutton)
+    {
+        button.onClick = [this] {
+            // we're assuming switch is wired to an bool parameter
+            controller->setParameterValue({ button.getToggleState() }, parameterHandle, gmpi::MP_FT_VALUE);
+        };
+    }
+
+    // gmpi::IMpParameterObserver
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    {
+        if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
+        {
+            const auto newVal = RawToValue<bool>(data, size);
+            button.setToggleState(newVal, juce::NotificationType::dontSendNotification);
         }
 
         return gmpi::MP_OK;
