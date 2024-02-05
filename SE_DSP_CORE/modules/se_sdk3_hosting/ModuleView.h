@@ -316,6 +316,7 @@ namespace SynthEdit2
 		gmpi_sdk::mp_shared_ptr<gmpi::IMpUserInterface2B> pluginParameters2B;
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics> pluginGraphics;
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics2> pluginGraphics2;
+		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics3> pluginGraphics3;
 		gmpi_sdk::mp_shared_ptr<gmpi_gui_api::IMpGraphics4> pluginGraphics4; // includes pluginGraphics3
 
 		GmpiDrawing::Rect pluginGraphicsPos;

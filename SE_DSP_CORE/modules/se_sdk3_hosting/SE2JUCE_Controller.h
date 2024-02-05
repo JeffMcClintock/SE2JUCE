@@ -17,6 +17,7 @@ class MpParameterJuce : public MpParameter_native
 	std::atomic<bool> dirty;
 	class SeJuceController* juceController = {};
 	bool isInverted_ = false;
+	int hostTag = -1;	// index, sequential.
 
 	float adjust(float normalised) const
 	{
@@ -26,6 +27,8 @@ class MpParameterJuce : public MpParameter_native
 public:
 
 	MpParameterJuce(class SeJuceController* controller, int ParameterIndex, bool isInverted);
+
+	int getNativeTag() override { return hostTag; }
 
 	void setNormalizedUnsafe(float daw_normalized);
 

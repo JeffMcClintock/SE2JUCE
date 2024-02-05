@@ -4,9 +4,10 @@
 #include "tinyxml/tinyxml.h"
 
 MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterIndex, bool isInverted) :
-	MpParameter_native(controller, ParameterIndex)
+	MpParameter_native(controller)
 	,juceController(controller)
-	, isInverted_(isInverted)
+	,isInverted_(isInverted)
+	,hostTag(ParameterIndex)
 {
 }
 

@@ -4,7 +4,7 @@
 //#include "AiLookAndFeel.h"
 
 /*
-#include "SeParameterAttachment.h"
+#include "SE2JUCE_ParameterAttachment.h"
 */
 
 struct SeParameterAttachment : gmpi::IMpParameterObserver
@@ -197,6 +197,7 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
     }
 };
 
+#if 0
 // For Mode control
 struct SeParameterAttachmentButtonWithConfirmation : SeParameterAttachmentButton
 {
@@ -213,6 +214,7 @@ struct SeParameterAttachmentButtonWithConfirmation : SeParameterAttachmentButton
 
 //    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override;
 };
+#endif
 
 struct SeParameterAttachmentMeter : SeParameterAttachment
 {
