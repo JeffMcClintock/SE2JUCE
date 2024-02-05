@@ -169,18 +169,21 @@ struct SeParameterAttachmentButton : SeParameterAttachment
 struct SeParameterAttachmentBoolButton : SeParameterAttachment
 {
     juce::Button& button;
+    bool isInverted = false;
 
     SeParameterAttachmentBoolButton(
         IGuiHost2* pcontroller
         , juce::Button& pbutton
         , int32_t pparameterHandle
+        , bool pisInverted = false
     )
         : SeParameterAttachment(pcontroller, pparameterHandle)
         , button(pbutton)
+        , isInverted(pisInverted)
     {
         button.onClick = [this] {
             // we're assuming switch is wired to an bool parameter
-            controller->setParameterValue({ button.getToggleState() }, parameterHandle, gmpi::MP_FT_VALUE);
+            controller->setParameterValue({ button.getToggleState() != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
         };
     }
 
@@ -190,7 +193,7 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
         if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
         {
             const auto newVal = RawToValue<bool>(data, size);
-            button.setToggleState(newVal, juce::NotificationType::dontSendNotification);
+            button.setToggleState(newVal != isInverted, juce::NotificationType::dontSendNotification);
         }
 
         return gmpi::MP_OK;
