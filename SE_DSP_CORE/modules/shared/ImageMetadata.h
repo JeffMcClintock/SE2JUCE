@@ -1,6 +1,7 @@
 #ifndef IMAGEMETADATA_H_INCLUDED
 #define IMAGEMETADATA_H_INCLUDED
 
+#include <memory>
 #include <vector>
 #include <algorithm>
 #include "../se_sdk3/Drawing.h"
