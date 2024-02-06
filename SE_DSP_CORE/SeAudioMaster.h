@@ -311,10 +311,6 @@ public:
 
 	EventProcessor* current_run_ug = nullptr;
 
-#if defined( _DEBUG )
-	std::vector< std::string > debug_missing_modules;
-#endif
-
 #if defined(LOG_PIN_EVENTS )
 	std::ofstream eventLogFile;
 #endif
@@ -587,6 +583,9 @@ public:
 
 	int getLatencySamples();
 	void setLatencyCompensation(int ElatencyCompensation);
+#endif
+#if defined( _DEBUG )
+	std::vector< std::string > debug_missing_modules;
 #endif
 
 private:

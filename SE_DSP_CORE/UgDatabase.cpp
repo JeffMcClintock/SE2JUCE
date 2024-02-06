@@ -2408,8 +2408,9 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(Converters);
 	INIT_STATIC_FILE(FreqAnalyser2);
 	INIT_STATIC_FILE(IdeLogger);
-    INIT_STATIC_FILE(ImpulseResponse);
-    INIT_STATIC_FILE(Inverter);
+	INIT_STATIC_FILE(ImpulseResponse);
+	INIT_STATIC_FILE(ImpulseResponse2);
+	INIT_STATIC_FILE(Inverter);
 	INIT_STATIC_FILE(MIDItoGate);
 	INIT_STATIC_FILE(NoteExpression);
 	INIT_STATIC_FILE(OscillatorNaive);
@@ -2420,6 +2421,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(PatchMemoryList3);
 	INIT_STATIC_FILE(PatchMemoryText);
 	INIT_STATIC_FILE(Slider);
+	INIT_STATIC_FILE(Scope3XP)
 	INIT_STATIC_FILE(SVFilter4)
 	INIT_STATIC_FILE(SoftDistortion);
 	INIT_STATIC_FILE(Switch);

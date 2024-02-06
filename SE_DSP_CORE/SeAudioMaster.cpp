@@ -737,8 +737,10 @@ void AudioMasterBase::BuildModules(
 			if(!generator)
 			{
 #if defined( _DEBUG)
-                if(find(debug_missing_modules.begin(), debug_missing_modules.end(), typeS) == debug_missing_modules.end())
-					debug_missing_modules.push_back(typeS);
+				auto& missing = container->AudioMaster2()->debug_missing_modules;
+
+                if(find(missing.begin(), missing.end(), typeS) == missing.end())
+					missing.push_back(typeS);
 #endif
 				continue;
 			}

@@ -47,7 +47,7 @@ public:
 		// Allocate a BLOB
 		blobInfo* blob = nullptr;
 
-		for (int i = 0; i < std::size(outputBlobPool); ++i)
+		for (size_t i = 0; i < std::size(outputBlobPool); ++i)
 		{
 			if (!outputBlobPool[i]->blobview.inUse())
 			{
