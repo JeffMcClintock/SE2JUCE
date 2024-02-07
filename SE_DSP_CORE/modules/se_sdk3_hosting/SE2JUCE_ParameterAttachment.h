@@ -60,6 +60,57 @@ struct SeParameterAttachment2 : SeParameterAttachment
     }
 };
 
+// same but generic
+template< typename T>
+struct SeParameterAttachment3 : SeParameterAttachment
+{
+    std::function<void(const T&)> onChanged;
+    std::function<void(float)> onChangedNormalized;
+
+    SeParameterAttachment3(
+        IGuiHost2* pcontroller,
+        int32_t pparameterHandle,
+        std::function<void(const T&)> pOnChanged = {}
+    ) :
+        SeParameterAttachment(pcontroller, pparameterHandle)
+        , onChanged(pOnChanged)
+    {
+    }
+
+    void setValue(const T&& value)
+    {
+        RawView raw(value);
+        controller->setParameterValue(value, parameterHandle);
+    }
+
+    void setNormalized(float value)
+    {
+        RawView raw(value);
+        controller->setParameterValue(value, parameterHandle, gmpi::FieldType::MP_FT_NORMALIZED);
+    }
+
+    // gmpi::IMpParameterObserver
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    {
+        if (parameterHandle == pparameterHandle)
+        {
+            RawView raw(data, size);
+
+            if (onChanged && gmpi::MP_FT_VALUE == fieldId)
+            {
+                onChanged((T)raw);
+            }
+
+            if(onChangedNormalized && gmpi::MP_FT_NORMALIZED == fieldId)
+			{
+				onChangedNormalized((float) raw);
+			}
+        }
+
+        return gmpi::MP_OK;
+    }
+};
+
 struct SeParameterAttachmentSlider : SeParameterAttachment
 {
     juce::Slider& slider;
@@ -181,10 +232,22 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
         , button(pbutton)
         , isInverted(pisInverted)
     {
-        button.onClick = [this] {
-            // we're assuming switch is wired to an bool parameter
-            controller->setParameterValue({ button.getToggleState() != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
-        };
+        if (button.getClickingTogglesState())
+        {
+            // set up a handler to toggle the param
+            button.onClick = [this] {
+                // we're assuming switch is wired to an bool parameter
+                controller->setParameterValue({ button.getToggleState() != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
+                };
+        }
+        else
+        {
+            // set up a handler to set the param only while mouse is down.
+            button.onStateChange = [this]() {
+    //            _RPTN(_CRT_WARN, "onStateChange %d\n", (int) button.getState() );
+    			controller->setParameterValue({ (button.getState() == juce::Button::buttonDown) != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
+		    };
+        }
     }
 
     // gmpi::IMpParameterObserver
@@ -193,7 +256,14 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
         if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
         {
             const auto newVal = RawToValue<bool>(data, size);
-            button.setToggleState(newVal != isInverted, juce::NotificationType::dontSendNotification);
+
+            // _RPTN(_CRT_WARN, "setParameter %d\n", (int)newVal);
+
+            // if the button is a toggle, we need to update the button
+            if (button.getClickingTogglesState())
+            {
+                button.setToggleState(newVal != isInverted, juce::NotificationType::dontSendNotification);
+            }
         }
 
         return gmpi::MP_OK;

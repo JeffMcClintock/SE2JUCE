@@ -2628,6 +2628,14 @@ sink.AddLine(GmpiDrawing::Point(edgeX - radius, y));
 					}
 					else
 					{
+						if (pluginGraphics3)
+						{
+							// TODO!! use editEnabled to somehow ignore click on knob titles when no editing.
+							// e.g. List entry and knobs on PD303 have blank area at top that blocks anything above from being clicked.
+							// either add a flag, or a host-control ("is editor") to allow plugin to know if it's in edit mode.
+							return pluginGraphics3->hitTest2(flags, local) == gmpi::MP_OK;
+						}
+
 						return pluginGraphics2->hitTest(local) == gmpi::MP_OK;
 					}
 				}
