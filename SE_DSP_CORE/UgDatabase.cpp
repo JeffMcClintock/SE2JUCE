@@ -2521,7 +2521,8 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(ug_io_mod);
 	//    INIT_STATIC_FILE(ug_led);
 	INIT_STATIC_FILE(ug_logic_counter);
-    INIT_STATIC_FILE(StepSequencer3); // also in ug_logic_counter.cpp
+	INIT_STATIC_FILE(StepSequencer2);
+	INIT_STATIC_FILE(StepSequencer3); // also in ug_logic_counter.cpp
    
 	INIT_STATIC_FILE(ug_logic_gate);
 	INIT_STATIC_FILE(ug_math_base);
@@ -2555,7 +2556,6 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(ug_wave_recorder);
 
 	INIT_STATIC_FILE(DAWSampleRate);
-	INIT_STATIC_FILE(StepSequencer2);
 	INIT_STATIC_FILE(MIDI2Converter)
 	INIT_STATIC_FILE(MPEToMIDI2)
 

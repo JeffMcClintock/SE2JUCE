@@ -13,6 +13,72 @@ using namespace Steinberg::Vst;
 
 namespace VstPresetUtil
 {
+	// Steinbergs implementation don't handle UTF8
+	class FileStreamUtf8 : public IBStream
+	{
+	public:
+		//------------------------------------------------------------------------
+#ifdef _WIN32
+		static IBStream* open(const wchar_t* filename, const wchar_t* mode)
+		{
+			FILE* file = _wfopen(filename, mode);
+#else
+		static IBStream* open(const char* filename, const char* mode)
+		{
+			FILE* file = fopen(filename, mode);
+#endif
+			return file ? new FileStreamUtf8(file) : nullptr;
+		}
+
+		//---from FUnknown------------------
+		DECLARE_FUNKNOWN_METHODS
+
+		//---from IBStream------------------
+		tresult PLUGIN_API read(void* buffer, int32 numBytes, int32* numBytesRead = nullptr) SMTG_OVERRIDE
+		{
+			size_t result = fread(buffer, 1, static_cast<size_t> (numBytes), file);
+			if (numBytesRead)
+				*numBytesRead = (int32)result;
+			return static_cast<int32> (result) == numBytes ? kResultOk : kResultFalse;
+		}
+		tresult PLUGIN_API write(void* buffer, int32 numBytes, int32* numBytesWritten = nullptr) SMTG_OVERRIDE
+		{
+			size_t result = fwrite(buffer, 1, static_cast<size_t> (numBytes), file);
+			if (numBytesWritten)
+				*numBytesWritten = (int32)result;
+			return static_cast<int32> (result) == numBytes ? kResultOk : kResultFalse;
+		}
+		tresult PLUGIN_API seek(int64 pos, int32 mode, int64* result = nullptr) SMTG_OVERRIDE
+		{
+			if (fseek(file, (int32)pos, mode) == 0)
+			{
+				if (result)
+					*result = ftell(file);
+				return kResultOk;
+			}
+			return kResultFalse;
+		}
+		tresult PLUGIN_API tell(int64* pos) SMTG_OVERRIDE
+		{
+			if (pos)
+				*pos = ftell(file);
+			return kResultOk;
+		}
+
+		//------------------------------------------------------------------------
+	protected:
+		FileStreamUtf8(FILE* file) : file(file) { FUNKNOWN_CTOR }
+		virtual ~FileStreamUtf8()
+		{
+			fclose(file);
+			FUNKNOWN_DTOR
+		}
+
+		FILE* file;
+	};
+
+	IMPLEMENT_FUNKNOWN_METHODS(FileStreamUtf8, IBStream, IBStream::iid)
+
 	struct IVstPresetWriter
 	{
 		virtual int getState(Steinberg::IBStream* state, int patch) = 0;
@@ -33,7 +99,7 @@ namespace VstPresetUtil
 		/** The host passes a number of interfaces as context to initialize the Plug-in class.
 			@note Extensive memory allocations etc. should be performed in this method rather than in the class' constructor!
 			If the method does NOT return kResultOk, the object is released immediately. In this case terminate is not called! */
-		Steinberg::tresult PLUGIN_API initialize(FUnknown* context) override
+		Steinberg::tresult PLUGIN_API initialize(FUnknown* /*context*/) override
 		{
 			assert(false);
 			return 0;
@@ -48,28 +114,28 @@ namespace VstPresetUtil
 		}
 
 		/** Called before initializing the component to get information about the controller class. */
-		Steinberg::tresult PLUGIN_API getControllerClassId(Steinberg::TUID classId) override
+		Steinberg::tresult PLUGIN_API getControllerClassId(Steinberg::TUID /*classId*/) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called before 'initialize' to set the component usage (optional). See \ref IoModes */
-		Steinberg::tresult PLUGIN_API setIoMode(Steinberg::Vst::IoMode mode) override
+		Steinberg::tresult PLUGIN_API setIoMode(Steinberg::Vst::IoMode /*mode*/) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called after the Plug-in is initialized. See \ref MediaTypes, BusDirections */
-		Steinberg::int32 PLUGIN_API getBusCount(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir) override
+		Steinberg::int32 PLUGIN_API getBusCount(Steinberg::Vst::MediaType /*type*/, Steinberg::Vst::BusDirection /*dir*/) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Called after the Plug-in is initialized. See \ref MediaTypes, BusDirections */
-		Steinberg::tresult PLUGIN_API getBusInfo(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir, Steinberg::int32 index, Steinberg::Vst::BusInfo& bus /*out*/) override
+		Steinberg::tresult PLUGIN_API getBusInfo(Steinberg::Vst::MediaType /*type*/, Steinberg::Vst::BusDirection /*dir*/, Steinberg::int32 /*index*/, Steinberg::Vst::BusInfo& /*bus*/ /*out*/) override
 		{
 			assert(false);
 			return 0;
@@ -77,7 +143,7 @@ namespace VstPresetUtil
 
 		/** Retrieves routing information (to be implemented when more than one regular input or output bus exists).
 			The inInfo always refers to an input bus while the returned outInfo must refer to an output bus! */
-		Steinberg::tresult PLUGIN_API getRoutingInfo(Steinberg::Vst::RoutingInfo& inInfo, Steinberg::Vst::RoutingInfo& outInfo /*out*/) override
+		Steinberg::tresult PLUGIN_API getRoutingInfo(Steinberg::Vst::RoutingInfo& /*inInfo*/, Steinberg::Vst::RoutingInfo& /*outInfo*/ /*out*/) override
 		{
 			assert(false);
 			return 0;
@@ -85,21 +151,21 @@ namespace VstPresetUtil
 
 		/** Called upon (de-)activating a bus in the host application. The Plug-in should only processed an activated bus,
 			the host could provide less see \ref AudioBusBuffers in the process call (see \ref IAudioProcessor::process) if last buses are not activated */
-		Steinberg::tresult PLUGIN_API activateBus(Steinberg::Vst::MediaType type, Steinberg::Vst::BusDirection dir, Steinberg::int32 index, Steinberg::TBool state) override
+		Steinberg::tresult PLUGIN_API activateBus(Steinberg::Vst::MediaType /*type*/, Steinberg::Vst::BusDirection /*dir*/, Steinberg::int32 /*index*/, Steinberg::TBool /*state*/) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Activates / deactivates the component. */
-		Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) override
+		Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool /*state*/) override
 		{
 			assert(false);
 			return 0;
 		}
 
 		/** Sets complete state of component. */
-		Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) override
+		Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* /*state*/) override
 		{
 			assert(false);
 			return 0;
@@ -110,15 +176,16 @@ namespace VstPresetUtil
 		{
 			return patchManager_->getState(state, preset_);
 		}
+
 	};
 
 	IMPLEMENT_REFCOUNT(Vst3PresetProxy);
 
-	tresult PLUGIN_API Vst3PresetProxy::queryInterface(FIDString iid, void** obj)
+	tresult PLUGIN_API Vst3PresetProxy::queryInterface(FIDString piid, void** obj)
 	{
-		QUERY_INTERFACE(iid, obj, IComponent::iid, IComponent)
-			QUERY_INTERFACE(iid, obj, IPluginBase::iid, IPluginBase)
-			QUERY_INTERFACE(iid, obj, FUnknown::iid, FUnknown)
+		QUERY_INTERFACE(piid, obj, IComponent::iid, IComponent)
+		QUERY_INTERFACE(piid, obj, IPluginBase::iid, IPluginBase)
+		QUERY_INTERFACE(piid, obj, FUnknown::iid, FUnknown)
 			*obj = 0;
 		return kNoInterface;
 	}
@@ -129,7 +196,7 @@ namespace VstPresetUtil
 
 		PresetWriterHelper(std::string ppresetXml) : presetXml(ppresetXml) {}
 
-		int getState(Steinberg::IBStream* state, int patch) override
+		int getState(Steinberg::IBStream* state, int /*patch*/) override
 		{
 			Steinberg::int32 chunkSize = (Steinberg::int32) presetXml.size();
 			Steinberg::int32 bytesWritten;
@@ -156,10 +223,7 @@ namespace VstPresetUtil
 #if defined(_WIN32)
 		size_t bytes_required = 1 + WideCharToMultiByte(CP_ACP, 0, p_cstring.c_str(), -1, 0, 0, NULL, NULL);
 #else
-		// size_t bytes_required = 1 + p_cstring.size();
-        mbstate_t state{};
-        const wchar_t* src = p_cstring.c_str();
-        const size_t bytes_required = /* 1 + */ wcsrtombs(nullptr, &src, 0, &state);
+		size_t bytes_required = 1 + wcstombs(0, p_cstring.c_str(), 0);
 #endif
 
 		std::string res;
@@ -168,7 +232,7 @@ namespace VstPresetUtil
 #if defined(_WIN32)
 		WideCharToMultiByte(CP_ACP, 0, p_cstring.c_str(), -1, (LPSTR) res.data(), (int)bytes_required, NULL, NULL);
 #else
-		wcstombs(res.data(), p_cstring.c_str(), bytes_required);
+		wcstombs((char*)res.data(), p_cstring.c_str(), bytes_required);
 #endif
 
 		return res;
@@ -177,7 +241,7 @@ namespace VstPresetUtil
 	void WritePreset(std::wstring wfilename, std::string categoryName, std::string vendorName, std::string productName, Steinberg::FUID *processorId, std::string xmlPreset)
 	{
 		// Steinberg::Vst::FileStream does not handle UTF8.
-		std::string filename_asci = WStringToMultibyte(wfilename);
+//		std::string filename_asci = WStringToMultibyte(wfilename);
 
 		tinyxml2::XMLDocument doc;
 		doc.LinkEndChild(doc.NewDeclaration());
@@ -199,7 +263,12 @@ namespace VstPresetUtil
 		tinyxml2::XMLPrinter vst3MetaInfoPrinter;
 		doc.Accept(&vst3MetaInfoPrinter);
 
-		auto stream = Steinberg::Vst::FileStream::open(filename_asci.c_str(), "wb");
+#ifdef _WIN32
+		auto stream = FileStreamUtf8::open(wfilename.c_str(), L"wb");
+#else
+		std::string filename_utf8 = WStringToUtf8(wfilename);
+		auto stream = FileStreamUtf8::open(filename_utf8.c_str(), "wb");
+#endif
 		if (stream)
 		{
 			PresetWriterHelper component(xmlPreset);
@@ -217,7 +286,13 @@ namespace VstPresetUtil
 		std::string filename_asci = WStringToMultibyte(wfilename);
 		std::string returnPresetString;
 
-		auto stream = Steinberg::Vst::FileStream::open(filename_asci.c_str(), "rb");
+#ifdef _WIN32
+		auto stream = FileStreamUtf8::open(wfilename.c_str(), L"rb");
+#else
+		std::string filename_utf8 = WStringToUtf8(wfilename);
+		auto stream = FileStreamUtf8::open(filename_utf8.c_str(), "rb");
+#endif
+
 		if (stream)
 		{
 			PresetFile pf(stream);

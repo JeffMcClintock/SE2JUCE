@@ -322,12 +322,6 @@ struct SeParameterAttachmentButtonDisabler : SeParameterAttachment
     bool isMastering = false;
     bool shouldEnable = false;
 
-    //SeParameterAttachmentButtonDisabler(IGuiHost2* pcontroller, juce::Button& pbutton, int32_t paramButton, int32_t paramEnable) :
-    //    SeParameterAttachment(pcontroller, paramButton)
-    //    , button(pbutton)
-    //    , paramEnableHandle(paramEnable)
-    //{}
-
     SeParameterAttachmentButtonDisabler(IGuiHost2* pcontroller, int32_t paramButton, int32_t paramEnable, std::function <void(bool)> pcallback) :
         SeParameterAttachment(pcontroller, paramButton)
         , callback(pcallback)

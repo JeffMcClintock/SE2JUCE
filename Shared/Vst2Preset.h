@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "modules/shared/platform_string.h"
 
 // VST2 preset support.
 
@@ -20,6 +21,6 @@ namespace Vst2PresetUtil
 		char xml[1];
 	};
 
-	void WritePreset(std::wstring wfilename, int32_t Vst2Id, std::string presetName, const std::string& xmlPreset);
-	std::string ReadPreset(std::wstring wfilename, int32_t Vst2Id_32bit, int32_t Vst2Id_64bit);
+	void WritePreset(platform_string wfilename, int32_t Vst2Id, std::string presetName, const std::string& xmlPreset);
+	std::string ReadPreset(platform_string wfilename, int32_t Vst2Id_32bit, int32_t Vst2Id_64bit);
 }
