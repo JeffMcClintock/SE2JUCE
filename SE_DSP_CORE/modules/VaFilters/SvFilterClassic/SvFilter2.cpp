@@ -206,13 +206,11 @@ void SvFilter2::ChoseProcessMethod()
 // periodic check/correct for numeric overflow
 void SvFilter2::StabilityCheck()
 {
-	if( ! isfinite( low_pass1 ) ) // overload?
+	for (auto* state : { &low_pass1, &band_pass1, &low_pass2, &band_pass2 })
 	{
-		low_pass1 = 0.f;
-	}
-
-	if( ! isfinite( band_pass1 ) ) // overload?
+		if (isnan(*state) || !isfinite(*state)) // overload?
 	{
-		band_pass1 = 0.f;
+			*state = 0.f;
+		}
 	}
 }

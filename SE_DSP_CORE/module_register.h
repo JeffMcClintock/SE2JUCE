@@ -40,7 +40,9 @@
 typedef void (*ListInterface_ptr)(InterfaceObjectArray&);
 
 // Ensure linker includes file in static-library. See also INIT_STATIC_FILE in UgDatabase.cpp
-#if !defined(SE_DECLARE_INIT_STATIC_FILE)
+#ifdef SE_DECLARE_INIT_STATIC_FILE
+#undef SE_DECLARE_INIT_STATIC_FILE
+#endif
 
 #if defined(_DEBUG) && defined(SE_TARGET_PLUGIN)
 // has extra debugging check
@@ -49,8 +51,6 @@ typedef void (*ListInterface_ptr)(InterfaceObjectArray&);
 bool teststaticinit_##filename = ModuleFactory()->debugInitCheck( #filename );
 #else
 #define SE_DECLARE_INIT_STATIC_FILE(filename) void se_static_library_init_##filename(){}
-#endif
-
 #endif
 
 bool ModuleFactory_RegisterModule(const wchar_t* p_unique_id, int p_sid_name, int p_sid_group_name, class CDocOb* (*cug_create)(class Module_Info*), class ug_base* (*ug_create)(), int p_flags);

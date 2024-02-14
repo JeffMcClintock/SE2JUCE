@@ -321,6 +321,8 @@ public:
 
 class SeAudioMaster : public EventProcessor, public interThreadQueUser, public AudioMasterBase
 {
+	friend class AudioMasterBase;
+
 public:
 	//this need to be fairly big, if it fills up, audio thread will block until GUI thread clears que.
 	// UPDATE: Now not using overflow (stricter realtime? not sure why). Using larger buffer.
@@ -584,6 +586,7 @@ public:
 	int getLatencySamples();
 	void setLatencyCompensation(int ElatencyCompensation);
 #endif
+
 #if defined( _DEBUG )
 	std::vector< std::string > debug_missing_modules;
 #endif

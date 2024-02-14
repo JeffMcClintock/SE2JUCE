@@ -373,11 +373,8 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 			const int minIndex = 0;
 			const int maxIndex = spectrumCount - 1;
 			float x = leftBorder;
-			for (const auto& bin : pixelToBin)
+			for (const auto& [index, fraction]: pixelToBin)
 			{
-				const auto& index = bin.index;
-				const auto& fraction = static_cast<double>(bin.fraction);
-
 				const double y0 = dbs[(std::max)(minIndex, index - 1)];
 				const double y1 = dbs[(std::min)(maxIndex, index + 0)];
 				const double y2 = dbs[(std::min)(maxIndex, index + 1)];
