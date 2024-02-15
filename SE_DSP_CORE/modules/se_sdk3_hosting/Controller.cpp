@@ -2018,6 +2018,9 @@ void MpController::SavePreset(int32_t presetIndex)
 void MpController::SavePresetAs(const std::string& presetName)
 {
 	const auto presetFolderW = BundleInfo::instance()->getPresetFolder();
+
+	assert(!presetFolderW.empty()); // you need to call BundleInfo::initPresetFolder(manufacturer, product) when initializing this plugin.
+
 	CreateFolderRecursive(presetFolderW);
 
 	const auto presetFolder = WStringToUtf8(presetFolderW);

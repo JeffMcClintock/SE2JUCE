@@ -76,6 +76,7 @@ public:
 	std::wstring getImbeddedFileFolder();
     std::wstring getResourceFolder();
 	std::wstring getSemFolder();
+    void initPresetFolder(const char* manufacturer, const char* product);
     std::wstring getPresetFolder()
     {
         return presetFolder;

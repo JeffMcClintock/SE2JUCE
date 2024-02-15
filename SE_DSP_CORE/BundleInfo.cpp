@@ -238,6 +238,21 @@ std::wstring BundleInfo::getUserDocumentFolder()
 #endif
 
 }
+
+void BundleInfo::initPresetFolder(const char* manufacturer, const char* product)
+{
+#ifdef _WIN32
+    std::wstring res{ L"C:\\ProgramData\\" };
+#else
+    std::wstring res{ L"/Library/Application Support/" };
+#endif
+
+    res += Utf8ToWstring(manufacturer) + PLATFORM_PATH_SLASH_L + Utf8ToWstring(product) + PLATFORM_PATH_SLASH_L;
+    res += std::wstring(L"USER Presets") + PLATFORM_PATH_SLASH_L;
+
+    presetFolder = res;
+}
+
 #if 0
 std::wstring BundleInfo::getPresetFolder()
 {

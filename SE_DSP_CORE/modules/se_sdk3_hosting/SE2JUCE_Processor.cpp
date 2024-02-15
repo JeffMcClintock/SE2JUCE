@@ -3,6 +3,7 @@
 
 #include "unicode_conversion.h"
 #include "RawConversions.h"
+#include "BundleInfo.h"
 
 //==============================================================================
 SE2JUCE_Processor::SE2JUCE_Processor() :
@@ -26,6 +27,8 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
                        )
 #endif
 {
+    BundleInfo::instance()->initPresetFolder(JucePlugin_Manufacturer, JucePlugin_Name);
+
     processor.connectPeer(&controller);
     controller.Initialize(this);
 

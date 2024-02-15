@@ -96,7 +96,7 @@ public:
 	{}
 	std::wstring getNativePresetExtension() override
 	{
-		return {};
+		return L"xmlpreset";
 	}
 	std::vector< MpController::presetInfo > scanFactoryPresets() override;
 	void loadFactoryPreset(int index, bool fromDaw) override;
