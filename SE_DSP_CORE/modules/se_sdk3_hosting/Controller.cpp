@@ -15,7 +15,6 @@
 #include "../../modules/shared/string_utilities.h"
 #include "../shared/unicode_conversion.h"
 #include "../../UniqueSnowflake.h"
-#include "../shared/FileWatcher.h"
 #include "mfc_emulation.h"
 #if !defined(SE_USE_JUCE_UI)
 #include "GuiPatchAutomator3.h"
@@ -391,6 +390,8 @@ void MpController::Initialize()
 		}
 	}
 
+		// crashes in JUCE VST3 plugin helper
+#if (GMPI_IS_PLATFORM_JUCE==0)
 	{
 		auto presetFolderPath = toPlatformString(BundleInfo::instance()->getPresetFolder());
 		if (!presetFolderPath.empty())
@@ -405,7 +406,8 @@ void MpController::Initialize()
 			);
 		}
 	}
-    
+#endif
+
 	undoManager.initial(this);
 
     isInitialized = true;
