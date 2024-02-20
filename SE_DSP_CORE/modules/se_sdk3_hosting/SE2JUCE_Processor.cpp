@@ -6,7 +6,7 @@
 #include "BundleInfo.h"
 
 //==============================================================================
-SE2JUCE_Processor::SE2JUCE_Processor() :
+SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter) :
     // init the midi converter
     midiConverter(
         // provide a lambda to accept converted MIDI 2.0 messages
@@ -32,6 +32,11 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
     processor.connectPeer(&controller);
     controller.Initialize(this);
 
+    if(!customizeParameter)
+    {
+        customizeParameter = [](int32_t paramID) { return juce::AudioParameterFloatAttributes{}; };
+	}
+
     int sequentialIndex = 0;
     for(auto& p : controller.nativeParameters())
     {
@@ -52,7 +57,7 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
 
             juceParameter =
                 new juce::AudioParameterChoice(
-                    {std::to_string(sequentialIndex), 1},       // parameterID/versionhint
+                    {std::to_string(sequentialIndex), 1}, // parameterID/versionhint
                     WStringToUtf8(p->name_).c_str(),      // parameter name
                     choices,
                     defaultItemIndex
@@ -62,8 +67,8 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
         {
             juceParameter =
                 new juce::AudioParameterBool(
-                    { std::to_string(sequentialIndex), 1 },       // parameterID/versionhint
-                    WStringToUtf8(p->name_).c_str(),      // parameter name
+                    { std::to_string(sequentialIndex), 1 }, // parameterID/versionhint
+                    WStringToUtf8(p->name_).c_str(),        // parameter name
                     false
                 );
         }
@@ -75,13 +80,15 @@ SE2JUCE_Processor::SE2JUCE_Processor() :
             const auto minimumReal = (std::min)(actualMin, actualMax);
             const auto maximumReal = (std::max)(actualMin, actualMax);
 
+            auto attributes = customizeParameter(p->parameterHandle_);
+
             juceParameter =
                 new juce::AudioParameterFloat(
-                    {std::to_string(sequentialIndex), 1},       // parameterID/versionhint
-                    WStringToUtf8(p->name_).c_str(),                // parameter name
-                    minimumReal,   // minimum value
-                    maximumReal,   // maximum value
-                    static_cast<float>(p->getValueReal())           // default value
+                    {std::to_string(sequentialIndex), 1},  // parameterID/versionhint
+                    WStringToUtf8(p->name_).c_str(),       // parameter name
+                    { minimumReal, maximumReal },          // range
+                    static_cast<float>(p->getValueReal()), // default value
+                    attributes
                 );
         }
 

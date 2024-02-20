@@ -92,6 +92,8 @@ void MpParameterJuce::setNormalizedUnsafe(float daw_normalized)
 
 	dirty.store(true, std::memory_order_release);
 	juceController->setDirty();
+	assert(juceController == controller_);
+//	controller_->setDirty();
 }
 
 // this is the DAW setting a parameter.
@@ -114,13 +116,17 @@ void MpParameterJuce::updateFromImmediate()
 		//updateProcessor(gmpi::MP_FT_VALUE, 0);
 
 		// this will update the processor only, not the DAW.
-		juceController->ParamToDsp(this);
+		//juceController->ParamToDsp(this);
+		assert(juceController == controller_);
+		controller_->ParamToDsp(this);
 	}
 }
 
 void MpParameterJuce::updateProcessor(gmpi::FieldType fieldId, int32_t voice)
 {
 	juceController->ParamToProcessorAndHost(this, fieldId, voice);
+	assert(juceController == controller_);
+//	controller_->ParamToProcessorAndHost(this, fieldId, voice);
 }
 
 void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param, gmpi::FieldType fieldId, int32_t voice)

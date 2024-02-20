@@ -390,7 +390,7 @@ void MpController::Initialize()
 		}
 	}
 
-		// crashes in JUCE VST3 plugin helper
+	// crashes in JUCE VST3 plugin helper: EXEC : error : FindFirstChangeNotification function failed. [D:\a\1\s\build\Optimus\Optimus_VST3.vcxproj]
 #if (GMPI_IS_PLATFORM_JUCE==0)
 	{
 		auto presetFolderPath = toPlatformString(BundleInfo::instance()->getPresetFolder());

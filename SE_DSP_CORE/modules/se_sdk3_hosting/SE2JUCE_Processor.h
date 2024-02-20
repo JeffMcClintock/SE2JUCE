@@ -31,7 +31,7 @@ protected:
 
 public:
     //==============================================================================
-    SE2JUCE_Processor();
+    SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter = {});
     ~SE2JUCE_Processor() override;
 
     //==============================================================================
