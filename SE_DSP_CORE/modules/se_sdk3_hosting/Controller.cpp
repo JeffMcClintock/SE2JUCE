@@ -15,6 +15,7 @@
 #include "../../modules/shared/string_utilities.h"
 #include "../shared/unicode_conversion.h"
 #include "../../UniqueSnowflake.h"
+#include "../shared/FileWatcher.h"
 #include "mfc_emulation.h"
 #if !defined(SE_USE_JUCE_UI)
 #include "GuiPatchAutomator3.h"
