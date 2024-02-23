@@ -18,6 +18,7 @@ class MpParameterJuce : public MpParameter_native
 	class SeJuceController* juceController = {};
 	bool isInverted_ = false;
 	int hostTag = -1;	// index, sequential.
+	bool dawGrabbed = false; // the grabbed state we last sent to the DAW (logical OR of all grabbers)
 
 	float adjust(float normalised) const
 	{
@@ -46,6 +47,16 @@ public:
 	}
 
 	void updateProcessor(gmpi::FieldType fieldId, int32_t voice) override;
+
+	void onGrabbedChanged() override
+	{
+		if (isGrabbed() != dawGrabbed)
+		{
+			dawGrabbed = isGrabbed();
+
+			controller_->ParamGrabbed(this);
+		}
+	}
 
 	// not required for JUCE.
 	void upDateImmediateValue() override{}
@@ -82,11 +93,6 @@ public:
 	{
 		return tagToParameter;
 	}
-
-	void ParamGrabbed(MpParameter_native* param, int32_t voice = 0) override
-	{}
-	
-//	void legacySendProgramChangeToHost(float normalised) override;
 
 	std::string loadNativePreset(std::wstring sourceFilename) override
 	{
@@ -142,7 +148,8 @@ public:
 		}
 	}
 
-	void ParamToProcessorAndHost(MpParameterJuce* param, gmpi::FieldType fieldId, int32_t voice);
+	void ParamGrabbed(MpParameter_native* param) override;
+	void ParamToProcessorAndHost(MpParameterJuce* param);
 
 	MpParameter_native* makeNativeParameter(int, bool isInverted = false) override
 	{

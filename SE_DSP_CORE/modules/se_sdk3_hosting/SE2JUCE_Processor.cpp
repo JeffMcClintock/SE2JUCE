@@ -109,10 +109,12 @@ void SE2JUCE_Processor::parameterValueChanged(int parameterIndex, float newValue
 
 void SE2JUCE_Processor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
 {
+    /* feedsback from GUI to GUI
     if (auto p = controller.getDawParameter(parameterIndex); p)
     {
         p->setGrabbed(gestureIsStarting);
     }
+    */
 }
 
 SE2JUCE_Processor::~SE2JUCE_Processor()

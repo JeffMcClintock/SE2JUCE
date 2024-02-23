@@ -92,8 +92,6 @@ void MpParameterJuce::setNormalizedUnsafe(float daw_normalized)
 
 	dirty.store(true, std::memory_order_release);
 	juceController->setDirty();
-	assert(juceController == controller_);
-//	controller_->setDirty();
 }
 
 // this is the DAW setting a parameter.
@@ -124,17 +122,26 @@ void MpParameterJuce::updateFromImmediate()
 
 void MpParameterJuce::updateProcessor(gmpi::FieldType fieldId, int32_t voice)
 {
-	juceController->ParamToProcessorAndHost(this, fieldId, voice);
-	assert(juceController == controller_);
-//	controller_->ParamToProcessorAndHost(this, fieldId, voice);
+	if(fieldId == gmpi::MP_FT_VALUE || fieldId == gmpi::MP_FT_NORMALIZED)
+		juceController->ParamToProcessorAndHost(this);
 }
 
-void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param, gmpi::FieldType fieldId, int32_t voice)
+void SeJuceController::ParamGrabbed(MpParameter_native* param)
 {
-	// JUCE does not provide for thread-safe notification to the processor, so handle this via the message queue.
-	ParamToDsp(param, voice);
+	auto juceParameter = processor->getParameters()[param->getNativeTag()];
+	if (juceParameter)
+	{
+		if (param->isGrabbed())
+			juceParameter->beginChangeGesture();
+		else
+			juceParameter->endChangeGesture();
+	}
+}
 
+void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param)
+{
 	// also need to notify JUCE and DAW.
+#if 0
 	switch (fieldId)
 	{
 	case gmpi::MP_FT_GRAB:
@@ -149,10 +156,15 @@ void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param, gmpi::Fie
 			}
 		}
 		break;
-
 	case gmpi::MP_FT_VALUE:
-//	case gmpi::MP_FT_NORMALIZED:
+	case gmpi::MP_FT_NORMALIZED:
 		{
+#endif
+			// JUCE does not provide for thread-safe notification to the processor, so handle this via the message queue.
+
+			// NOTE: juceParameter->setValueNotifyingHost() also updates the DSP via the timer, but *only* if it detects a change in the value (which is often won't)
+			ParamToDsp(param);
+
 			// update JUCE parameter
 			auto juceParameter = processor->getParameters()[param->getNativeTag()];
 			if (juceParameter)
@@ -170,15 +182,10 @@ void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param, gmpi::Fie
 					juceParameter->endChangeGesture();
 				}
 			}
-		}
-		break;
-	}
+	//	}
+	//	break;
+	//}
 }
-
-//void SeJuceController::legacySendProgramChangeToHost(float)
-//{
-//	processor->updateHostDisplay(juce::AudioProcessorListener::ChangeDetails().withProgramChanged(true));
-//}
 
 // ensure GUI reflects the value of all parameters
 void SeJuceController::initGuiParameters()

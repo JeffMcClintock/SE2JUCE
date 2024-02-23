@@ -645,6 +645,8 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     
     mousePos = mouseToGmpi(self, theEvent);
     drawingFrame.getView()->onPointerMove(flags, mousePos);
+    
+    [self ToolTipOnMouseActivity];
 }
 
 - (void)scrollWheel:(NSEvent *)theEvent {
@@ -673,7 +675,6 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
-    [self ToolTipOnMouseActivity];
     
     int32_t flags = gmpi_gui_api::GG_POINTER_FLAG_INCONTACT | gmpi_gui_api::GG_POINTER_FLAG_PRIMARY | gmpi_gui_api::GG_POINTER_FLAG_CONFIDENCE;
     flags |= gmpi_gui_api::GG_POINTER_FLAG_FIRSTBUTTON;
@@ -683,6 +684,8 @@ void ApplyKeyModifiers(int32_t& flags, NSEvent* theEvent)
     mousePos = mouseToGmpi(self, theEvent);
     
     drawingFrame.getView()->onPointerMove(flags, mousePos);
+
+    [self ToolTipOnMouseActivity];
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {

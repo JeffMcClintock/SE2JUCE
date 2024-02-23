@@ -748,6 +748,6 @@ void MpParameter_native::onGrabbedChanged()
 	{
 		dawGrabbed = isGrabbed();
 
-		controller_->ParamGrabbed(this, gmpi::MP_FT_GRAB);
+		controller_->ParamGrabbed(this);
 	}
 }

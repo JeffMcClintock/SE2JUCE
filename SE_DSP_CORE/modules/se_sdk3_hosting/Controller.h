@@ -195,7 +195,7 @@ public:
 	}
 
 	// Override these
-	virtual void ParamGrabbed(MpParameter_native* param, int32_t voice = 0) = 0;
+	virtual void ParamGrabbed(MpParameter_native* param) = 0;
 
 	// Presets
 	virtual std::string loadNativePreset(std::wstring sourceFilename) = 0;

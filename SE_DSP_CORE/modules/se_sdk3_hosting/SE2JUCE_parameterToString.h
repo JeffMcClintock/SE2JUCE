@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-inline juce::String displayPercentage(float value, int maxLen)
+inline juce::String displayPercentage(float value, int /*maxLen*/)
 {
     // whole numbers with percentage sign. see also customizeParameter() in OptimusProcessor.cpp
     const auto txt = std::to_string(static_cast<int>(value)) + " %";
@@ -15,7 +15,7 @@ inline juce::String displayPercentageD(double value)
     return juce::String(txt);
 }
 
-inline juce::String displayPercentageWithSign(float value, int maxLen)
+inline juce::String displayPercentageWithSign(float value, int /*maxLen*/)
 {
     // whole numbers with percentage sign and +/-. see also customizeParameter() in OptimusProcessor.cpp
     const auto txt = std::string(value < 0.0f ? "" : "+") + std::to_string(static_cast<int>(value)) + " %";
@@ -29,7 +29,7 @@ inline juce::String displayPercentageWithSignD(double value)
     return juce::String(txt);
 }
 
-inline juce::String displaydB(float value, int maxLen)
+inline juce::String displaydB(float value, int /*maxLen*/)
 {
     // whole numbers with percentage sign. see also customizeParameter() in OptimusProcessor.cpp
     const auto txt = std::to_string(static_cast<int>(value)) + " dB";
@@ -43,7 +43,7 @@ inline juce::String displaydBD(double value)
     return juce::String(txt);
 }
 
-inline juce::String displayRealNumber(float value, int maxLen)
+inline juce::String displayRealNumber(float value, int /*maxLen*/)
 {
     // real number with a sensible number of decimal places
     char txt[12];

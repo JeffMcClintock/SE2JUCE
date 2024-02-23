@@ -79,13 +79,11 @@ struct SeParameterAttachment3 : SeParameterAttachment
 
     void setValue(const T&& value)
     {
-        RawView raw(value);
         controller->setParameterValue(value, parameterHandle);
     }
 
     void setNormalized(float value)
     {
-        RawView raw(value);
         controller->setParameterValue(value, parameterHandle, gmpi::FieldType::MP_FT_NORMALIZED);
     }
 
@@ -244,7 +242,7 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
         {
             // set up a handler to set the param only while mouse is down.
             button.onStateChange = [this]() {
-    //            _RPTN(_CRT_WARN, "onStateChange %d\n", (int) button.getState() );
+//                _RPTN(_CRT_WARN, "onStateChange %d\n", (int)(button.getState() == juce::Button::buttonDown) != isInverted);
     			controller->setParameterValue({ (button.getState() == juce::Button::buttonDown) != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
 		    };
         }

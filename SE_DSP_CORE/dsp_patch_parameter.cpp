@@ -197,7 +197,7 @@ void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 		{
 			OnValueChangedFromGUI( due_to_program_change, voice );
 		}
-//		_RPTN(_CRT_WARN, "DSP ppc %10s v=%d val=\n", debugName.c_str(), voice/*, RawToValue<float> this->*/ );
+//		_RPTN(_CRT_WARN, "DSP ppc %10s v=%d val=%f\n", debugName.c_str(), voice, GetValueNormalised() );
 	}
 	break;
 
