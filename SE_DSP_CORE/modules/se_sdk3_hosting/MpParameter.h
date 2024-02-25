@@ -154,13 +154,8 @@ class MpParameter_native : public MpParameter_base
 	bool dawGrabbed = false; // the grabbed state we last sent to the DAW (logical OR of all grabbers)
 
 public:
-//	int hostTag = -1;	// index as set in SE, not nesc sequential.
-
 	MpParameter_native(MpController* controller) : MpParameter_base(controller)
-//		, hostTag(idx)
 	{}
-
-//	int getNativeTag() override { return hostTag; } // -1 = not exported to DAW.
 
 	bool isPolyPhonic() override {
 		return false;
