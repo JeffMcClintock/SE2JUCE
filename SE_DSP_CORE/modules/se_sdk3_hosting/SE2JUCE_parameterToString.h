@@ -31,15 +31,29 @@ inline juce::String displayPercentageWithSignD(double value)
 
 inline juce::String displaydB(float value, int /*maxLen*/)
 {
-    // whole numbers with percentage sign. see also customizeParameter() in OptimusProcessor.cpp
-    const auto txt = std::to_string(static_cast<int>(value)) + " dB";
+    // real number with a 1 decimal places
+    char txt[12];
+
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%2.1f dB", value);
+#else
+    sprintf(txt, "%2.1f dB", value);
+#endif
+
     return juce::String(txt);
 }
 
 inline juce::String displaydBD(double value)
 {
-    // whole numbers with percentage sign. see also customizeParameter() in OptimusProcessor.cpp
-    const auto txt = std::to_string(static_cast<int>(value)) + " dB";
+    // real number with a 1 decimal places
+    char txt[12];
+
+#if defined(_MSC_VER)
+    sprintf_s(txt, "%2.1f dB", value);
+#else
+    sprintf(txt, "%2.1f dB", value);
+#endif
+
     return juce::String(txt);
 }
 
