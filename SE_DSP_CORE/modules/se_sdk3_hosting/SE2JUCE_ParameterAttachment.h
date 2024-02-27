@@ -70,10 +70,12 @@ struct SeParameterAttachment3 : SeParameterAttachment
     SeParameterAttachment3(
         IGuiHost2* pcontroller,
         int32_t pparameterHandle,
-        std::function<void(const T&)> pOnChanged = {}
+        std::function<void(const T&)> pOnChanged = {},
+        std::function<void(const T&)> ponChangedNormalized = {}
     ) :
         SeParameterAttachment(pcontroller, pparameterHandle)
         , onChanged(pOnChanged)
+        , onChangedNormalized(ponChangedNormalized)
     {
     }
 
@@ -287,6 +289,7 @@ struct SeParameterAttachmentButtonWithConfirmation : SeParameterAttachmentButton
 };
 #endif
 
+#if 0
 struct SeParameterAttachmentMeter : SeParameterAttachment
 {
     std::function<void(void)> onChanged;
@@ -310,6 +313,7 @@ struct SeParameterAttachmentMeter : SeParameterAttachment
         return gmpi::MP_OK;
     }
 };
+#endif
 
 // enables/disables Analze/Master button based on the state of two parameters
 struct SeParameterAttachmentButtonDisabler : SeParameterAttachment
