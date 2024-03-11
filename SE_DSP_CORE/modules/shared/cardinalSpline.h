@@ -9,12 +9,12 @@ namespace drawing
 namespace utils
 {
 
-GmpiDrawing::Point InterpolatePoint(double t, GmpiDrawing::Point a, GmpiDrawing::Point b)
+inline GmpiDrawing::Point InterpolatePoint(double t, GmpiDrawing::Point a, GmpiDrawing::Point b)
 {
 	return GmpiDrawing::Point(static_cast<float>(a.x + (b.x - a.x) * t), static_cast<float>(a.y + (b.y - a.y) * t));
 }
 
-void CalcCurve(GmpiDrawing::Point pts0, GmpiDrawing::Point pts1, GmpiDrawing::Point pts2, float tension, GmpiDrawing::Point& p1, GmpiDrawing::Point& p2)
+inline void CalcCurve(GmpiDrawing::Point pts0, GmpiDrawing::Point pts1, GmpiDrawing::Point pts2, float tension, GmpiDrawing::Point& p1, GmpiDrawing::Point& p2)
 {
 	// tangent from 1st to last point, ignoring center point.
 	Gmpi::VectorMath::Vector2D tangent = Gmpi::VectorMath::Vector2D::FromPoints(pts0, pts2);
@@ -34,7 +34,7 @@ void CalcCurve(GmpiDrawing::Point pts0, GmpiDrawing::Point pts1, GmpiDrawing::Po
 	p2 = pts1 + tangent * tension2;
 }
 
-std::vector<GmpiDrawing::Point> cardinalSpline(std::vector<GmpiDrawing::Point>& pts)
+inline std::vector<GmpiDrawing::Point> cardinalSpline(std::vector<GmpiDrawing::Point>& pts)
 {
 	int i, nrRetPts;
 	GmpiDrawing::Point p1, p2;
