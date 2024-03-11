@@ -29,6 +29,8 @@ public:
 	std::vector< std::pair<int32_t, std::unique_ptr<ControllerHost> > > childPluginControllers;
 	IGuiHost2* patchManager;
 
+    virtual ~ControllerManager(){}
+    
 	virtual int32_t MP_STDCALL setParameter(int32_t parameterHandle, int32_t fieldId, int32_t voice, const void* data, int32_t size) override
 	{
 		int32_t moduleHandle = -1;

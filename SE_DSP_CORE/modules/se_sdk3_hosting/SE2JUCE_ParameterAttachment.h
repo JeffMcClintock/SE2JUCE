@@ -71,7 +71,7 @@ struct SeParameterAttachment3 : SeParameterAttachment
         IGuiHost2* pcontroller,
         int32_t pparameterHandle,
         std::function<void(const T&)> pOnChanged = {},
-        std::function<void(const T&)> ponChangedNormalized = {}
+        std::function<void(float)> ponChangedNormalized = {}
     ) :
         SeParameterAttachment(pcontroller, pparameterHandle)
         , onChanged(pOnChanged)
