@@ -209,6 +209,9 @@ public:
 	}
 	presetInfo getPresetInfo(int index) // return a copy on purpose so we can rescan presets from inside PresetMenu.callbackOnDeleteClicked lambda
 	{
+		if (index < 0 || index >= presets.size())
+			return { {}, {}, -1, {}, 0, false, true };
+
 		return presets[index];
 	}
 	bool isPresetModified();
