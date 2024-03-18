@@ -28,6 +28,19 @@ public:
 		return gmpi::MP_OK;
 	}
 
+	int32_t MP_STDCALL hitTest(GmpiDrawing_API::MP1_POINT point) override
+	{
+		for (auto& w : widgets)
+		{
+			if (w->widgetHitTest(point))
+			{
+				return gmpi::MP_OK;
+			}
+		}
+
+		return gmpi::MP_UNHANDLED;
+	}
+
 	virtual int32_t MP_STDCALL onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
 	{
 		captureWidget = nullptr;

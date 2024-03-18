@@ -32,7 +32,7 @@ public:
 		return r;
 	}
 
-	bool widgetHitTest(GmpiDrawing::Point point)
+	virtual bool widgetHitTest(GmpiDrawing::Point point)
 	{
 		return point.x >= position.left && point.x < position.right && point.y >= position.top && point.y < position.bottom;
 	}

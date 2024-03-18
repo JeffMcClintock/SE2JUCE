@@ -796,7 +796,7 @@ void MpPluginBase::resetSleepCounter()
 void MpBase::wakeSubProcessAtLeastOnce()
 {
 	sleepCount_ = (std::max)(1, sleepCount_);
-	curSubProcess_ = saveSubProcess_;
+// no otherwise well disable subProcessPreSleep and will never sleep.	curSubProcess_ = saveSubProcess_;
 }
 
 #ifdef _DEBUG

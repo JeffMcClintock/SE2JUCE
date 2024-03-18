@@ -759,7 +759,7 @@ public:
 		return host.getSampleRate();
 	}
 	void resetSleepCounter();
-	void wakeSubProcessAtLeastOnce();
+//	void wakeSubProcessAtLeastOnce();
 	void nudgeSleepCounter()
 	{
 		sleepCount_ = (std::max)(sleepCount_, 1);

@@ -22,6 +22,14 @@ public:
 	void Load(const char* imageFile);
 	virtual GmpiDrawing::Size getSize() override;
 
+	bool widgetHitTest(GmpiDrawing::Point point) override
+	{
+		if (!Widget::widgetHitTest(point))
+			return false;
+
+		return bitmapHitTest2(point);
+	}
+
 	bool bitmapHitTest2(GmpiDrawing::Point point)
 	{
 		point.x -= position.left;

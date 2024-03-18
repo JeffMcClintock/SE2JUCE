@@ -424,10 +424,66 @@ namespace gmpi
 			hdr.messageType = static_cast<uint8_t>(msg[0] >> 4);
 			hdr.group = static_cast<uint8_t>(msg[0] & 0x0f);
 
-			if (msg.size() > 1)
+			size_t expectedSize = 0;
+
+			switch (hdr.messageType)
+			{
+			case 0: //  32 bits Utility Messages 
+			case 1: //  32 bits System Real Time and System Common Messages (except System Exclusive)
+			case 2: //  32 bits MIDI 1.0 Channel Voice Messages
+				expectedSize = 4;
+				break;
+
+			case 3: //  64 bits Data Messages (including System Exclusive)
+			case 4: //  64 bits MIDI 2.0 Channel Voice Messages
+				expectedSize = 8;
+				break;
+
+			case 5: // 128 bits Data Messages
+				expectedSize = 16;
+				break;
+
+			case 6:
+			case 7:
+				expectedSize = 4; //  32 bits Reserved for future definition by MMA/AME
+				break;
+
+			case 8:
+			case 9:
+			case 0xA:
+				expectedSize = 8; //  64 bits Reserved for future definition by MMA/AME
+				break;
+
+			case 0xB:
+			case 0xC:
+				expectedSize = 12; //  64 bits Reserved for future definition by MMA/AME
+				break;
+
+			case 0xD:
+			case 0xE:
+			case 0xF:
+				expectedSize = 16; //  128 bits Reserved for future definition by MMA/AME
+				break;
+
+			default:
+				break;
+			}
+
+			const bool valid = expectedSize == msg.size();
+			if(!valid)
+			{
+				hdr.messageType = 0xff; // not recognized
+				return hdr;
+			}
+
+			if (ChannelVoice64 == hdr.messageType)
 			{
 				hdr.channel = static_cast<uint8_t>(msg[1] & 0x0f);
 				hdr.status = static_cast<uint8_t>(msg[1] >> 4);
+			}
+			else
+			{
+				hdr.messageType = 0xff; // not handled
 			}
 
 			return hdr;
@@ -1393,6 +1449,9 @@ namespace gmpi
 				assert(gmpi::midi_2_0::isMidi2Message(msg));
 
 				const auto header = midi_2_0::decodeHeader(msg);
+
+				if (header.messageType != gmpi::midi_2_0::ChannelVoice64 || header.channel > 15)
+					return;
 
 				// Handle MPE Configuration messages. (MCM)
 				if (gmpi::midi_2_0::Status::RPN == header.status && (header.channel == 0 || header.channel == 15))

@@ -981,6 +981,17 @@ void DrawingFrameBase::CreateDevice()
 			((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion > 1))); // Win7 = V6.1
 	}
 
+	// query adaptor memory. Assume small integrated graphics cards do not have the capacity for float pixels.
+	{
+		DXGI_ADAPTER_DESC adapterDesc{};
+		adapter->GetDesc(&adapterDesc);
+
+		const auto dedicatedRamMB = adapterDesc.DedicatedVideoMemory / 0x100000;
+
+		// Intel HD Graphics on my Kogan has 128MB.
+		DX_support_sRGB &= (dedicatedRamMB >= 512); // MB
+	}
+
 	/* NOTES:
 		DXGI_FORMAT_R10G10B10A2_UNORM - fails in CreateBitmapFromDxgiSurface() don't supprt direct2d says channel9.
 		DXGI_FORMAT_R16G16B16A16_FLOAT - 'tends to take up far too much memoryand bandwidth at HD resolutions' - Stack Overlow.
@@ -1005,6 +1016,28 @@ void DrawingFrameBase::CreateDevice()
 		{
 			DX_support_sRGB &= ((driverSrgbSupport & srgbflags) == srgbflags);
 		}
+
+		/* Surfeace Studio returns only L1
+		D3D11_FEATURE_DATA_D3D11_OPTIONS1 Options1{};
+		hr = D3D11Device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS1, &Options1, sizeof(Options1));
+		if (SUCCEEDED(hr))
+		{
+			// trying to weed out shitty graphics cards like Intel HD Graphics.
+			// these tend to have TiledResourceTier < 1
+			DX_support_sRGB &= (D3D11_TILED_RESOURCES_TIER_1 <= Options1.TiledResourcesTier);
+		}
+		*/
+/* 
+ works to detect Intel HD graphics, but seems a bit random
+		D3D11_SHARED_RESOURCE_TIER SharedResourceTier{};
+		hr = D3D11Device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS5, &SharedResourceTier, sizeof(SharedResourceTier));
+		if (SUCCEEDED(hr))
+		{
+			// Specifies that DXGI_FORMAT_R11G11B10_FLOAT supports NT handle sharing.
+			// trying to weed out shitty graphics cards like Intel HD Graphics.
+			DX_support_sRGB &= (D3D11_SHARED_RESOURCE_TIER_3 == SharedResourceTier);
+		}
+*/
 	}
 
 	DX_support_sRGB &= D3D_FEATURE_LEVEL_11_0 <= currentDxFeatureLevel;
