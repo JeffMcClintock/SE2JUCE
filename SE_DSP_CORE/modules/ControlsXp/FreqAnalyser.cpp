@@ -18,6 +18,7 @@ index_( 0 )
 	initializePin(pinSamplesA);
 	initializePin(pinSignalA);
 	initializePin(pinCaptureSize);
+	initializePin(pinUpdateRate);
 }
 
 int32_t FreqAnalyser::open()
@@ -105,7 +106,7 @@ void FreqAnalyser::sendResultToGui(int block_offset)
 
 	// waste of CPU to send updates more often than GUI can repaint,
 	// wait approx 1/10th second between captures.
-	timeoutCount_ = (int)getSampleRate() / 10;
+	timeoutCount_ = (std::max)(100, ((int)getSampleRate() - pinCaptureSize.getValue()) / (std::max)(1, pinUpdateRate.getValue()));
 	setSubProcess(&FreqAnalyser::waitAwhile);
 
 	// if inputs aren't changing, we can sleep.

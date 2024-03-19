@@ -31,6 +31,7 @@ protected:
 	BlobOutPin pinSamplesA;
 	AudioInPin pinSignalA;
 	IntInPin pinCaptureSize;
+	IntInPin pinUpdateRate;
 
 	int index_;
 	int timeoutCount_;

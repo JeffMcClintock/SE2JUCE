@@ -399,7 +399,7 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
             graphValues[0].y = graphValues[1].y;
             
             // extend line to right border
-            graphValues.push_back({width + 1, graphValues.back().y});
+            graphValues.push_back({rightBorder, graphValues.back().y});
             
 			SimplifyGraph(graphValues, responseOptimized);
 
