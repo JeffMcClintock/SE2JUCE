@@ -24,9 +24,9 @@ struct SeParameterAttachment : gmpi::IMpParameterObserver
         controller->UnRegisterGui2(this);
     }
 
-    void Init()
+    void Init(gmpi::FieldType FieldId = gmpi::MP_FT_VALUE)
     {
-        controller->initializeGui(this, parameterHandle, gmpi::MP_FT_VALUE);
+        controller->initializeGui(this, parameterHandle, FieldId);
     }
 
     GMPI_QUERYINTERFACE1(gmpi::MP_IID_PARAMETER_OBSERVER, gmpi::IMpParameterObserver);
