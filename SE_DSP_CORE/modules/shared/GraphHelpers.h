@@ -68,6 +68,11 @@ inline void SimplifyGraph(const std::vector<Point>& in, std::vector<Point>& out)
          
         prev = p;
     }
+
+	if (out.empty()) // perfect flat line
+	{
+		out.push_back(lastOut);
+	}
     
     assert(out.back() != in.back());
     

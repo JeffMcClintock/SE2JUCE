@@ -70,9 +70,14 @@ bool Module_Info::isDllAvailable()
 	return m_module_dll_available;
 }
 
+bool Module_Info::alwaysExport()
+{
+	return (flags & CF_ALWAYS_EXPORT) != 0;
+}
+
 bool Module_Info::getSerialiseFlag()
 {
-	return m_serialise_me || ((flags & CF_ALWAYS_EXPORT) != 0);
+	return m_serialise_me; // moved to ClearSerialiseFlags(). || ((flags & CF_ALWAYS_EXPORT) != 0);
 }
 
 bool Module_Info::hasDspModule()
@@ -1563,7 +1568,7 @@ tinyxml2::XMLElement* Module_Info::Export(tinyxml2::XMLElement* element, ExportF
 	}
 
 	// DSP plugs.
-	if (hasDspPlugs)
+	if (hasDspPlugs || m_dsp_registered)
 	{
 		auto DspXml = doc->NewElement("Audio");
 		pluginXml->LinkEndChild(DspXml);
@@ -1943,11 +1948,19 @@ void CModuleFactory::ClearModuleDb( const std::wstring& p_extension )
 }
 
 // On save, relevant module infos are flagged for saving
-void CModuleFactory::ClearSerialiseFlags()
+void CModuleFactory::ClearSerialiseFlags(bool isExportingPlugin)
 {
-	for( auto it = module_list.begin(); it != module_list.end(); ++it )
+	for( auto& m : module_list)
 	{
-		(*it).second->ClearSerialiseFlag();
+		if (isExportingPlugin && m.second->alwaysExport())
+		{
+			assert(m.second->isDllAvailable()); // hmm, essential but not available?
+			m.second->SetSerialiseFlag();
+		}
+		else
+		{
+			m.second->ClearSerialiseFlag();
+		}
 	}
 }
 

@@ -47,6 +47,7 @@ typedef void (*ListInterface_ptr)(InterfaceObjectArray&);
 #if defined(_DEBUG) && defined(SE_TARGET_PLUGIN)
 // has extra debugging check
 #include "UgDatabase.h"
+#undef SE_DECLARE_INIT_STATIC_FILE
 #define SE_DECLARE_INIT_STATIC_FILE(filename) void se_static_library_init_##filename(){} \
 bool teststaticinit_##filename = ModuleFactory()->debugInitCheck( #filename );
 #else

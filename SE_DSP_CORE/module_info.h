@@ -36,6 +36,7 @@ protected:
 	virtual int getClassType() {return 1;} // 0 - Module_Info3, 1 - Module_Info, 2 - Module_Info3_internal, 3 - Module_Info_Plugin
 	
 public:
+	// only true if scanned during *this* session. Don't use as a test of plugin capabilities.
 	bool scanned_xml_dsp;
 	bool scanned_xml_gui;
 	bool scanned_xml_parameters;
@@ -138,6 +139,7 @@ public:
 	}
 
 	bool getSerialiseFlag();
+	bool alwaysExport();
 
 	void setLoadedIntoDatabase(bool loaded = true)
 	{

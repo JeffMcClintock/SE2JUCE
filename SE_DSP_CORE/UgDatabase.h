@@ -41,7 +41,7 @@ public:
 	// file path management
 	std::vector< std::wstring > PrefabFileNames; // list of prefabs and VST plugins
 
-	void ClearSerialiseFlags( void );
+	void ClearSerialiseFlags(bool isExportingPlugin = false);
 	void SerialiseModuleInfo(CArchive& ar, bool loadingCache = false);
 	void ImportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType targetType, int fileFormatVersion);
 	void ExportModuleInfo(tinyxml2::XMLElement* documentE, ExportFormatType targetType);
