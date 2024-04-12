@@ -1098,7 +1098,13 @@ bool CreateFolderRecursive(std::wstring folderPath)
 				return false;
 		}
 #else
-        mkdir(WStringToUtf8(*it).c_str(), 0775);
+        const auto res = mkdir(WStringToUtf8(*it).c_str(), 0775);
+        if(res && EEXIST != errno)
+        {
+             // 13  EACCES            /* Permission denied
+            _RPT2(0, "mkdir FAIL %d (%s)\n", errno, WStringToUtf8(*it).c_str());
+            break;
+        }
 #endif
 	}
 
