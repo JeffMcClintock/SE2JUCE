@@ -2491,7 +2491,6 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(ug_filter_biquad);
 	INIT_STATIC_FILE(ug_filter_sv);
 	INIT_STATIC_FILE(ug_logic_decade);
-	INIT_STATIC_FILE(ug_logic_not);
 	INIT_STATIC_FILE(ug_logic_shift);
 	INIT_STATIC_FILE(ug_math_ceil);
 	INIT_STATIC_FILE(ug_math_floor);
@@ -2538,6 +2537,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(StepSequencer3); // also in ug_logic_counter.cpp
    
 	INIT_STATIC_FILE(ug_logic_gate);
+	INIT_STATIC_FILE(ug_logic_not);
 	INIT_STATIC_FILE(ug_math_base);
 	INIT_STATIC_FILE(ug_midi_automator);
 	INIT_STATIC_FILE(ug_midi_controllers);
