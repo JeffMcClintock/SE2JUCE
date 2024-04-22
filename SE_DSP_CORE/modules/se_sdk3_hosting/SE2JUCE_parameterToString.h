@@ -4,28 +4,28 @@
 inline juce::String displayPercentage(float value, int /*maxLen*/)
 {
     // whole numbers with percentage sign. see also customizeParameter() in OptimusProcessor.cpp
-    const auto txt = std::to_string(static_cast<int>(value)) + "%";
+    const auto txt = std::to_string(static_cast<int>(value + 0.5f)) + "%";
     return juce::String(txt);
 }
 
 inline juce::String displayPercentageD(double value)
 {
     // whole numbers with percentage sign. see also customizeParameter() in OptimusProcessor.cpp
-    const auto txt = std::to_string(static_cast<int>(value)) + "%";
+    const auto txt = std::to_string(static_cast<int>(value + 0.5f)) + "%";
     return juce::String(txt);
 }
 
 inline juce::String displayPercentageWithSign(float value, int /*maxLen*/)
 {
     // whole numbers with percentage sign and +/-. see also customizeParameter() in OptimusProcessor.cpp
-    const auto txt = std::string(value < 0.0f ? "" : "+") + std::to_string(static_cast<int>(value)) + "%";
+    const auto txt = std::string(value < 0.0f ? "" : "+") + std::to_string(static_cast<int>(value + 0.5f)) + "%";
     return juce::String(txt);
 }
 
 inline juce::String displayPercentageWithSignD(double value)
 {
     // whole numbers with percentage sign and +/-. see also customizeParameter() in OptimusProcessor.cpp
-    const auto txt = std::string(value < 0.0f ? "" : "+") + std::to_string(static_cast<int>(value)) + "%";
+    const auto txt = std::string(value < 0.0f ? "" : "+") + std::to_string(static_cast<int>(value + 0.5f)) + "%";
     return juce::String(txt);
 }
 
