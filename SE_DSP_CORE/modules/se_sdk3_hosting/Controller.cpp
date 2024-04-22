@@ -2035,7 +2035,10 @@ void MpController::SavePresetAs(const std::string& presetName)
 
 	ScanPresets();
 
-	// find the new preset
+	// Add new preset to combo
+	UpdatePresetBrowser();
+
+	// find the new preset and select it.
 	for (int32_t presetIndex = 0; presetIndex < presets.size(); ++presetIndex)
 	{
 		if (presets[presetIndex].name == presetName)
@@ -2050,8 +2053,6 @@ void MpController::SavePresetAs(const std::string& presetName)
 			break;
 		}
 	}
-
-	UpdatePresetBrowser();
 }
 
 void MpController::DeletePreset(int presetIndex)
