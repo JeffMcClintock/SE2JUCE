@@ -2,6 +2,7 @@
 #include "ConnectorView.h"
 #include "ContainerView.h"
 #include "ModuleView.h"
+#include "ModuleViewStruct.h"
 #include "modules/shared/xplatform_modifier_keys.h"
 #include "modules/shared/VectorMath.h"
 

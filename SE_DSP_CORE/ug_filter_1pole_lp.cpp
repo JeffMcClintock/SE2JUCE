@@ -14,6 +14,7 @@ SE_DECLARE_INIT_STATIC_FILE(ug_filter_1pole_hp)
 
 using namespace std;
 
+// keywords one pole
 namespace
 {
 REGISTER_MODULE_1(L"1 Pole LP", IDS_MN_1_POLE_LP,IDS_MG_FILTERS,ug_filter_1pole ,CF_STRUCTURE_VIEW,L"A simple, efficient Low Pass filter. Has 6db/Octave response.");

@@ -79,6 +79,7 @@ int32_t GmpiResourceManager::RegisterResourceUri(int32_t moduleHandle, const std
 	{
 		if (strcmp(resourceType, "Image") == 0 || strcmp(resourceType, "png") == 0 || strcmp(resourceType, "svg") == 0)
 		{
+			// see also: isSkinImageFile()
 			searchExtensions.push_back(L".png");
 			searchExtensions.push_back(L".bmp");
 			searchExtensions.push_back(L".jpg");

@@ -116,7 +116,7 @@ namespace
 	auto r = Register<PrefabBrowserGui>::withXml(R"XML(
 <?xml version="1.0" ?>
 <PluginList>
-  <Plugin id="SE Prefab Browser" name="Prefab Browser" category="Special">
+  <Plugin id="SE Prefab Browser" name="Prefab Browser" category="Debug">
     <GUI>
       <Pin name="Index" datatype="int" direction="out" />
       <Pin name="Names" datatype="string" direction="out" />

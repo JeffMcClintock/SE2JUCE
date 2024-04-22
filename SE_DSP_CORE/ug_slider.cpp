@@ -27,8 +27,8 @@ void ug_slider::ListInterface2(InterfaceObjectArray& PList)
 
 	LIST_PIN( L"Signal Out", DR_OUT, L"", L"", IO_AUTOCONFIGURE_PARAMETER, L"");
 	// obsolete, no longer used. Function transfered to patch memory.
-	LIST_VAR3( L"Lo Value", min_val, DR_IN, DT_FLOAT , L"0", L"", IO_HIDE_PIN, L"");
-	LIST_VAR3( L"Hi Value", max_val, DR_IN, DT_FLOAT , L"10", L"", IO_HIDE_PIN, L"");
+	LIST_VAR3N( L"Lo Value", DR_IN, DT_FLOAT , L"0", L"", IO_HIDE_PIN, L"");
+	LIST_VAR3N( L"Hi Value", DR_IN, DT_FLOAT , L"10", L"", IO_HIDE_PIN, L"");
 	// if you add a new appearance, check UpdateOutput() handles it
 	LIST_VAR3( L"Appearance",appearance,DR_IN,DT_ENUM, L"1", L"None=-1,Plain Slider, Vert Slider, Horiz Slider, Knob, Button, Button (toggle),Plain Button, Small Knob, Small Button, Small Button (Toggle)",IO_MINIMISED, L"Sets the appearance of the control" );
 	LIST_VAR3( L"Show Readout",trash_bool_ptr,DR_IN,DT_BOOL, L"1", L"",IO_MINIMISED, L"Adds text readout of value" );
@@ -40,8 +40,7 @@ void ug_slider::ListInterface2(InterfaceObjectArray& PList)
 }
 
 ug_slider::ug_slider() :
-	output_val(0.f)
-	,output_so(SOT_LINEAR)
+	output_so(SOT_LINEAR)
 	,appearance(0)
 {
 	// drum synths get voice numbers propagated back upstream, cause engine to
@@ -54,8 +53,6 @@ int ug_slider::Open()
 {
 	ug_control::Open();
 	output_so.SetPlug( GetPlug(PLG_OUT) );
-	//	ChangeOutput(false);
-	//	OutputChange( SampleClock(), GetPlug(PLG_OUT), ST_ONE_OFF );
 	return 0;
 }
 
@@ -65,22 +62,16 @@ void ug_slider::Resume()
 	output_so.Resume();
 }
 
-void ug_slider::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p_state )
+void ug_slider::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type )
 {
 	if( p_to_plug == GetPlug( PLG_PATCH_VALUE ) )
 	{
-		output_val = patchValue_ * 0.1f; // Voltages are divided by 10.
-		bool smoothUpdate = p_clock > 0; // first update instant.
-		ChangeOutput( smoothUpdate );
-	}
-}
+		const float output_val = patchValue_ * 0.1f; // Voltages are divided by 10.
+		const bool smoothUpdate = p_clock > 0; // first update instant.
 
-// private function, changes output smoothly
-void ug_slider::ChangeOutput(bool p_smoothing)
-{
 	int smooth_amnt;
 
-	if( p_smoothing )	// when user moves control
+		if (smoothUpdate)	// when user moves control
 	{
 		if( appearance == 8 || ( appearance > 3 && appearance < 7) )	// switch, minimal smoothing
 		{
@@ -100,17 +91,10 @@ void ug_slider::ChangeOutput(bool p_smoothing)
 	//	_RPT1(_CRT_WARN, "change output %d\n", SampleClock() );
 	SET_CUR_FUNC( &ug_slider::sub_process );
 }
+}
 
 void ug_slider::sub_process(int start_pos, int sampleframes)
 {
-//#if defined( _DEBUG )
-//	// Suspect concurrency problem Steinber VST Bridge. This got called without module being open.
-//	if( ( flags & UGF_OPEN ) == 0 )
-//	{
-//		GetApp()->SeMessageBox( L"not open!!", MB_OK | MB_ICONSTOP );
-//	}
-//#endif
-
 	bool can_sleep = true;
 	output_so.Process( start_pos, sampleframes, can_sleep );
 

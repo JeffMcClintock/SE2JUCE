@@ -5,6 +5,7 @@
 #include "ViewBase.h"
 #include "ConnectorView.h"
 #include "ConnectorViewStruct.h"
+#include "ModuleViewStruct.h"
 #include "modules/se_sdk3_hosting/Presenter.h"
 #include "ResizeAdorner.h"
 #include "GuiPatchAutomator3.h"

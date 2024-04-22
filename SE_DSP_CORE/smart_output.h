@@ -363,6 +363,38 @@ private:
 
     #endif
 
+		// more robust in face of rounding errors
+		if (curve_type == SOT_LINEAR)
+		{
+			for (int s = sampleframes; s > 0; s--)
+			{
+				*out++ = v;
+
+				if ((dv > 0.0 && v >= target) || (dv <= 0.0 && v <= target))
+				{
+					v = target;
+					output_level = v;
+					*(out - 1) = v; // ensure output *exact*
+
+					plug->TransmitState(plug->UG->AudioMaster()->BlockStartClock() + start_pos + sampleframes - s, ST_STATIC);
+					// fill remainder of block if nesc
+					s--;
+
+					for (; s > 0; s--)
+					{
+						*out++ = v;
+					}
+
+					return false;
+				}
+				v += dv;
+
+				assert(ddv == 0.f);
+				assert(c == 0.f);
+			}
+		}
+		else
+		{
 	    for( int s = sampleframes ; s > 0 ; s-- )
 	    {
 		    *out++ = v;
@@ -388,6 +420,7 @@ private:
 		    dv += ddv;
 		    ddv += c;
 	    }
+		}
 
 	    output_level = v;
 	    return true; // more to do
@@ -400,6 +433,7 @@ private:
 	float v;	// output val
 	int count;
 	float target;
+
 #if defined( _DEBUG )
 void InitLowPass( float p_end, int p_sample_count)
 {
