@@ -43,6 +43,7 @@ public:
 #if defined(SE_TARGET_PLUGIN)
 	virtual	void setParameterNormalized(timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) = 0;
 #endif
+	virtual void setPreset(struct DawPreset const* preset) = 0;
 	virtual void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) = 0;
 	virtual void getPresetState( std::string& chunk, bool saveRestartState) = 0;
 

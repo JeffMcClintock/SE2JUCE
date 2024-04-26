@@ -1198,6 +1198,15 @@ void SeAudioMaster::HandleInterrupt()
 //
 //#endif
 
+	if(interrupt_preset_)
+	{
+		auto preset = interrupt_preset_;
+		interrupt_preset_ = nullptr;
+
+		gmpi_sdk::AutoCriticalSection cs(audioMasterLock_);
+		Patchmanager_->setPreset(preset);
+	}
+
 #if defined(SE_TARGET_PLUGIN)
 
 	if( interrupt_getchunk_ )
@@ -2304,16 +2313,15 @@ void AudioMasterBase::CpuFunc()
 	}
 
 	// pass container's CPU to any parent. Containers are never on active list.
-	for (auto it = m_cpu_parents.begin(); it != m_cpu_parents.end(); ++it)
+	for (auto ug : m_cpu_parents)
 	{
-		ug_base* ug = *it;
 		ug->OnCpuMeasure();
 	}
 
 	// Debug Windows.
-	for (auto it = m_debuggers.begin(); it != m_debuggers.end(); ++it)
+	for (auto debugger : m_debuggers)
 	{
-		(*it)->CpuToGui();
+		debugger->CpuToGui();
 	}
 }
 

@@ -58,7 +58,8 @@ public:
 	virtual	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) override; // VST3.
 #endif
 
-    void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;
+	void setPreset(struct DawPreset const* preset) override;
+	void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;
 	void getPresetState(std::string& chunk, bool saveRestartState)  override;
 
 	void InitializeAllParameters() override;

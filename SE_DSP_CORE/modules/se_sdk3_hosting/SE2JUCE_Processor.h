@@ -19,6 +19,7 @@
 */
 class SE2JUCE_Processor : public juce::AudioProcessor, public juce::AudioProcessorParameter::Listener, public IShellServices
 {
+protected:
     SynthRuntime processor;
 
     // unusual: Controller is held as member of processor, as JUCE don't support the concept.
@@ -26,8 +27,8 @@ class SE2JUCE_Processor : public juce::AudioProcessor, public juce::AudioProcess
     my_VstTimeInfo timeInfoSe;                          // SE format
     gmpi::midi_2_0::MidiConverter2 midiConverter;
 
-protected:
     SeJuceController controller;
+    DawStateManager dawStateManager;
 
 public:
     //==============================================================================

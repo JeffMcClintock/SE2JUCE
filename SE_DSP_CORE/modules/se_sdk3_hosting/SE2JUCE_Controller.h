@@ -71,7 +71,9 @@ class SeJuceController : public MpController, public IHasDirty, private juce::Ti
     interThreadQue queueToDsp_;
 
 public:
-	SeJuceController();
+	SeJuceController(
+		DawStateManager& dawState
+	);
 
 	void Initialize(SE2JUCE_Processor* pprocessor) 
 	{

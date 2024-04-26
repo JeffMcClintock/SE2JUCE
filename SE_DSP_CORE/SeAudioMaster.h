@@ -62,6 +62,9 @@ class dsp_msg_target;
 class IO_base;
 class my_msg_que_input_stream;
 class my_input_stream;
+class DawStateManager;
+
+struct DawPreset;
 
 // helper struct to track lookup table list
 struct lookup_table_entry
@@ -555,6 +558,7 @@ public:
 	std::atomic<bool> interrupt_flag = {};
 	std::atomic<bool> interupt_start_fade_out = {};
 	std::atomic<bool> interupt_module_latency_change = {};
+	DawPreset const* interrupt_preset_ = {};
 	bool interrupt_clear_delays = false;
 
 	bool synth_thread_running;

@@ -24,6 +24,9 @@
 #include "BundleInfo.h"
 #include "PresetReader.h"
 #include "modules/shared/voice_allocation_modes.h"
+#ifdef SE_USE_DAW_STATE_MGR
+#include "modules/se_sdk3_hosting/DawStateManager.h"
+#endif
 
 using namespace std;
 using namespace GmpiMidi;
@@ -1759,6 +1762,26 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncResta
 	}
 
 	// TODO: for each parameter not set, return it to it's default value. (would require DSP to store default value, or mayby just use init value.)
+}
+
+void DspPatchManager::setPreset(DawPreset const* preset)
+{
+	constexpr int patch = 0;
+
+	for(const auto& [handle, val] : preset->params)
+	{
+		if (auto parameter = GetParameter(handle); parameter)
+		{
+			for(int voice = 0 ; voice < val.rawValues_.size() ; ++voice)
+			{
+				const auto& v = val.rawValues_[voice];
+				if (parameter->SetValueRaw2(v.data(), v.size(), patch, voice))
+				{
+					parameter->OnValueChangedFromGUI(false, voice);
+				}
+			}
+		}
+	}
 }
 
 void DspPatchManager::setMidiChannel( int c )

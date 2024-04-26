@@ -588,7 +588,7 @@ void CModuleFactory::RegisterPluginsXml(TiXmlNode* pluginList )
 					// * Check module source file is included in project.
 					// * Check source contains 'SE_DECLARE_INIT_STATIC_FILE' macro.
 					// * Check this file contains 'INIT_STATIC_FILE' macro.
-					// if JUCE, it's OK not to register GUI modules because they are not supported.
+					// if using JUCE GUI, it's OK not to register GUI modules because they are not supported.
 					_RPT1(0, "Module not available: %S\n", pluginId.c_str());
 #if defined( _DEBUG)
 					failedGuiModules.push_back(pluginId);

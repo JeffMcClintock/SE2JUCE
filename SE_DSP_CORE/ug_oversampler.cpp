@@ -12,6 +12,7 @@
 #include "EventProcessor.h"
 #include "DspPatchManagerProxy.h"
 #include "./modules/shared/xplatform.h"
+#include "UgDebugInfo.h"
 
 using namespace std;
 
@@ -42,6 +43,13 @@ void ug_oversampler::Setup1(int factor, int filterType, bool copyStandardPlugs )
 // WRONG	main_container->patch_control_container = main_container;
 
 	main_container->SetAudioMaster(this);
+
+	// move any debugger to oversampler
+	if (main_container->m_debugger)
+	{
+		m_debugger = std::move(main_container->m_debugger);
+		m_debugger->m_module = this;
+	}
 
 	oversampler_out = new ug_oversampler_out();
 	AudioMaster()->AssignTemporaryHandle(oversampler_out);
@@ -820,7 +828,7 @@ void ug_oversampler::RegisterPatchAutomator( class ug_patch_automator* client )
 
 void ug_oversampler::OnCpuMeasure()
 {
-	SumCpu();
+// pointless, already done	SumCpu();
 	CpuFunc();
 }
 

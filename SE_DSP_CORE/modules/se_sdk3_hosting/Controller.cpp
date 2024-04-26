@@ -196,6 +196,7 @@ void MpController::Initialize()
 
 	auto parameters_xml = patchManagerE->FirstChildElement("Parameters");
 
+	size_t nativeParameterCount = 0;
 	for (auto parameter_xml = parameters_xml->FirstChildElement("Parameter"); parameter_xml; parameter_xml = parameter_xml->NextSiblingElement("Parameter"))
 	{
 		int dataType = DT_FLOAT;
@@ -257,6 +258,7 @@ void MpController::Initialize()
 		{
 			assert(ParameterTag >= 0);
 			seParameter = makeNativeParameter(ParameterTag, pminimum > pmaximum);
+			++nativeParameterCount;
 		}
 		else
 		{
@@ -581,7 +583,11 @@ std::vector< MpController::presetInfo > MpController::scanPresetFolder(platform_
 
 			if (!xml.empty())
 			{
-				returnValues.push_back(parsePreset(ToWstring(sourceFilename), xml));
+				const auto preset = parsePreset(ToWstring(sourceFilename), xml);
+				if(!preset.filename.empty()) // avoid ones that fail to parse
+				{
+					returnValues.push_back(preset);
+				}
 			}
 		}
 	}
@@ -690,6 +696,18 @@ void UndoManager::debug()
 #endif
 }
 
+#ifdef SE_USE_DAW_STATE_MGR
+void UndoManager::setPreset(MpController* controller, DawPreset const* preset)
+{
+	controller->dawStateManager.setPreset(preset);
+}
+#else
+void UndoManager::setPreset(MpController * controller, const std::string & preset)
+{
+	controller->setPreset(preset);
+}
+#endif
+
 void UndoManager::initial(MpController* controller)
 {
 	history.clear();
@@ -698,11 +716,20 @@ void UndoManager::initial(MpController* controller)
 	UpdateGui(controller);
 }
 
+#ifdef SE_USE_DAW_STATE_MGR
+void UndoManager::initial(MpController* controller, DawPreset const* preset)
+{
+	history.clear();
+	push({}, preset);
+}
+#else
+
 void UndoManager::initialFromXml(MpController* controller, std::string xml)
 {
 	history.clear();
 	push({}, std::move(xml));
 }
+#endif
 
 bool UndoManager::canUndo()
 {
@@ -720,7 +747,11 @@ void UndoManager::UpdateGui(MpController* controller)
 	*(controller->getHostParameter(HC_CAN_REDO)) = canRedo();
 }
 
+#ifdef SE_USE_DAW_STATE_MGR
+void UndoManager::push(std::string description, DawPreset const* preset)
+#else
 void UndoManager::push(std::string description, const std::string& preset)
+#endif
 {
 	if (undoPosition < size() - 1)
 	{
@@ -736,7 +767,7 @@ void UndoManager::snapshot(MpController* controller, std::string description)
 	if (!enabled)
 		return;
 
-	push(description, controller->getPresetXml());
+	push(description, controller->getPreset());
 
 	UpdateGui(controller);
 	debug();
@@ -748,9 +779,10 @@ void UndoManager::undo(MpController* controller)
 		return;
 
 	--undoPosition;
-	controller->setPreset(history[undoPosition].second);
 
-	// if wer're back to the original preset, set modified=false.
+	setPreset(controller, history[undoPosition].second);
+
+	// if we're back to the original preset, set modified=false.
 	if (!canUndo())
 		controller->setModified(false);
 
@@ -764,7 +796,8 @@ void UndoManager::redo(MpController* controller)
 	if (next < 0 || next >= size())
 		return;
 
-	controller->setPreset(history[next].second);
+	//controller->setPreset(history[next].second);
+	setPreset(controller, history[next].second);
 
 	undoPosition = next;
 
@@ -781,10 +814,12 @@ void UndoManager::getA(MpController* controller)
 
 	AB_is_A = true;
 
-	auto current = controller->getPresetXml();
+	auto current = controller->getPreset();
 	push("Choose A", current);
 
-	controller->setPreset(AB_storage);
+	//controller->setPreset(AB_storage);
+	setPreset(controller, AB_storage);
+
 	AB_storage = current;
 }
 
@@ -796,16 +831,21 @@ void UndoManager::getB(MpController* controller)
 	AB_is_A = false;
 
 	// first time clicking 'B' just assign current preset to 'B'
+#ifdef SE_USE_DAW_STATE_MGR
+	if (!AB_storage)
+#else
 	if (AB_storage.empty())
+#endif
 	{
-		AB_storage = controller->getPresetXml();
+		AB_storage = controller->getPreset();
 		return;
 	}
 
-	auto current = controller->getPresetXml();
+	auto current = controller->getPreset();
 	push("Choose B", current);
 
-	controller->setPreset(AB_storage);
+//	controller->setPreset(AB_storage);
+	setPreset(controller, AB_storage);
 	AB_storage = current;
 }
 
@@ -813,11 +853,12 @@ void UndoManager::copyAB(MpController* controller)
 {
 	if (AB_is_A)
 	{
-		AB_storage = controller->getPresetXml();
+		AB_storage = controller->getPreset();
 	}
 	else
 	{
-		controller->setPreset(AB_storage);
+//		controller->setPreset(AB_storage);
+		setPreset(controller, AB_storage);
 	}
 }
 
@@ -873,7 +914,7 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 
 				if (presets[preset].isSession)
 				{
-					setPreset(session_preset_xml);
+					setPreset(session_preset);
 				}
 				else if (presets[preset].isFactory)
 				{
@@ -891,7 +932,11 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 					{
 						xml = loadNativePreset(presets[preset].filename);
 					}
+#ifdef SE_USE_DAW_STATE_MGR
+					dawStateManager.setPreset(xml);
+#else
 					setPreset(xml);
+#endif
 				}
 
 				undoManager.initial(this);
@@ -1326,6 +1371,11 @@ bool MpController::OnTimer()
 		UpdatePresetBrowser();
 	}
 
+	if (auto preset = interrupt_preset_.exchange(nullptr, std::memory_order_relaxed) ; preset)
+	{
+		setPreset(preset);
+	}
+
 	return true;
 }
 
@@ -1333,7 +1383,9 @@ void MpController::OnStartupTimerExpired()
 {
 	if (BundleInfo::instance()->getPluginInfo().emulateIgnorePC)
 	{
+#ifndef SE_USE_DAW_STATE_MGR
 		ignoreProgramChange = true;
+#endif
 
 		my_msg_que_output_stream s(getQueueToDsp(), UniqueSnowflake::APPLICATION, "EIPC"); // Emulate Ignore Program Change
 		s << (uint32_t)0;
@@ -1396,7 +1448,11 @@ void MpController::OnFileDialogComplete(int patchCommand, int32_t result)
 			else
 			{
 				auto xml = loadNativePreset( Utf8ToWstring(fullpath) );
-                setPresetFromDaw(xml, true); // will update preset browser if appropriate
+#ifdef SE_USE_DAW_STATE_MGR
+				dawStateManager.setPreset(xml);
+#else
+				setPresetFromDaw(xml, true); // will update preset browser if appropriate
+#endif
 			}
 			break;
 
@@ -1409,7 +1465,7 @@ void MpController::OnFileDialogComplete(int patchCommand, int32_t result)
 				std::wstring r_file, r_path, r_extension;
 				decompose_filename(Utf8ToWstring(fullpath), r_file, r_path, r_extension);
 
-				// Update program name and cateogry (as they are queried by getPresetXml() ).
+				// Update program name and cateogry (as they are queried by getPreset() ).
 				for (auto& p : parameters_)
 				{
 					if (p->getHostControl() == HC_PROGRAM_NAME)
@@ -1429,7 +1485,7 @@ void MpController::OnFileDialogComplete(int patchCommand, int32_t result)
 					}
 				}
 
-				saveNativePreset(fullpath.c_str(), WStringToUtf8(r_file), getPresetXml());
+				saveNativePreset(fullpath.c_str(), WStringToUtf8(r_file), getPreset()->toString(BundleInfo::instance()->getPluginId()));
 
 				ScanPresets();
 				UpdatePresetBrowser();
@@ -1471,6 +1527,12 @@ void MpController::OnFileDialogComplete(int patchCommand, int32_t result)
 
 void MpController::ImportPresetXml(const char* filename, int presetIndex)
 {
+#ifdef SE_USE_DAW_STATE_MGR
+//	dawStateManager.setPresetFromFile(filename, presetIndex);
+	auto preset = dawStateManager.fileToPreset(filename);
+	if (preset)
+		dawStateManager.setPreset(preset);
+#else
 	TiXmlDocument doc;
 	doc.LoadFile(filename);
 
@@ -1483,9 +1545,71 @@ void MpController::ImportPresetXml(const char* filename, int presetIndex)
 	TiXmlHandle hDoc(&doc);
 
 	setPreset(hDoc.ToNode(), true, presetIndex);
+#endif
 }
 
-std::string MpController::getPresetXml(std::string presetNameOverride)
+#ifdef SE_USE_DAW_STATE_MGR
+DawPreset const* MpController::getPreset(std::string presetNameOverride)
+{
+	auto preset = new DawPreset();
+
+	// Sort for export consistancy.
+	for (auto& p : parameters_)
+	{
+		if (p->getHostControl() == HC_PROGRAM_NAME)
+		{
+			preset->name = WStringToUtf8((std::wstring)p->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0));
+			continue; // force non-save
+		}
+		if (p->getHostControl() == HC_PROGRAM_CATEGORY)
+		{
+			preset->category = WStringToUtf8((std::wstring)p->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0));
+			continue; // force non-save
+		}
+
+		if (p->stateful_)
+		{
+			const auto paramHandle = p->parameterHandle_;
+			auto& values = preset->params[paramHandle];
+
+			values.dataType = (gmpi::PinDatatype)p->datatype_;
+
+			const int voice = 0;
+			const auto raw = p->getValueRaw(gmpi::MP_FT_VALUE, voice);
+			values.rawValues_.push_back({ (char* const)raw.data(), raw.size() });
+
+#if 0
+	// MIDI learn.
+			if (parameter->MidiAutomation != -1)
+			{
+				paramElement->SetAttribute("MIDI", parameter->MidiAutomation);
+
+				if (!parameter->MidiAutomationSysex.empty())
+					paramElement->SetAttribute("MIDI_SYSEX", WStringToUtf8(parameter->MidiAutomationSysex));
+			}
+#endif
+		}
+	}
+
+	if (!presetNameOverride.empty())
+	{
+		preset->name = presetNameOverride;
+	}
+
+#if 0 // ??
+	{
+		char buffer[20];
+		sprintf(buffer, "%08x", BundleInfo::instance()->getPluginId());
+		element->SetAttribute("pluginId", buffer);
+	}
+#endif
+
+	// TODO : what about hash?
+
+	return dawStateManager.retainPreset(preset);
+}
+#else
+std::string MpController::getPreset(std::string presetNameOverride)
 {
 	std::string presetName, presetCategory;
 
@@ -1570,6 +1694,7 @@ std::string MpController::getPresetXml(std::string presetNameOverride)
 
 	return printer.CStr();
 }
+#endif
 
 int32_t MpController::getParameterModuleAndParamId(int32_t parameterHandle, int32_t* returnModuleHandle, int32_t* returnModuleParameterId)
 {
@@ -1596,6 +1721,7 @@ RawView MpController::getParameterValue(int32_t parameterHandle, int32_t fieldId
 	return {};
 }
 
+#ifndef SE_USE_DAW_STATE_MGR
 void MpController::setPreset(TiXmlNode* parentXml, bool updateProcessor, int preset)
 {
 	// see also CPatchManager::ImportPresetXml()
@@ -1774,43 +1900,43 @@ void MpController::setPreset(TiXmlNode* parentXml, bool updateProcessor, int pre
 			const auto raw = ParseToRaw(parameter->datatype_, v);
 
 			// This block seems messy. Should updating a parameter be a single function call?
-						// (would need to pass 'updateProcessor')
-						{
-							// calls controller_->updateGuis(this, voice)
-						parameter->setParameterRaw(gmpi::MP_FT_VALUE, (int32_t)raw.size(), raw.data(), voiceId);
+			// (would need to pass 'updateProcessor')
+			{
+				// calls controller_->updateGuis(this, voice)
+				parameter->setParameterRaw(gmpi::MP_FT_VALUE, (int32_t)raw.size(), raw.data(), voiceId);
 
-						// updated cached value.
-						parameter->upDateImmediateValue();
+				// updated cached value.
+				parameter->upDateImmediateValue();
 
-						if(updateProcessor) // For non-private parameters, update DAW.
-						{
-							parameter->updateProcessor(gmpi::MP_FT_VALUE, voiceId);
-							}
-						}
-                        
-                        // MIDI learn.
-                        if(updateProcessor && formatVersion > 0)
-                        {
-                            int32_t midiController = -1;
-                            ParamElement->QueryIntAttribute("MIDI", &midiController);
-                                {
-                                    my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCID");
-                                    s << static_cast<uint32_t>(sizeof(midiController));
-                                    s << midiController;
-                                    s.Send();
-                                }
+				if (updateProcessor) // For non-private parameters, update DAW.
+				{
+					parameter->updateProcessor(gmpi::MP_FT_VALUE, voiceId);
+				}
+			}
 
-                                std::string sysexU;
-                                ParamElement->QueryStringAttribute("MIDI_SYSEX", &sysexU);
-                                {
-                                    const auto sysex = Utf8ToWstring(sysexU);
-                                    
-                                    my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCSX");
-                                    s << static_cast<uint32_t>(sizeof(int32_t) + sizeof(wchar_t) * sysex.size());
-                                    s << sysex;
-                                    s.Send();
-                                }
-                            }
+			// MIDI learn.
+			if (updateProcessor && formatVersion > 0)
+			{
+				int32_t midiController = -1;
+				ParamElement->QueryIntAttribute("MIDI", &midiController);
+				{
+					my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCID");
+					s << static_cast<uint32_t>(sizeof(midiController));
+					s << midiController;
+					s.Send();
+				}
+
+				std::string sysexU;
+				ParamElement->QueryStringAttribute("MIDI_SYSEX", &sysexU);
+				{
+					const auto sysex = Utf8ToWstring(sysexU);
+
+					my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCSX");
+					s << static_cast<uint32_t>(sizeof(int32_t) + sizeof(wchar_t) * sysex.size());
+					s << sysex;
+					s.Send();
+				}
+			}
 		}
 	}
 	else // Old-style. 'Internal' Presets
@@ -1848,6 +1974,7 @@ void MpController::setPreset(TiXmlNode* parentXml, bool updateProcessor, int pre
 	if (updateProcessor)
 		OnEndPresetChange();
 }
+#endif
 
 void MpController::OnEndPresetChange()
 {
@@ -1858,6 +1985,7 @@ void MpController::OnEndPresetChange()
 	}
 }
 
+#ifndef SE_USE_DAW_STATE_MGR
 // xml may contain multiple presets, or just one.
 void MpController::setPreset(const std::string& xml, bool updateProcessor, int preset)
 {
@@ -1872,10 +2000,141 @@ void MpController::setPreset(const std::string& xml, bool updateProcessor, int p
 
 	setPreset(&doc, updateProcessor, preset);
 }
+#endif
+
+#ifdef SE_USE_DAW_STATE_MGR
+void MpController::setPresetUnsafe(DawPreset const* preset)
+{
+	interrupt_preset_.store(preset, std::memory_order_release);
+
+	// TODO: Update Immediate values here right in callers stack frame, otherwise DAW might query a stale value
+	// not relevant to JUCE ATM anyhow.
+}
+
+// new: set preset UI only. Processor is updated in paralell
+void MpController::setPreset(DawPreset const* preset)
+{
+	constexpr int patch = 0;
+	constexpr bool updateProcessor = false;
+
+	const std::wstring categoryNameW = Utf8ToWstring(preset->category);
+	auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM_CATEGORY);
+	auto it = ParameterHandleIndex.find(parameterHandle);
+	if (it != ParameterHandleIndex.end())
+	{
+		auto p = (*it).second;
+		p->setParameterRaw(gmpi::FieldType::MP_FT_VALUE, RawView(categoryNameW)); // don't check changed flag, if even originated from GUI, param is already changed. Still need top go to DSP.
+/*
+		if (updateProcessor)
+		{
+			p->updateProcessor(gmpi::MP_FT_VALUE, voiceId);
+		}
+*/
+	}
+	{
+		const std::wstring nameW = Utf8ToWstring(preset->name);
+		auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM_NAME);
+		auto it = ParameterHandleIndex.find(parameterHandle);
+		if (it != ParameterHandleIndex.end())
+		{
+			auto p = (*it).second;
+			p->setParameterRaw(gmpi::FieldType::MP_FT_VALUE, RawView(nameW)); // don't check changed flag, if even originated from GUI, param is already changed. Still need top go to DSP.
+/*
+			if (updateProcessor)
+			{
+				p->updateProcessor(gmpi::MP_FT_VALUE, voiceId);
+			}
+*/
+		}
+	}
+
+	for (const auto& [handle, val] : preset->params)
+	{
+		assert(handle != -1);
+
+		auto it = ParameterHandleIndex.find(handle);
+		if (it == ParameterHandleIndex.end())
+			continue;
+
+		auto& parameter = (*it).second;
+
+		assert(parameter->datatype_ == (int)val.dataType);
+
+		if (parameter->datatype_ != (int)val.dataType)
+			continue;
+
+		for (int voice = 0; voice < val.rawValues_.size(); ++voice)
+		{
+			const auto& raw = val.rawValues_[voice];
+
+			// This block seems messy. Should updating a parameter be a single function call?
+			// (would need to pass 'updateProcessor')
+			{
+				// calls controller_->updateGuis(this, voice)
+				parameter->setParameterRaw(gmpi::MP_FT_VALUE, (int32_t)raw.size(), raw.data(), voice);
+
+				// updated cached value.
+				parameter->upDateImmediateValue();
+
+				if (updateProcessor) // For non-private parameters, update DAW.
+				{
+					parameter->updateProcessor(gmpi::MP_FT_VALUE, voice);
+				}
+			}
+#if 0
+			// TODO I guess
+			// MIDI learn.
+			if (updateProcessor && formatVersion > 0)
+			{
+				int32_t midiController = -1;
+				ParamElement->QueryIntAttribute("MIDI", &midiController);
+				{
+					my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCID");
+					s << static_cast<uint32_t>(sizeof(midiController));
+					s << midiController;
+					s.Send();
+				}
+
+				std::string sysexU;
+				ParamElement->QueryStringAttribute("MIDI_SYSEX", &sysexU);
+				{
+					const auto sysex = Utf8ToWstring(sysexU);
+
+					my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCSX");
+					s << static_cast<uint32_t>(sizeof(int32_t) + sizeof(wchar_t) * sysex.size());
+					s << sysex;
+					s.Send();
+				}
+			}
+#endif
+		}
+	}
+
+	syncPresetControls(preset);
+}
+#endif
+
+#ifndef SE_USE_DAW_STATE_MGR
 
 void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor)
 {
 	setPreset(xml, updateProcessor);
+
+	syncPresetControls(std::hash<std::string>{}(xml), updateProcessor);
+}
+#endif
+
+// after setting a preset, try to make sense of it in terms of the existing preset list.
+#ifdef SE_USE_DAW_STATE_MGR
+void MpController::syncPresetControls(DawPreset const* preset)
+#else
+void MpController::syncPresetControls(const std::string& xml, size_t hash, bool updateProcessor)
+#endif
+{
+#ifdef SE_USE_DAW_STATE_MGR
+	constexpr bool updateProcessor = false;
+	auto& hash = preset->hash;
+#endif
 
 	std::string presetName;
 	{
@@ -1896,7 +2155,6 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 	XML will not match if any parameter was set outside the normalized range, because it will get clamped in the plugin.
 	*/
   //  _RPT2(_CRT_WARN, "setPresetFromDaw: hash=%d\nXML:\n%s\n", (int) std::hash<std::string>{}(xml), xml.c_str());
-	auto hash = std::hash<std::string>{}(xml);
 
 	// If preset has no name, treat it as a (modified) "Default"
 	if (presetName.empty())
@@ -1924,14 +2182,25 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 	{
 		if (presetSameNameIndex != -1)
 		{
+			// same name as an existing preset, but not the same parameter values.
 			// assume it's the same preset, except it's been modified
 			presetIndex = presetSameNameIndex;
 
 			// put original as undo state
-			std::string newXml;
 			const platform_string nativePath = toPlatformString(presets[presetIndex].filename);
+#ifdef SE_USE_DAW_STATE_MGR
+			const auto filename_utf8 = ToUtf8String(nativePath);
+			auto preset = dawStateManager.fileToPreset(filename_utf8.c_str());
+
+//			auto preset = dawStateManager.retainPreset(newXml);
+//			auto preset = dawStateManager.retainPreset(new DawPreset(dawStateManager.parameterInfos, hDoc.ToNode(), presetIndex))
+			if(preset)
+				undoManager.initial(this, preset);
+#else
+			std::string newXml;
 			FileToString(nativePath, newXml);
 			undoManager.initialFromXml(this, newXml);
+#endif
 			undoManager.snapshot(this, "Load Session Preset");
 			setModified(true);
 		}
@@ -1942,16 +2211,34 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 				std::remove_if(presets.begin(), presets.end(), [](presetInfo& preset) { return preset.isSession; })
 				, presets.end()
 			);
-			session_preset_xml.clear();
+//			session_preset_xml.clear();
 			
 			// preset not available and not the same name as any existing ones, add it to presets as 'session' preset.
 			presetIndex = static_cast<int32_t>(presets.size());
+
+#ifdef SE_USE_DAW_STATE_MGR
+			presets.push_back(
+			{
+				presetName,
+				preset->category,
+				presetIndex,			// Internal Factory presets only.
+				{},						// filename: External disk presets only.
+				preset->hash,
+				false,					// isFactory
+				true					// isSession
+				}
+			);
+//			presets.back().name = presetName;
+//			presets.back().isSession = true;
+			session_preset = preset;
+#else
 			presets.push_back(
 				parsePreset({}, xml)
 			);
 			presets.back().name = presetName;
 			presets.back().isSession = true;
-			session_preset_xml = xml;
+			session_preset = xml;
+#endif
 		}
 	}
 
@@ -2089,7 +2376,13 @@ void MpController::ExportPresetXml(const char* filename, std::string presetNameO
 {
 	ofstream myfile;
 	myfile.open(filename);
-	myfile << getPresetXml(presetNameOverride);
+
+#ifdef SE_USE_DAW_STATE_MGR
+	myfile << getPreset(presetNameOverride)->toString(BundleInfo::instance()->getPluginId());
+#else
+	myfile << getPreset(presetNameOverride);
+#endif
+
 	myfile.close();
 }
 

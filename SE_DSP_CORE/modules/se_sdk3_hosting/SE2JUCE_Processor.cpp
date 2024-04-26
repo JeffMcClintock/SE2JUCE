@@ -7,8 +7,9 @@
 
 //==============================================================================
 SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter) :
+    controller(dawStateManager)
     // init the midi converter
-    midiConverter(
+    ,midiConverter(
         // provide a lambda to accept converted MIDI 2.0 messages
         [this](const gmpi::midi::message_view& msg, int offset)
         {
@@ -27,10 +28,47 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
                        )
 #endif
 {
+
     BundleInfo::instance()->initPresetFolder(JucePlugin_Manufacturer, JucePlugin_Name);
 
     processor.connectPeer(&controller);
     controller.Initialize(this);
+
+    // Initialize the DAW state manager
+    {
+        {
+            TiXmlDocument doc;
+            {
+                const auto xml = BundleInfo::instance()->getResource("parameters.se.xml");
+                doc.Parse(xml.c_str());
+                assert(!doc.Error());
+            }
+
+            TiXmlHandle hDoc(&doc);
+
+            auto controllerE = hDoc.FirstChildElement("Controller").Element();
+            assert(controllerE);
+
+            auto patchManagerE = controllerE->FirstChildElement();
+            assert(strcmp(patchManagerE->Value(), "PatchManager") == 0);
+
+            auto parameters_xml = patchManagerE->FirstChildElement("Parameters");
+
+            dawStateManager.init(parameters_xml);
+        }
+
+        // update Processor when preset changes
+        dawStateManager.callbacks.push_back([this](DawPreset const* preset)
+            {
+                processor.setPresetUnsafe(preset);
+            });
+
+        // update Controller when preset changes
+        dawStateManager.callbacks.push_back([this](DawPreset const* preset)
+            {
+                controller.setPresetUnsafe(preset);
+            });
+    }
 
     if(!customizeParameter)
     {
@@ -170,7 +208,7 @@ int SE2JUCE_Processor::getCurrentProgram()
     const auto parameterHandle = controller.getParameterHandle(-1, -1 - HC_PROGRAM);
 
     const auto program = (int32_t) controller.getParameterValue(parameterHandle, gmpi::MP_FT_VALUE);
-    _RPT1(0, "getCurrentProgram() -> %d\n", program);
+    // _RPT1(0, "getCurrentProgram() -> %d\n", program);
     return program;
 }
 
@@ -325,5 +363,7 @@ void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
 void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
 {
     const std::string chunk(static_cast<const char*>(data), sizeInBytes);
-	controller.setPresetFromDaw(chunk, true);
+	//controller.setPresetFromDaw(chunk, true);
+
+    dawStateManager.setPreset(chunk);
 }

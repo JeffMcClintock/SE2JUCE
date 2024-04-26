@@ -296,3 +296,16 @@ void SynthRuntime::setPresetStateFromUiThread(const std::string& chunk, bool pro
 		generator->setPresetState_UI_THREAD(chunk, processorActive);
 	}
 }
+
+void SynthRuntime::setPresetUnsafe(DawPreset const* preset)
+{
+	std::lock_guard<std::mutex> x(generatorLock); // protect against setting preset during a restart of the processor (else preset gets lost).
+
+	// TODO!!! in standalone, how to get preset into processor later once it's constructed?
+	if (!generator)
+		return;
+
+	// TODO check behaviour during DSP restart
+	generator->interrupt_preset_ = preset;
+	generator->TriggerInterrupt();
+}

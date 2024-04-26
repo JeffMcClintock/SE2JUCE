@@ -19,6 +19,7 @@ public:
 #if defined(SE_TARGET_PLUGIN)
 	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) override; // VST3.
 #endif
+	void setPreset(struct DawPreset const* preset) override;
 	void getPresetState( std::string& chunk, bool saveRestartState) override;
     void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) override;
 	class dsp_patch_parameter_base* GetHostControl(int32_t hostControl, int32_t attachedToContainerHandle = -1) override;

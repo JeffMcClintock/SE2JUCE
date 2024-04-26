@@ -10,6 +10,8 @@
 #include "IProcessorMessageQues.h"
 #include "tinyxml/tinyxml.h"
 
+struct DawPreset;
+
 class my_output_stream_temp : public my_output_stream
 {
 public:
@@ -81,7 +83,8 @@ public:
 	// For VST process side automation.
 	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value, int32_t flags )
 	{
-		generator->setParameterNormalizedDsp( timestamp, paramIndex, value, flags );
+		if(generator)
+			generator->setParameterNormalizedDsp( timestamp, paramIndex, value, flags );
 	}
 
 	void UpdateTempo( my_VstTimeInfo * ti )
@@ -91,6 +94,8 @@ public:
     
 	void getPresetState(std::string& chunk, bool processorActive);
 	void setPresetStateFromUiThread(const std::string& chunk, bool processorActive);
+	void setPresetUnsafe(DawPreset const* preset);
+
 	int getNumInputs()
 	{
 		return generator->getNumInputs();

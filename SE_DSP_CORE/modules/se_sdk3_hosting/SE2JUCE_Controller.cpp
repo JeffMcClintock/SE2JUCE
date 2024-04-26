@@ -11,8 +11,9 @@ MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterInde
 {
 }
 
-SeJuceController::SeJuceController() :
-	queueToDsp_(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
+SeJuceController::SeJuceController(DawStateManager& dawState) :
+	MpController(dawState)
+	,queueToDsp_(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
 {
 }
 
@@ -53,6 +54,9 @@ void SeJuceController::loadFactoryPreset(int index, bool fromDaw)
 			const auto data = BinaryData::getNamedResource(BinaryData::namedResourceList[i], dataSizeInBytes);
 			const std::string xml(data, dataSizeInBytes);
 
+#if 1
+			dawStateManager.setPreset(xml);
+#else
 			if (fromDaw)
 			{
 				setPresetFromDaw(xml, true);
@@ -72,6 +76,8 @@ void SeJuceController::loadFactoryPreset(int index, bool fromDaw)
 
 				setPreset(hDoc.ToNode(), true, presetIndex);
 			}
+#endif
+
 			return;
 		}
 	}
@@ -84,6 +90,10 @@ void SeJuceController::OnStartupTimerExpired()
 	MpController::OnStartupTimerExpired();
 
 	undoManager.initial(this);
+
+#ifdef SE_USE_DAW_STATE_MGR
+	dawStateManager.enableIgnoreProgramChange();
+#endif
 }
 
 void MpParameterJuce::setNormalizedUnsafe(float daw_normalized)

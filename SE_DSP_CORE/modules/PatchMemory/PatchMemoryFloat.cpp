@@ -40,10 +40,19 @@ public:
 		if (pinLatchInput.getValue())
 		{
 			value = pinValueIn.getValue();
+//#ifdef _DEBUG
+//		_RPTN(0, "[%5d] PM IO -> %f IN\n", host.getHandle(), value);
+//#endif		
 		}
 		else
 		{
 			value = pinValueHostIn.getValue();
+//#ifdef _DEBUG
+//			if (444539279 != host.getHandle())
+//			{
+//				_RPTN(0, "[%5d] PM IO -> %f OUT\n", host.getHandle(), value);
+//			}
+//#endif		
 		}
 
 		pinValueOut = value;

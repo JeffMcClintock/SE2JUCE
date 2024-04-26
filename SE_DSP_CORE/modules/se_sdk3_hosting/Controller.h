@@ -6,6 +6,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include "../se_sdk3/TimerManager.h"
 #include "../se_sdk3/mp_gui.h"
 #include "../shared/FileWatcher.h"
@@ -16,6 +17,10 @@
 #include "MpParameter.h"
 #include "../../modules/se_sdk3_hosting/ControllerHost.h"
 #include "../../my_msg_que_output_stream.h"
+
+#ifdef SE_USE_DAW_STATE_MGR
+#include "DawStateManager.h"
+#endif
 
 namespace SynthEdit2
 {
@@ -79,25 +84,42 @@ class MpController;
 
 class UndoManager
 {
+#ifdef SE_USE_DAW_STATE_MGR
+	std::vector< std::pair< std::string, DawPreset const*> > history;
+	DawPreset const* AB_storage = {};
+#else
 	//                      description   preset XML
 	std::vector< std::pair< std::string, std::string> > history;
+	std::string AB_storage;
+#endif
+
 	int undoPosition = -1;
 	bool AB_is_A = true;
-	std::string AB_storage;
 
 	int size()
 	{
 		return static_cast<int>(history.size());
 	}
 
+#ifdef SE_USE_DAW_STATE_MGR
+	void setPreset(MpController* controller, DawPreset const* preset);
+#else
+	void setPreset(MpController* controller, const std::string& preset);
+#endif
+
 public:
 	bool enabled = {};
 
 	void initial(class MpController* controller);
 
-	void initialFromXml(MpController* controller, std::string xml);
 
+#ifdef SE_USE_DAW_STATE_MGR
+	void initial(MpController* controller, DawPreset const* preset);
+	void push(std::string description, DawPreset const* preset);
+#else
+	void initialFromXml(MpController* controller, std::string xml);
 	void push(std::string description, const std::string& preset);
+#endif
 
 	void snapshot(class MpController* controller, std::string description);
 
@@ -114,6 +136,8 @@ public:
 
 class MpController : public IGuiHost2, public interThreadQueUser, public TimerClient
 {
+	friend class UndoManager;
+
 public:
 	// presets from factory.xmlpreset resource.
 	struct presetInfo
@@ -140,11 +164,16 @@ private:
 	static const int ignoreProgramChangeStartupTimeMs = 2000;
 	static const int startupTimerInit = ignoreProgramChangeStartupTimeMs / timerPeriodMs;
 	int startupTimerCounter = startupTimerInit;
-	bool ignoreProgramChange = false;
 	bool presetsFolderChanged = false;
 
 protected:
+#ifdef SE_USE_DAW_STATE_MGR
+	DawStateManager& dawStateManager;
+#else
+	bool ignoreProgramChange = false;
+#endif
 	::UndoManager undoManager;
+
     bool isInitialized = {};
 
 	std::vector< std::unique_ptr<MpParameter> > parameters_;
@@ -161,7 +190,13 @@ protected:
 
 	// see also VST3Controller.programNames
 	std::vector< presetInfo > presets;
-	std::string session_preset_xml;
+#ifdef SE_USE_DAW_STATE_MGR
+	DawPreset const* session_preset;
+#else
+	std::string session_preset;
+#endif
+
+	std::atomic<DawPreset const*> interrupt_preset_ = {};
 
 	GmpiGui::OkCancelDialog okCancelDialog;
 
@@ -169,8 +204,16 @@ protected:
 	virtual void OnStartupTimerExpired();
 
 public:
-	MpController() :
+
+	MpController(
+#ifdef SE_USE_DAW_STATE_MGR
+		DawStateManager& dawState
+#endif
+	) :
 		message_que_dsp_to_ui(SeAudioMaster::UI_MESSAGE_QUE_SIZE2)
+#ifdef SE_USE_DAW_STATE_MGR
+		,dawStateManager(dawState)
+#endif
 	{
 		semControllers.patchManager = this;
 		RegisterGui2(&semControllers);
@@ -179,7 +222,14 @@ public:
     ~MpController();
 
 	void ScanPresets();
+#ifdef SE_USE_DAW_STATE_MGR
+	void setPreset(DawPreset const* preset);
+	void setPresetUnsafe(DawPreset const* preset);
+	void syncPresetControls(DawPreset const* preset);
+#else
 	void setPresetFromDaw(const std::string& xml, bool updateProcessor);
+	void syncPresetControls(const std::string& xml, size_t hash, bool updateProcessor = false);
+#endif
 	void SavePreset(int32_t presetIndex);
 	void SavePresetAs(const std::string& presetName);
 	void DeletePreset(int presetIndex);
@@ -258,9 +308,13 @@ public:
 	MpParameter* getHostParameter(int32_t hostControl);
 
 	void ImportPresetXml(const char* filename, int presetIndex = -1);
-	std::string getPresetXml(std::string presetNameOverride = {});
+#ifndef SE_USE_DAW_STATE_MGR
 	void setPreset(class TiXmlNode* parentXml, bool updateProcessor, int preset);
 	void setPreset(const std::string& xml, bool updateProcessor = true, int preset = 0);
+	std::string getPreset(std::string presetNameOverride = {});
+#else
+	DawPreset const* getPreset(std::string presetNameOverride = {});
+#endif
 	void ExportPresetXml(const char* filename, std::string presetNameOverride = {});
 	void ImportBankXml(const char * filename);
 	void setModified(bool presetIsModified);
