@@ -131,6 +131,7 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
         }
 
         addParameter(juceParameter);
+        p->setJuceParameter(juceParameter);
 
         juceParameter->addListener(this);
         sequentialIndex++;

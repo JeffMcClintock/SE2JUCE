@@ -11,6 +11,75 @@ MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterInde
 {
 }
 
+// After we recieve a preset, need to update native params value to DAW ASAP
+// Note there is not gaurentee what thread this happens on.
+// Note that the parameter is not updated fully yet, that happens asyncronously on UI thread.
+void MpParameterJuce::updateDawUnsafe(const std::string& rawValue)
+{
+	const RawView raw(rawValue.data(), rawValue.size());
+
+	double normalized{};
+
+	switch(datatype_)
+	{
+	default:
+	{
+		assert(false);
+		return;
+	}
+
+	break;
+	case DT_BOOL:
+	{
+		const auto value = (bool)raw;
+		normalized = RealToNormalized(static_cast<double>(value));
+	}
+	break;
+	case DT_INT:
+	{
+		const auto value = (int32_t)raw;
+		normalized = RealToNormalized(static_cast<double>(value));
+	}
+	break;
+	case DT_INT64:
+	{
+		const auto value = (int64_t)raw;
+		normalized = RealToNormalized(static_cast<double>(value));
+	}
+	break;
+	case DT_FLOAT:
+	{
+		const auto value = (float)raw;
+		normalized = RealToNormalized(static_cast<double>(value));
+	}
+	break;
+	case DT_DOUBLE:
+	{
+		const auto value = (double)raw;
+		normalized = RealToNormalized(value);
+	}
+	break;
+	}
+
+//	auto juceParameter = juceController->processor->getParameters()[hostTag];
+	if (juceParameter)
+	{
+		const bool handleGrabMyself = !isGrabbed();
+		if (handleGrabMyself)
+		{
+			juceParameter->beginChangeGesture();
+		}
+
+		juceParameter->setValueNotifyingHost(adjust(normalized)); // param->getDawNormalized());
+
+		if (handleGrabMyself)
+		{
+			juceParameter->endChangeGesture();
+		}
+	}
+}
+
+
 SeJuceController::SeJuceController(DawStateManager& dawState) :
 	MpController(dawState)
 	,queueToDsp_(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
@@ -108,13 +177,11 @@ void MpParameterJuce::setNormalizedUnsafe(float daw_normalized)
 // it needs to be relayed to the Controller (and GUI) and to the Processor
 void MpParameterJuce::updateFromImmediate()
 {
-	const auto pdirty = dirty.load(std::memory_order_relaxed);
+	const auto pdirty = dirty.exchange(false, std::memory_order_relaxed);
 	if (!pdirty)
 	{
 		return;
 	}
-
-	dirty.store(false, std::memory_order_release);
 
 	const float se_normalized = adjust(dawNormalizedUnsafe.load(std::memory_order_relaxed));
 

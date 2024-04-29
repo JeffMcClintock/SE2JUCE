@@ -79,7 +79,8 @@ public:
     virtual double RealToNormalized(double normalized) const = 0;
 
 	virtual void updateProcessor(gmpi::FieldType fieldId, int32_t voice) = 0;
-    
+	virtual void updateDawUnsafe(const std::string& rawValue) = 0;
+
 	// VST2 requires an unsafe cache of most recent parameter value from DAW.
 	// Override this method to allow the framework to update the cached value from the plugin side.
     virtual void upDateImmediateValue()= 0;
@@ -147,6 +148,7 @@ public:
 
 	void updateProcessor(gmpi::FieldType fieldId, int32_t voice) override;
 	void upDateImmediateValue() override {}
+	void updateDawUnsafe(const std::string& rawValue) override {}
 };
     
 class MpParameter_native : public MpParameter_base

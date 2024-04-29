@@ -287,6 +287,13 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 			values.rawValues_ = info.defaultRaw;
 		}
 	}
+
+#ifdef _DEBUG
+	for(auto& p : params)
+	{
+		assert(p.second.rawValues_.size() == 1);
+	}
+#endif
 }
 
 std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride) const
@@ -465,14 +472,14 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 		const auto dataType = p.dataType;
 		ParseXmlPreset(
 			parameter_xml,
-			[p, dataType](int /*voiceId*/, int /*preset*/, const char* xmlvalue) mutable
+			[&p, dataType](int /*voiceId*/, int /*preset*/, const char* xmlvalue) mutable
 			{
 				p.defaultRaw.push_back(ParseToRaw((int)dataType, xmlvalue));
 			}
 		);
 
 		// no patch-list?, init to zero.
-		if (!parameter_xml->FirstChildElement("patch-list"))
+		if (p.defaultRaw.empty()) //!parameter_xml->FirstChildElement("patch-list"))
 		{
 			assert(!stateful_);
 
@@ -517,4 +524,11 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 				// Ensure host queries return correct value.
 		//		p.upDateImmediateValue();
 	}
+
+#ifdef _DEBUG
+	for (auto& p : parameterInfos)
+	{
+		assert(!p.second.defaultRaw.empty());
+	}
+#endif
 }

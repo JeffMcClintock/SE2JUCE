@@ -19,6 +19,7 @@ class MpParameterJuce : public MpParameter_native
 	bool isInverted_ = false;
 	int hostTag = -1;	// index, sequential.
 	bool dawGrabbed = false; // the grabbed state we last sent to the DAW (logical OR of all grabbers)
+	juce::AudioProcessorParameter* juceParameter = {};
 
 	float adjust(float normalised) const
 	{
@@ -28,10 +29,14 @@ class MpParameterJuce : public MpParameter_native
 public:
 
 	MpParameterJuce(class SeJuceController* controller, int ParameterIndex, bool isInverted);
-
+	void setJuceParameter(juce::AudioProcessorParameter* parameter)
+	{
+		juceParameter = parameter;
+	}
 	int getNativeTag() override { return hostTag; }
 
 	void setNormalizedUnsafe(float daw_normalized);
+	void updateDawUnsafe(const std::string& rawValue) override;
 
 	// on the foreground thread, update the parameter from the unsafe value provided by the DAW
 	void updateFromImmediate();

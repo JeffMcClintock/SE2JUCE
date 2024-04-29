@@ -2008,7 +2008,27 @@ void MpController::setPresetUnsafe(DawPreset const* preset)
 	interrupt_preset_.store(preset, std::memory_order_release);
 
 	// TODO: Update Immediate values here right in callers stack frame, otherwise DAW might query a stale value
-	// not relevant to JUCE ATM anyhow.
+
+	const int voice = 0;
+	for (const auto& [handle, val] : preset->params)
+	{
+		assert(handle != -1);
+
+		auto it = ParameterHandleIndex.find(handle);
+		if (it == ParameterHandleIndex.end())
+			continue;
+
+		auto& parameter = (*it).second;
+
+		assert(parameter->datatype_ == (int)val.dataType);
+
+		if (parameter->datatype_ != (int)val.dataType)
+			continue;
+
+		const auto& raw = val.rawValues_[voice];
+
+		parameter->updateDawUnsafe(raw);
+	}
 }
 
 // new: set preset UI only. Processor is updated in paralell

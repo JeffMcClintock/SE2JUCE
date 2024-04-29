@@ -185,7 +185,6 @@ protected:
 	GmpiGui::FileDialog nativeFileDialog;
 
     interThreadQue message_que_dsp_to_ui;
-	bool hasInternalPresets = false; // VST2 has internal preset. VST3 does not.
 	bool isSemControllersInitialised = false;
 
 	// see also VST3Controller.programNames
