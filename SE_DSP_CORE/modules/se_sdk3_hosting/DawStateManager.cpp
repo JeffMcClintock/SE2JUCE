@@ -376,11 +376,6 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 		parameterInfos[ParameterHandle] = {};
 		paramInfo& p = parameterInfos[ParameterHandle];
 
-		//??		seParameter.strictIndex = strictIndex++;
-
-		//		seParameter.dataType = DT_FLOAT;
-		int ParameterTag = -1;
-		int Private = 0;
 
 #ifdef _DEBUG
 		p.name = parameter_xml->Attribute("Name");
@@ -397,7 +392,10 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 				p.dataType = gmpi::PinDatatype::Int32;
 			}
 		}
-		parameter_xml->QueryIntAttribute("Index", &ParameterTag);
+
+//		int ParameterTag = -1;
+		int Private = 0;
+//		parameter_xml->QueryIntAttribute("Index", &ParameterTag);
 		parameter_xml->QueryIntAttribute("Private", &Private);
 		p.private_ = Private != 0;
 
@@ -420,43 +418,20 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 		parameter_xml->QueryIntAttribute("ignoreProgramChange", &ignorePc);
 		p.ignoreProgramChange = ignorePc != 0;
 
-		double pminimum = 0.0;
-		double pmaximum = 10.0;
-
-		parameter_xml->QueryDoubleAttribute("RangeMinimum", &pminimum);
-		parameter_xml->QueryDoubleAttribute("RangeMaximum", &pmaximum);
-
-		int moduleHandle_ = -1;
-		int moduleParamId_ = 0;
-		bool isPolyphonic_ = false;
-		std::wstring enumList_;
-
-		parameter_xml->QueryIntAttribute("Module", &(moduleHandle_));
-		parameter_xml->QueryIntAttribute("ModuleParamId", &(moduleParamId_));
-		parameter_xml->QueryBoolAttribute("isPolyphonic", &(isPolyphonic_));
+		parameter_xml->QueryDoubleAttribute("RangeMinimum", &p.minimum);
+		parameter_xml->QueryDoubleAttribute("RangeMaximum", &p.maximum);
 
 		if (p.dataType == gmpi::PinDatatype::Int32 || p.dataType == gmpi::PinDatatype::String /*|| dataType == DT_ENUM */)
 		{
-			auto s = parameter_xml->Attribute("MetaData");
-			if (s)
-				p.meta = s; // convert.from_bytes(s);
+			if (auto s = parameter_xml->Attribute("MetaData") ; s)
+				p.meta = s;
 		}
 
 		if (Private == 0)
 		{
-			assert(ParameterTag >= 0);
-			//			p = makeNativeParameter(ParameterTag, pminimum > pmaximum);
-			//			++nativeParameterCount;
+//			assert(ParameterTag >= 0);
 			nativeParameters.push_back(std::make_unique<nativeParameter>(0)); // TODO index
 		}
-		else
-		{
-			//			p.isPolyphonic_ = isPolyphonic_;
-		}
-
-		//		p.hostControl_ = hostControl;
-		p.minimum = pminimum;
-		p.maximum = pmaximum;
 
 #if 0
 		parameter_xml->QueryIntAttribute("MIDI", &(p.MidiAutomation));
@@ -467,7 +442,6 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 			p.MidiAutomationSysex = Utf8ToWstring(temp);
 		}
 #endif
-#if 1
 		// Default values from patch list.
 		const auto dataType = p.dataType;
 		ParseXmlPreset(
@@ -504,25 +478,6 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 				p.defaultRaw.push_back(raw);
 			}
 		}
-#endif
-
-#if 0
-		p.parameterHandle_ = ParameterHandle;
-		p.datatype_ = dataType;
-		p.moduleHandle_ = moduleHandle_;
-		p.moduleParamId_ = moduleParamId_;
-		p.stateful_ = stateful_;
-		p.name_ = convert.from_bytes(Name);
-		p.enumList_ = enumList_;
-		p.ignorePc_ = ignorePc != 0;
-
-		parameters_.push_back(std::unique_ptr<MpParameter>(p));
-#endif
-		//		ParameterHandleIndex.insert(std::make_pair(ParameterHandle, p));
-		//		moduleParameterIndex.insert(std::make_pair(std::make_pair(moduleHandle_, moduleParamId_), ParameterHandle));
-
-				// Ensure host queries return correct value.
-		//		p.upDateImmediateValue();
 	}
 
 #ifdef _DEBUG

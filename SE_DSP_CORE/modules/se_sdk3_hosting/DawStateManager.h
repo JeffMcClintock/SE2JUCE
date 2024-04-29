@@ -27,7 +27,7 @@ struct paramInfo
 	std::vector< std::string > defaultRaw;
 	gmpi::PinDatatype dataType = gmpi::PinDatatype::Float32;
 	double minimum = 0.0;
-	double maximum = 1.0;
+	double maximum = 10.0;
 	std::string meta; // enum list/file ext
 	bool private_ = false;
 	bool ignoreProgramChange = false;
