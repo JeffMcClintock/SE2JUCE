@@ -32,7 +32,6 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
     BundleInfo::instance()->initPresetFolder(JucePlugin_Manufacturer, JucePlugin_Name);
 
     processor.connectPeer(&controller);
-    controller.Initialize(this);
 
     // Initialize the DAW state manager
     {
@@ -69,6 +68,8 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
                 controller.setPresetUnsafe(preset);
             });
     }
+
+    controller.Initialize(this);
 
     if(!customizeParameter)
     {

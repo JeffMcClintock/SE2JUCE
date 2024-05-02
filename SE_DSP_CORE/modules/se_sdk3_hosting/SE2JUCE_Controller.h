@@ -113,6 +113,7 @@ public:
 	}
 	std::vector< MpController::presetInfo > scanFactoryPresets() override;
 	void loadFactoryPreset(int index, bool fromDaw) override;
+	std::string getFactoryPresetXml(std::string filename) override;
 
 	// IHasDirty
 	void setDirty() override

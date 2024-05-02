@@ -374,6 +374,8 @@ struct SeParameterAttachmentButtonDisabler2 : SeParameterAttachment
         {
             const auto enable = RawToValue<bool>(data, size);
             button.setEnabled(enable);
+
+//            _RPTN(_CRT_WARN, "%s setEnabled(%d)\n", button.getName().getCharPointer(), (int)enable);
         }
 
         return gmpi::MP_OK;

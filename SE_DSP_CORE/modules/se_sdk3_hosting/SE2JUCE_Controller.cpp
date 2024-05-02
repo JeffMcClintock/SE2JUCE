@@ -86,6 +86,21 @@ SeJuceController::SeJuceController(DawStateManager& dawState) :
 {
 }
 
+std::string SeJuceController::getFactoryPresetXml(std::string filename)
+{
+	for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
+	{
+		if (filename == BinaryData::originalFilenames[i])
+		{
+			int dataSizeInBytes = {};
+			const auto data = BinaryData::getNamedResource(BinaryData::namedResourceList[i], dataSizeInBytes);
+			return std::string(data, dataSizeInBytes);
+		}
+	}
+
+	return {};
+}
+
 std::vector< MpController::presetInfo > SeJuceController::scanFactoryPresets()
 {
 	const char* xmlPresetExt = ".xmlpreset";
@@ -158,7 +173,7 @@ void SeJuceController::OnStartupTimerExpired()
 	// disable updates to 'Master/Analyse' via loading presets.
 	MpController::OnStartupTimerExpired();
 
-	undoManager.initial(this);
+//??	undoManager.initial(this);
 
 #ifdef SE_USE_DAW_STATE_MGR
 	dawStateManager.enableIgnoreProgramChange();

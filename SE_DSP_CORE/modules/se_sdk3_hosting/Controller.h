@@ -270,6 +270,7 @@ public:
 	std::vector< MpController::presetInfo > scanNativePresets();
 	virtual std::vector< MpController::presetInfo > scanFactoryPresets() = 0;
 	virtual void loadFactoryPreset(int index, bool fromDaw) = 0;
+	virtual std::string getFactoryPresetXml(std::string filename) = 0;
 	std::vector<MpController::presetInfo> scanPresetFolder(platform_string PresetFolder, platform_string extension);
 
 	void ParamToDsp(MpParameter* param, int32_t voice = 0);

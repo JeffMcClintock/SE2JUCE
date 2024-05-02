@@ -6,17 +6,8 @@
 
 void DawStateManager::setPreset(const std::string& presetString)
 {
-	// perform parsing on callers thread.
-	setPreset(retainPreset(new DawPreset(parameterInfos, presetString)));
-
-	/* no, needed by undo manager
-	// remove old presets, assuming not accessed anywhere. could use shared_ptr? maybe
-	if (presets.size() > 10)
-	{
-		presets.erase(presets.begin());
-	}
-	*/
-	
+	auto preset = new DawPreset(parameterInfos, presetString);
+	setPreset(retainPreset(preset));
 }
 
 DawPreset const* DawStateManager::fileToPreset(const char* filename, int presetIndex)
@@ -33,6 +24,27 @@ DawPreset const* DawStateManager::fileToPreset(const char* filename, int presetI
 	TiXmlHandle hDoc(&doc);
 
 	return retainPreset(new DawPreset(parameterInfos, hDoc.ToNode(), presetIndex));
+}
+
+DawPreset const* DawStateManager::xmlToPreset(std::string xml, bool retain)
+{
+	if(xml.empty())
+		return {};
+
+	assert(!parameterInfos.empty()); // need to initialise first
+
+	auto preset = new DawPreset(parameterInfos, xml);
+
+	if(preset->hash == 0 && preset->name.empty()) // failed to read preset
+	{
+		delete preset;
+		return {};
+	}
+
+	if(retain)
+		retainPreset(preset);
+
+	return preset;
 }
 
 void DawStateManager::setPreset(DawPreset const* preset)
@@ -147,8 +159,6 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 
 	if (parametersE == nullptr)
 		return;
-
-// TODO!!!! ?????	hash = std::hash<std::string>{}(presetString);
 
 	if (presetXml)
 	{
@@ -277,8 +287,12 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 	}
 
 	// set any parameters missing from the preset to their default
+	// except for preset name and category
 	for (auto& [paramHandle, info] : parametersInfo)
 	{
+		if(info.hostControl == HC_PROGRAM_NAME || HC_PROGRAM_CATEGORY == info.hostControl)
+			continue;
+
 		if (params.find(paramHandle) == params.end())
 		{
 			auto& values = params[paramHandle];
@@ -294,6 +308,8 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 		assert(p.second.rawValues_.size() == 1);
 	}
 #endif
+
+	calcHash();
 }
 
 std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride) const
@@ -306,9 +322,13 @@ std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride
 	doc.LinkEndChild(element);
 
 	{
-		char buffer[20];
-		sprintf(buffer, "%08x", pluginId);
-		element->SetAttribute("pluginId", buffer);
+		char txt[20];
+#if defined(_MSC_VER)
+		sprintf_s(txt, "%08x", pluginId);
+#else
+		snprintf(txt, std::size(txt), "%08x", pluginId);
+#endif
+		element->SetAttribute("pluginId", txt);
 	}
 
 	if (!presetNameOverride.empty())
@@ -353,6 +373,12 @@ std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride
 	doc.Accept(&printer);
 
 	return printer.CStr();
+}
+
+void DawPreset::calcHash()
+{
+	const auto xml = toString(0);
+	hash = std::hash<std::string>{}(xml);
 }
 
 void DawStateManager::init(TiXmlElement* parameters_xml)
@@ -412,8 +438,7 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 			}
 		}
 
-		int hostControl = -1;
-		parameter_xml->QueryIntAttribute("HostControl", &hostControl);
+		parameter_xml->QueryIntAttribute("HostControl", &p.hostControl);
 		int ignorePc = 0;
 		parameter_xml->QueryIntAttribute("ignoreProgramChange", &ignorePc);
 		p.ignoreProgramChange = ignorePc != 0;
@@ -458,7 +483,7 @@ void DawStateManager::init(TiXmlElement* parameters_xml)
 			assert(!stateful_);
 
 			// Special case HC_VOICE_PITCH needs to be initialized to standard western scale
-			if (HC_VOICE_PITCH == hostControl)
+			if (HC_VOICE_PITCH == p.hostControl)
 			{
 				const int middleA = 69;
 				constexpr float invNotesPerOctave = 1.0f / 12.0f;

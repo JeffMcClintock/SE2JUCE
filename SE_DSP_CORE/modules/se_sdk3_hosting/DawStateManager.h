@@ -31,6 +31,7 @@ struct paramInfo
 	std::string meta; // enum list/file ext
 	bool private_ = false;
 	bool ignoreProgramChange = false;
+	int32_t hostControl = -1;
 
 #ifdef _DEBUG
 	std::string name;
@@ -50,9 +51,8 @@ struct DawPreset
 	DawPreset(const DawPreset& other);
 	DawPreset() {}
 
-	void initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, TiXmlNode* presetXml, int presetIdx);
-
 	std::string toString(int32_t pluginId, std::string presetNameOverride = {}) const;
+	void calcHash();
 
 //	int idx = 0; // 'generation'
 	std::string name;
@@ -60,6 +60,10 @@ struct DawPreset
 	std::map<int32_t, paramValue> params;
 	std::size_t hash = 0;
 	mutable bool ignoreProgramChangeActive = false;
+	mutable bool resetUndo = true;
+
+private:
+	void initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, TiXmlNode* presetXml, int presetIdx);
 };
 
 // handles setting parameters and presets in a thread-safe manner in the presence of a hostile DAW.
@@ -106,6 +110,7 @@ public:
 	void setPreset(DawPreset const* preset);
 //	void setPresetFromFile(const char* filename, int presetIndex = 0);
 	DawPreset const* fileToPreset(const char* filename, int presetIndex = 0);
+	DawPreset const* xmlToPreset(std::string xml, bool retain = true);
 
 	void enableIgnoreProgramChange()
 	{
