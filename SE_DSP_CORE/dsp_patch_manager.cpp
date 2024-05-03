@@ -24,9 +24,7 @@
 #include "BundleInfo.h"
 #include "PresetReader.h"
 #include "modules/shared/voice_allocation_modes.h"
-#ifdef SE_USE_DAW_STATE_MGR
 #include "modules/se_sdk3_hosting/DawStateManager.h"
-#endif
 
 using namespace std;
 using namespace GmpiMidi;

@@ -329,13 +329,13 @@ namespace gmpi
 
 		enum MessageType //: unsigned char
 		{
-			Utility = 0x0, // 32 bits Utility Messages 
-			System = 0x1, // 32 bits System Real Time and System Common Messages (except System Exclusive)
-			ChannelVoice32 = 0x2, // 32 bits MIDI 1.0 Channel Voice Messages
-			Data64 = 0x3, // 64 bits Data Messages (including System Exclusive)
-			ChannelVoice64 = 0x4, // 64 bits MIDI 2.0 Channel Voice Messages
-			Data128 = 0x5, // 128 bits Data Messages
-			Reserved = 0x6, // 32 bits Reserved for future definition by MMA/AME
+			Utility        = 0x0, //  32 bits Utility Messages 
+			System         = 0x1, //  32 bits System Real Time and System Common Messages (except System Exclusive)
+			ChannelVoice32 = 0x2, //  32 bits MIDI 1.0 Channel Voice Messages
+			Data64         = 0x3, //  64 bits Data Messages (including System Exclusive)
+			ChannelVoice64 = 0x4, //  64 bits MIDI 2.0 Channel Voice Messages
+			Data128        = 0x5, // 128 bits Data Messages
+			Reserved       = 0x6, //  32 bits Reserved for future definition by MMA/AME
 		};
 
 		enum Status //: unsigned char

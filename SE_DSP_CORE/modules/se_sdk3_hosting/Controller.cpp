@@ -73,7 +73,7 @@ void MpController::ScanPresets()
 		auto nativePresetsCount = presets.size();
 
 		// Harvest factory preset names.
-		auto factoryPresetFolder = ToPlatformString(BundleInfo::instance()->getImbeddedFileFolder());
+		auto factoryPresetFolder = ToPlatformString(BundleInfo::instance()->getImbedded FileFolder());
 		string filenameUtf8 = ToUtf8String(factoryPresetFolder) + "factory.xmlpreset";
 
 		TiXmlDocument doc;
@@ -196,7 +196,6 @@ void MpController::Initialize()
 
 	auto parameters_xml = patchManagerE->FirstChildElement("Parameters");
 
-	size_t nativeParameterCount = 0;
 	for (auto parameter_xml = parameters_xml->FirstChildElement("Parameter"); parameter_xml; parameter_xml = parameter_xml->NextSiblingElement("Parameter"))
 	{
 		int dataType = DT_FLOAT;
@@ -258,7 +257,6 @@ void MpController::Initialize()
 		{
 			assert(ParameterTag >= 0);
 			seParameter = makeNativeParameter(ParameterTag, pminimum > pmaximum);
-			++nativeParameterCount;
 		}
 		else
 		{
@@ -410,7 +408,7 @@ void MpController::Initialize()
 		}
 	}
 #endif
-
+    
 	undoManager.initial(this);
 
     isInitialized = true;
@@ -540,8 +538,6 @@ MpController::presetInfo MpController::parsePreset(const std::wstring& filename,
 			presetName = presetName.substr(5);
 		}
 	}
-
-
 
 	TiXmlDocument doc;
 	doc.Parse(xml.c_str());
@@ -829,7 +825,9 @@ void UndoManager::undo(MpController* controller)
 	--undoPosition;
 
 	auto preset = history[undoPosition].second;
+#ifdef SE_USE_DAW_STATE_MGR
 	preset->resetUndo = false;
+#endif
 	setPreset(controller, preset);
 
 	// if we're back to the original preset, set modified=false.
@@ -851,7 +849,11 @@ void UndoManager::redo(MpController* controller)
 		return;
 
 	auto preset = history[next].second;
+
+#ifdef SE_USE_DAW_STATE_MGR
 	preset->resetUndo = false;
+#endif
+
 	setPreset(controller, preset);
 
 	undoPosition = next;
@@ -876,7 +878,6 @@ void UndoManager::getA(MpController* controller)
 	auto current = controller->getPreset();
 	push("Choose A", current);
 
-	//controller->setPreset(AB_storage);
 	setPreset(controller, AB_storage);
 
 	AB_storage = current;
@@ -916,7 +917,6 @@ void UndoManager::copyAB(MpController* controller)
 	}
 	else
 	{
-//		controller->setPreset(AB_storage);
 		setPreset(controller, AB_storage);
 	}
 }
@@ -1434,10 +1434,12 @@ bool MpController::OnTimer()
 		UpdatePresetBrowser();
 	}
 
+#ifdef SE_USE_DAW_STATE_MGR
 	if (auto preset = interrupt_preset_.exchange(nullptr, std::memory_order_relaxed) ; preset)
 	{
 		setPreset(preset);
 	}
+#endif
 
 	return true;
 }
@@ -1548,7 +1550,11 @@ void MpController::OnFileDialogComplete(int patchCommand, int32_t result)
 					}
 				}
 
+#ifdef SE_USE_DAW_STATE_MGR
 				saveNativePreset(fullpath.c_str(), WStringToUtf8(r_file), getPreset()->toString(BundleInfo::instance()->getPluginId()));
+#else
+				saveNativePreset(fullpath.c_str(), WStringToUtf8(r_file), getPreset());
+#endif
 
 				ScanPresets();
 				UpdatePresetBrowser();
@@ -2206,7 +2212,7 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 {
 	setPreset(xml, updateProcessor);
 
-	syncPresetControls(std::hash<std::string>{}(xml), updateProcessor);
+	syncPresetControls(xml, updateProcessor);
 }
 #endif
 
@@ -2214,12 +2220,14 @@ void MpController::setPresetFromDaw(const std::string& xml, bool updateProcessor
 #ifdef SE_USE_DAW_STATE_MGR
 void MpController::syncPresetControls(DawPreset const* preset)
 #else
-void MpController::syncPresetControls(const std::string& xml, size_t hash, bool updateProcessor)
+void MpController::syncPresetControls(const std::string& xml, bool updateProcessor)
 #endif
 {
 #ifdef SE_USE_DAW_STATE_MGR
 	constexpr bool updateProcessor = false;
 	auto& hash = preset->hash;
+#else
+	auto hash = std::hash<std::string>{}(xml);
 #endif
 
 	std::string presetName;
@@ -2274,6 +2282,7 @@ void MpController::syncPresetControls(const std::string& xml, size_t hash, bool 
 			// assume it's the same preset, except it's been modified
 			presetIndex = presetSameNameIndex;
 
+#ifdef SE_USE_DAW_STATE_MGR
 			DawPreset const* preset{};
 
 			// put original as undo state
@@ -2285,20 +2294,20 @@ void MpController::syncPresetControls(const std::string& xml, size_t hash, bool 
 			else
 			{
 				const platform_string nativePath = toPlatformString(presets[presetIndex].filename);
-#ifdef SE_USE_DAW_STATE_MGR
 				const auto filename_utf8 = ToUtf8String(nativePath);
 				preset = dawStateManager.fileToPreset(filename_utf8.c_str());
 			}
 
-//			auto preset = dawStateManager.retainPreset(newXml);
-//			auto preset = dawStateManager.retainPreset(new DawPreset(dawStateManager.parameterInfos, hDoc.ToNode(), presetIndex))
-			if(preset)
+			if (preset)
 				undoManager.initial(this, preset);
-#else
+#endif
+
+#ifndef SE_USE_DAW_STATE_MGR
 			std::string newXml;
 			FileToString(nativePath, newXml);
 			undoManager.initialFromXml(this, newXml);
 #endif
+
 			undoManager.snapshot(this, "Load Session Preset");
 			setModified(true);
 		}

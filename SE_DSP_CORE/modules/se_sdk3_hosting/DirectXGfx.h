@@ -710,7 +710,7 @@ namespace gmpi
 			{
 				if (diBitmap_)
 				{
-				diBitmap_->GetSize(&returnSize->width, &returnSize->height);
+					diBitmap_->GetSize(&returnSize->width, &returnSize->height);
 				}
 				else if (nativeBitmap_)
 				{

@@ -227,7 +227,7 @@ public:
 	void syncPresetControls(DawPreset const* preset);
 #else
 	void setPresetFromDaw(const std::string& xml, bool updateProcessor);
-	void syncPresetControls(const std::string& xml, size_t hash, bool updateProcessor = false);
+	void syncPresetControls(const std::string& xml, bool updateProcessor = false);
 #endif
 	void SavePreset(int32_t presetIndex);
 	void SavePresetAs(const std::string& presetName);

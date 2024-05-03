@@ -69,28 +69,28 @@ void ug_slider::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type )
 		const float output_val = patchValue_ * 0.1f; // Voltages are divided by 10.
 		const bool smoothUpdate = p_clock > 0; // first update instant.
 
-	int smooth_amnt;
+		int smooth_amnt;
 
 		if (smoothUpdate)	// when user moves control
-	{
-		if( appearance == 8 || ( appearance > 3 && appearance < 7) )	// switch, minimal smoothing
 		{
-			smooth_amnt = 4; // allow 4 samples for transition
+			if (appearance == 8 || (appearance > 3 && appearance < 7))	// switch, minimal smoothing
+			{
+				smooth_amnt = 4; // allow 4 samples for transition
+			}
+			else		// normal knob, fairly heavy smoothing
+			{
+				smooth_amnt = (int)getSampleRate() / 32; // allow 1/32 sec for transition
+			}
 		}
-		else		// normal knob, fairly heavy smoothing
+		else			// instant change, when patch change happens
 		{
-			smooth_amnt = (int)getSampleRate() / 32; // allow 1/32 sec for transition
+			smooth_amnt = 0;
 		}
-	}
-	else			// instant change, when patch change happens
-	{
-		smooth_amnt = 0;
-	}
 
-	output_so.Set( SampleClock(), output_val, smooth_amnt );
-	//	_RPT1(_CRT_WARN, "change output %d\n", SampleClock() );
-	SET_CUR_FUNC( &ug_slider::sub_process );
-}
+		output_so.Set(SampleClock(), output_val, smooth_amnt);
+		//	_RPT1(_CRT_WARN, "change output %d\n", SampleClock() );
+		SET_CUR_FUNC(&ug_slider::sub_process);
+	}
 }
 
 void ug_slider::sub_process(int start_pos, int sampleframes)

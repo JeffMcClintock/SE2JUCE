@@ -395,31 +395,31 @@ private:
 		}
 		else
 		{
-	    for( int s = sampleframes ; s > 0 ; s-- )
-	    {
-		    *out++ = v;
+			for (int s = sampleframes; s > 0; s--)
+			{
+				*out++ = v;
 
-		    if( --count < 0 ) // done?
-		    {
-			    v = target;
-			    output_level = v;
-			    *(out-1) = v; // ensure output *exact*
-			    plug->TransmitState( plug->UG->AudioMaster()->BlockStartClock() + start_pos + sampleframes - s, ST_STATIC );
-			    // fill remainder of block if nesc
-			    s--;
+				if (--count < 0) // done?
+				{
+					v = target;
+					output_level = v;
+					*(out - 1) = v; // ensure output *exact*
+					plug->TransmitState(plug->UG->AudioMaster()->BlockStartClock() + start_pos + sampleframes - s, ST_STATIC);
+					// fill remainder of block if nesc
+					s--;
 
-			    for( ; s > 0 ; s-- )
-			    {
-				    *out++ = v;
-			    }
+					for (; s > 0; s--)
+					{
+						*out++ = v;
+					}
 
-			    return false;
-		    }
+					return false;
+				}
 
-		    v += dv;
-		    dv += ddv;
-		    ddv += c;
-	    }
+				v += dv;
+				dv += ddv;
+				ddv += c;
+			}
 		}
 
 	    output_level = v;

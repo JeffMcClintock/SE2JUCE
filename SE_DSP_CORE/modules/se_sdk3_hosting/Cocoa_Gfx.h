@@ -2223,8 +2223,8 @@ return gmpi::MP_FAIL;
             }
 
             GMPI_REFCOUNT_NO_DELETE;
-		};
-
+        };
+        
 		// https://stackoverflow.com/questions/10627557/mac-os-x-drawing-into-an-offscreen-nsgraphicscontext-using-cgcontextref-c-funct
 		class bitmapRenderTarget : public GraphicsContext // emulated by carefull layout public GmpiDrawing_API::IMpBitmapRenderTarget
 		{
@@ -2253,7 +2253,7 @@ return gmpi::MP_FAIL;
 #else
                 // To match Flipped View, Flip Bitmap Context too.
                 // (Alternative is [image setFlipped:TRUE] in constructor, but that method is deprected).
-                [image lockFocusFlipped:TRUE];
+                [image lockFocus Flipped:TRUE];
 #endif
                 GraphicsContext::BeginDraw();
             }

@@ -194,7 +194,7 @@ void Module_Info3::LoadDll()
 	std::wstring load_filename = filename;
 
 #if defined( SE_EDIT_SUPPORT )
-	CWaitCursor wait;
+	//	CWaitCursor wait; // will crash on background thread rebuild
 	
 	// if we are loading a project with incompatible modules. Don't attempt to load dll until it's upgraded.
 	if (m_incompatible_with_current_module)

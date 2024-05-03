@@ -85,8 +85,8 @@ void BypassFeedbackModule(ug_base* u, int voice)
 	std::vector<UPlug*> fromPins(moduleInputPin->connections);
 	for (auto fromPin : fromPins)
 	{
-	auto it = std::find(fromPin->connections.begin(), fromPin->connections.end(), moduleInputPin);
-	fromPin->connections.erase(it);
+		auto it = std::find(fromPin->connections.begin(), fromPin->connections.end(), moduleInputPin);
+		fromPin->connections.erase(it);
 	}
 
 	{
@@ -101,8 +101,8 @@ void BypassFeedbackModule(ug_base* u, int voice)
 			// connect the upstream module/s directly
 			for (auto fromPin : fromPins)
 			{
-			u->connect(fromPin, toPin);
-		}
+				u->connect(fromPin, toPin);
+			}
 		}
 		outgoingPin->connections.clear();
 	}
