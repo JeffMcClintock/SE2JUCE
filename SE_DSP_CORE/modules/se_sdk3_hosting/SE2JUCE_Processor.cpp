@@ -56,15 +56,12 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
             dawStateManager.init(parameters_xml);
         }
 
-        // update Processor when preset changes
         dawStateManager.callbacks.push_back([this](DawPreset const* preset)
             {
+                // update Processor when preset changes
                 processor.setPresetUnsafe(preset);
-            });
 
-        // update Controller when preset changes
-        dawStateManager.callbacks.push_back([this](DawPreset const* preset)
-            {
+                // update Controller when preset changes
                 controller.setPresetUnsafe(preset);
             });
     }

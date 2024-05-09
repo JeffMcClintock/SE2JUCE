@@ -70,7 +70,7 @@ void MpParameterJuce::updateDawUnsafe(const std::string& rawValue)
 			juceParameter->beginChangeGesture();
 		}
 
-		juceParameter->setValueNotifyingHost(adjust(normalized)); // param->getDawNormalized());
+		juceParameter->setValueNotifyingHost(adjust(static_cast<float>(normalized))); // param->getDawNormalized());
 
 		if (handleGrabMyself)
 		{
