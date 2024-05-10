@@ -6,6 +6,8 @@
 //TODO!!! check out much better Vicanek biquad filters: https://signalsmith-audio.co.uk/code/dsp/html/group___filters.html
 // also: https://github.com/RafaGago/artv-audio/releases/tag/v1.4.0
 
+// alternatly : https://github.com/berndporr/iir1
+
 #if defined( _DEBUG )
 #include <iomanip>
 // Fix for <sstream> on Mac (sstream uses undefined int_64t)

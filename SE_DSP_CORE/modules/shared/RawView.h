@@ -7,7 +7,8 @@
 struct RawData
 {
 private:
-	std::shared_ptr<std::string> value;
+//	std::shared_ptr<std::string> value;
+	std::string value;
 
 public:
 	RawData()
@@ -16,7 +17,8 @@ public:
 
 	RawData(const void* data, size_t size)
 	{
-		value = std::make_shared<std::string>(reinterpret_cast<const char*>(data), size);
+		value.assign(reinterpret_cast<const char*>(data), size);
+//		value = std::make_shared<std::string>(reinterpret_cast<const char*>(data), size);
 	}
 
 	template <typename T> RawData(const T& v)
@@ -24,14 +26,15 @@ public:
         const auto data = (const char*)&v;
         const auto size = sizeof(v);
         
-		value = std::make_shared<std::string>(data, size);
+//		value = std::make_shared<std::string>(data, size);
+		value.assign(data, size);
 	}
 
 	RawData(struct RawView v);
 
 	RawData(std::string v)
     {
-		value = std::make_shared<std::string>(v);
+		value = v; // std::make_shared<std::string>(v);
     }
                     
 	RawData(std::wstring v)
@@ -39,20 +42,29 @@ public:
         const auto size = v.size() * sizeof(v[0]);
         const auto data = (const char*)v.data();
         
-		value = std::make_shared<std::string>(data, size);
-    }
+//		value = std::make_shared<std::string>(data, size);
+		value.assign(data, size);
+	}
     
 	RawData(const char* v)
 	{
-		value = std::make_shared<std::string>(v);
+//		value = std::make_shared<std::string>(v);
+		value = v;
 	}
+
+	RawData& assign(const char* data, size_t size)
+	{
+		value.assign(data, size);
+		return *this;
+	}
+
 	const void* data() const
 	{
-		return value->data();
+		return value.data();
 	}
 	size_t size() const
 	{
-		return value->size();
+		return value.size();
 	}
 };
 
@@ -75,7 +87,7 @@ public:
 	RawView(const std::string& v) : data_(v.data()), size_(v.size() * sizeof(v[0])) {}
 	RawView(const std::wstring& v) : data_(v.data()), size_(v.size() * sizeof(v[0])) {}
 	RawView(const char* v) : data_(v), size_(strlen(v)) {}
-	RawView(RawData v) : data_(v.data()), size_(v.size()) {}
+	RawView(RawData& v) : data_(v.data()), size_(v.size()) {}
 
 	// conversion back to types.
 	template <typename T>
@@ -102,7 +114,8 @@ public:
 
 inline RawData::RawData(RawView v)
 {
-	value = std::make_shared<std::string>(reinterpret_cast<const char*>(v.data()), v.size());
+//	value = v.value;// std::make_shared<std::string>(reinterpret_cast<const char*>(v.data()), v.size());
+	value.assign(reinterpret_cast<const char*>(v.data()), v.size());
 }
 
 // Equality operators

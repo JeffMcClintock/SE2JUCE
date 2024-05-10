@@ -17,10 +17,7 @@
 #include "MpParameter.h"
 #include "../../modules/se_sdk3_hosting/ControllerHost.h"
 #include "../../my_msg_que_output_stream.h"
-
-#ifdef SE_USE_DAW_STATE_MGR
 #include "DawStateManager.h"
-#endif
 
 namespace SynthEdit2
 {
@@ -84,6 +81,7 @@ class MpController;
 
 class UndoManager
 {
+#if 0
 #ifdef SE_USE_DAW_STATE_MGR
 	std::vector< std::pair< std::string, DawPreset const*> > history;
 	DawPreset const* AB_storage = {};
@@ -91,6 +89,10 @@ class UndoManager
 	//                      description   preset XML
 	std::vector< std::pair< std::string, std::string> > history;
 	std::string AB_storage;
+#endif
+#else
+	std::vector< std::pair< std::string, std::unique_ptr<const DawPreset> >> history;
+	DawPreset AB_storage;
 #endif
 
 	int undoPosition = -1;
@@ -101,25 +103,24 @@ class UndoManager
 		return static_cast<int>(history.size());
 	}
 
-#ifdef SE_USE_DAW_STATE_MGR
+#if 1 //def SE_USE_DAW_STATE_MGR
 	void setPreset(MpController* controller, DawPreset const* preset);
 #else
 	void setPreset(MpController* controller, const std::string& preset);
 #endif
+	DawPreset const* push(std::string description, std::unique_ptr<const DawPreset> preset);
 
 public:
 	bool enabled = {};
 
-	void initial(class MpController* controller);
+//	void initial(class MpController* controller);
 
-
-#ifdef SE_USE_DAW_STATE_MGR
-	void initial(MpController* controller, DawPreset const* preset);
-	void push(std::string description, DawPreset const* preset);
+#if 1 //def SE_USE_DAW_STATE_MGR
 #else
-	void initialFromXml(MpController* controller, std::string xml);
+//	void initialFromXml(MpController* controller, std::string xml);
 	void push(std::string description, const std::string& preset);
 #endif
+	void initial(MpController* controller, std::unique_ptr<const DawPreset> preset);
 
 	void snapshot(class MpController* controller, std::string description);
 
@@ -167,8 +168,8 @@ private:
 	bool presetsFolderChanged = false;
 
 protected:
+	std::map<int32_t, paramInfo> parametersInfo;		// for parsing xml presets
 #ifdef SE_USE_DAW_STATE_MGR
-	DawStateManager& dawStateManager;
 #else
 	bool ignoreProgramChange = false;
 #endif
@@ -189,13 +190,7 @@ protected:
 
 	// see also VST3Controller.programNames
 	std::vector< presetInfo > presets;
-#ifdef SE_USE_DAW_STATE_MGR
-	DawPreset const* session_preset;
-#else
-	std::string session_preset;
-#endif
-
-	std::atomic<DawPreset const*> interrupt_preset_ = {};
+	DawPreset session_preset;
 
 	GmpiGui::OkCancelDialog okCancelDialog;
 
@@ -210,9 +205,6 @@ public:
 #endif
 	) :
 		message_que_dsp_to_ui(SeAudioMaster::UI_MESSAGE_QUE_SIZE2)
-#ifdef SE_USE_DAW_STATE_MGR
-		,dawStateManager(dawState)
-#endif
 	{
 		semControllers.patchManager = this;
 		RegisterGui2(&semControllers);
@@ -221,14 +213,9 @@ public:
     ~MpController();
 
 	void ScanPresets();
-#ifdef SE_USE_DAW_STATE_MGR
 	void setPreset(DawPreset const* preset);
-	void setPresetUnsafe(DawPreset const* preset);
 	void syncPresetControls(DawPreset const* preset);
-#else
-	void setPresetFromDaw(const std::string& xml, bool updateProcessor);
-	void syncPresetControls(const std::string& xml, bool updateProcessor = false);
-#endif
+
 	void SavePreset(int32_t presetIndex);
 	void SavePresetAs(const std::string& presetName);
 	void DeletePreset(int presetIndex);
@@ -249,6 +236,10 @@ public:
 	virtual void ParamGrabbed(MpParameter_native* param) = 0;
 
 	// Presets
+	// asking platform-specific controller to set preset on both controller and processor.
+	// the preset originates from the plugins preset browser, not from the DAW.
+	virtual void setPresetXmlFromSelf(const std::string& xml) = 0;
+	virtual void setPresetFromSelf(DawPreset const* preset) = 0;
 	virtual std::string loadNativePreset(std::wstring sourceFilename) = 0;
 	virtual void saveNativePreset(const char* filename, const std::string& presetName, const std::string& xml) = 0;
 	virtual std::wstring getNativePresetExtension() = 0;
@@ -308,12 +299,12 @@ public:
 	MpParameter* getHostParameter(int32_t hostControl);
 
 	void ImportPresetXml(const char* filename, int presetIndex = -1);
-#ifndef SE_USE_DAW_STATE_MGR
+#if 0 //ndef SE_USE_DAW_STATE_MGR
 	void setPreset(class TiXmlNode* parentXml, bool updateProcessor, int preset);
 	void setPreset(const std::string& xml, bool updateProcessor = true, int preset = 0);
 	std::string getPreset(std::string presetNameOverride = {});
 #else
-	DawPreset const* getPreset(std::string presetNameOverride = {});
+	std::unique_ptr<const DawPreset> getPreset(std::string presetNameOverride = {});
 #endif
 	void ExportPresetXml(const char* filename, std::string presetNameOverride = {});
 	void ImportBankXml(const char * filename);

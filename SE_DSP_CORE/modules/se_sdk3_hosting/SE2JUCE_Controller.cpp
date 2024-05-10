@@ -83,7 +83,47 @@ void MpParameterJuce::updateDawUnsafe(const std::string& rawValue)
 SeJuceController::SeJuceController(DawStateManager& dawState) :
 	MpController(dawState)
 	,queueToDsp_(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
+	, dawStateManager(dawState)
 {
+}
+
+void SeJuceController::setPresetXmlFromSelf(const std::string& xml)
+{
+	dawStateManager.setPresetFromXml(xml);
+}
+
+void SeJuceController::setPresetFromSelf(DawPreset const* preset)
+{
+	dawStateManager.setPresetFromUnownedPtr(preset);
+}
+
+void SeJuceController::setPresetUnsafe(DawPreset const* preset)
+{
+	interrupt_preset_.store(preset, std::memory_order_release);
+
+	// TODO: Update Immediate values here right in callers stack frame, otherwise DAW might query a stale value
+
+	const int voice = 0;
+	for (const auto& [handle, val] : preset->params)
+	{
+		assert(handle != -1);
+
+		auto it = ParameterHandleIndex.find(handle);
+		if (it == ParameterHandleIndex.end())
+			continue;
+
+		auto& parameter = (*it).second;
+
+		assert(parameter->datatype_ == (int)val.dataType);
+
+		if (parameter->datatype_ != (int)val.dataType)
+			continue;
+
+		const auto& raw = val.rawValues_[voice];
+
+		const std::string rawString((const char*) raw.data(), raw.size());
+		parameter->updateDawUnsafe(rawString);
+	}
 }
 
 std::string SeJuceController::getFactoryPresetXml(std::string filename)
@@ -139,7 +179,7 @@ void SeJuceController::loadFactoryPreset(int index, bool fromDaw)
 			const std::string xml(data, dataSizeInBytes);
 
 #if 1
-			dawStateManager.setPreset(xml);
+			dawStateManager.setPresetFromXml(xml);
 #else
 			if (fromDaw)
 			{
@@ -167,7 +207,7 @@ void SeJuceController::loadFactoryPreset(int index, bool fromDaw)
 	}
 }
 
-// Mode should remain on 'Master' unless explicity set by user.
+// Mode should remain on 'Master' unless explicitly set by user.
 void SeJuceController::OnStartupTimerExpired()
 {
 	// disable updates to 'Master/Analyse' via loading presets.

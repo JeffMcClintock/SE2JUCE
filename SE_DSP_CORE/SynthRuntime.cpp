@@ -88,7 +88,6 @@ void SynthRuntime::prepareToPlay(
 		std::lock_guard<std::mutex> x(generatorLock);
 
 //		_RPT3(_CRT_WARN, "AudioMaster rebuilt %x, SR=%d thread = %x\n", this, sampleRate, (int)GetCurrentThreadId());
-//		std::string presetChunk;
 		std::vector< std::pair<int32_t, std::string> > pendingPresets;
 		if(generator)
 		{
@@ -102,8 +101,6 @@ void SynthRuntime::prepareToPlay(
 
 			// ensure preset from DAW is up-to-date.
 			generator->HandleInterrupt();
-
-			assert(!generator->interrupt_setchunk_);
 
 			//const bool saveExtraState = true;
 			//generator->getPresetState(presetChunk, saveExtraState);
@@ -278,34 +275,20 @@ int32_t SynthRuntime::SeMessageBox(const wchar_t* msg, const wchar_t* title, int
 	return 0;
 }
 
-void SynthRuntime::getPresetState(std::string& chunk, bool processorActive)
+void SynthRuntime::onSetParameter(int32_t handle, RawView rawValue, int voiceId)
 {
-	std::lock_guard<std::mutex> x(generatorLock); // avoid calling into patch-manager if it's being deleted and recreated (DSP is restarting).
-	if (generator)
-	{
-		const bool saveRestartState = false;
-		generator->getPresetState_UI_THREAD(chunk, processorActive, saveRestartState);
-	}
-}
-
-void SynthRuntime::setPresetStateFromUiThread(const std::string& chunk, bool processorActive)
-{
-	std::lock_guard<std::mutex> x(generatorLock); // protect against setting preset during a restart of the processor (else preset gets lost).
-	if (generator) // Can be null during AU validation.
-	{
-		generator->setPresetState_UI_THREAD(chunk, processorActive);
-	}
+	shell_->onSetParameter(handle, rawValue, voiceId);
 }
 
 void SynthRuntime::setPresetUnsafe(DawPreset const* preset)
 {
 	std::lock_guard<std::mutex> x(generatorLock); // protect against setting preset during a restart of the processor (else preset gets lost).
 
-	// TODO!!! in standalone, how to get preset into processor later once it's constructed?
+	// TODO!!! in stand-alone, how to get preset into processor later once it's constructed?
 	if (!generator)
 		return;
 
 	// TODO check behaviour during DSP restart
-	generator->interrupt_preset_ = preset;
+	generator->interrupt_preset_.store(preset, std::memory_order_release);
 	generator->TriggerInterrupt();
 }

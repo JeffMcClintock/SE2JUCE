@@ -204,3 +204,4 @@ inline int getDataTypeSize(int datatype)
 	assert(false); // TODO
 	return 0;
 }
+

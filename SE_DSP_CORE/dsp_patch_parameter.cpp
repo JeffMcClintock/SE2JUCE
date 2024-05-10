@@ -171,6 +171,11 @@ dsp_patch_parameter_base::~dsp_patch_parameter_base()
 	}
 }
 
+void dsp_patch_parameter_base::setPatchMgr(IDspPatchManager* p_patch_mgr)
+{
+	m_patch_mgr = p_patch_mgr;
+}
+
 void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 {
 	switch( p_msg_id )
@@ -306,7 +311,7 @@ void dsp_patch_parameter_base::SendValue( timestamp_t unadjusted_timestamp, int 
 void dsp_patch_parameter_base::SendValuePt2( timestamp_t unadjusted_timestamp, Voice* voice, bool isInitialUpdate)
 {
 	int32_t size = 0;
-	int voiceId = voice ? voice->NoteNum : 0;
+	const int voiceId = voice ? voice->NoteNum : 0;
 	auto data = SerialiseForEvent(voiceId, size);
 
 	if( AffectsVoiceAllocation(getHostControlId()) && getVoiceContainer() ) // Voice container will be null if container muted.
@@ -314,11 +319,12 @@ void dsp_patch_parameter_base::SendValuePt2( timestamp_t unadjusted_timestamp, V
 		getVoiceContainer()->OnVoiceControlChanged(getHostControlId(), size, data);
 	}
 
+	const RawView raw(data, size);
+
 	if( isPolyphonic() )
 	{
 		if (voice)
 		{
-			RawView raw(data, size);
 			SendValuePoly(unadjusted_timestamp, voice->m_voice_number, raw, isInitialUpdate);
 		}
 	}
@@ -335,6 +341,8 @@ void dsp_patch_parameter_base::SendValuePt2( timestamp_t unadjusted_timestamp, V
 			fromPin->Transmit( timestamp, size, data );
 		}
 	}
+
+	shellDsp_->onSetParameter(Handle(), raw, voiceId);
 }
 
 void dsp_patch_parameter_base::SendValuePoly(timestamp_t unadjusted_timestamp, int physicalVoiceNumber, RawView value, bool isInitialUpdate)

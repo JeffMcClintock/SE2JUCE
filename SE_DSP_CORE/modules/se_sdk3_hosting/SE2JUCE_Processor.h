@@ -35,6 +35,16 @@ public:
     SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter = {});
     ~SE2JUCE_Processor() override;
 
+    // IShellServices interface
+    void onSetParameter(int32_t handle, RawView rawValue, int voiceId) override
+    {
+		dawStateManager.SetParameterRaw(handle, rawValue, voiceId);
+    }
+    void EnableIgnoreProgramChange() override
+    {
+        dawStateManager.enableIgnoreProgramChange();
+    }
+
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;

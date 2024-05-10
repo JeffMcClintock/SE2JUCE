@@ -74,6 +74,8 @@ class SeJuceController : public MpController, public IHasDirty, private juce::Ti
 	std::vector<MpParameterJuce* > tagToParameter;			// DAW parameter Index to parameter
 	class SE2JUCE_Processor* processor = {};
     interThreadQue queueToDsp_;
+	std::atomic<DawPreset const*> interrupt_preset_ = {};
+	DawStateManager& dawStateManager;
 
 public:
 	SeJuceController(
@@ -101,6 +103,9 @@ public:
 		return tagToParameter;
 	}
 
+	void setPresetXmlFromSelf(const std::string& xml) override;
+	void setPresetFromSelf(DawPreset const* preset) override;
+	void setPresetUnsafe(DawPreset const* preset);
 	std::string loadNativePreset(std::wstring sourceFilename) override
 	{
 		return {};
@@ -132,6 +137,11 @@ public:
 			{
 				p->updateFromImmediate();
 			}
+		}
+
+		if (auto preset = interrupt_preset_.exchange(nullptr, std::memory_order_relaxed); preset)
+		{
+			setPreset(preset);
 		}
 
 		// SE return MpController::OnTimer();

@@ -359,15 +359,6 @@ public:
     {
         Patchmanager_->setPresetState(chunk);
     }
-	std::atomic<bool> interrupt_getchunk_ = {};
-	std::atomic<bool> interrupt_setchunk_ = {};
-	std::atomic<bool> dsp_getchunk_completed_ = {};
-    void setPresetState_UI_THREAD( const std::string& chunk, bool processorActive);
-    void getPresetState_UI_THREAD( std::string& chunk, bool processorActive, bool saveRestartState );
-    void setPresetStateDspHelper();
-    void getPresetStateDspHelper();
-    std::string presetChunkIn_; // store preset from DAW while real-time thread reads it async
-    std::string presetChunkOut_; // store preset from processor so DAW can read it async
 	int getNumInputs();
 	int getNumOutputs();
 	bool wantsMidi();
@@ -558,7 +549,7 @@ public:
 	std::atomic<bool> interrupt_flag = {};
 	std::atomic<bool> interupt_start_fade_out = {};
 	std::atomic<bool> interupt_module_latency_change = {};
-	DawPreset const* interrupt_preset_ = {};
+	std::atomic<DawPreset const*> interrupt_preset_ = {};
 	bool interrupt_clear_delays = false;
 
 	bool synth_thread_running;

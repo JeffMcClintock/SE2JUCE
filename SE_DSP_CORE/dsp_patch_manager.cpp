@@ -1238,6 +1238,7 @@ void DspPatchManager::InitializeAllParameters()
 	for( auto parameter : m_parameters )
 	{
 		audiomaster->RegisterDspMsgHandle(parameter, parameter->Handle());
+		parameter->setShell(audiomaster->getShell());
 
 		if( parameter->WavesParameterIndex >= 0 )
 		{
@@ -1504,6 +1505,14 @@ void DspPatchManager::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 	case id_to_long2("EIPC"): // Emulate Ignore Program Change
 	{
 		mEmulateIgnoreProgramChange = true;
+	}
+	break;
+
+	case id_to_long2("PROG"):  // Program Change (from VST3 controller preset browser only)
+	{
+		std::string chunk;
+		p_stream >> chunk;
+		setPresetState(chunk, false);
 	}
 	break;
 	};
@@ -1773,7 +1782,7 @@ void DspPatchManager::setPreset(DawPreset const* preset)
 			for(int voice = 0 ; voice < val.rawValues_.size() ; ++voice)
 			{
 				const auto& v = val.rawValues_[voice];
-				if (parameter->SetValueRaw2(v.data(), v.size(), patch, voice))
+				if (parameter->SetValueRaw2(v.data(), static_cast<int32_t>(v.size()), patch, voice))
 				{
 					parameter->OnValueChangedFromGUI(false, voice);
 				}

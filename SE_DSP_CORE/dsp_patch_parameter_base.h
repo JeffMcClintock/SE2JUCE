@@ -34,6 +34,10 @@ public:
 	virtual int typeSize() = 0;
 	virtual int dataType() = 0;
 	virtual void Initialize( class TiXmlElement* xml );
+	void setShell(class ISeShellDsp* shellDsp)
+	{
+		shellDsp_ = shellDsp;
+	}
 	virtual bool SetValueFromXml(const std::string& valueString, int voice, int patch) = 0;
 	virtual std::string GetValueAsXml(int voice = 0 ) = 0;
 #if defined( _DEBUG )
@@ -45,10 +49,7 @@ public:
 	virtual void CopyPlugValue( int voice, UPlug* p_plug) = 0;
 	const void* SerialiseForEvent(int voice, int& size);
 	void OnUiMsg(int p_msg_id, my_input_stream& p_stream);
-	void setPatchMgr(IDspPatchManager* p_patch_mgr)
-	{
-		m_patch_mgr=p_patch_mgr;
-	}
+	void setPatchMgr(IDspPatchManager* p_patch_mgr);
 
 	bool hasNormalized()
 	{
@@ -251,4 +252,5 @@ protected:
 	int32_t moduleParameterId_;
 	bool stateful_ = true;
 	bool ignorePc = false;
+	class ISeShellDsp* shellDsp_ = nullptr;
 };

@@ -23,6 +23,8 @@ class IShellServices
 public:
     virtual void onQueDataAvailable() = 0;
     virtual void flushPendingParameterUpdates() = 0;
+	virtual void onSetParameter(int32_t handle, RawView rawValue, int voiceId) = 0;
+	virtual void EnableIgnoreProgramChange() = 0;
 };
 
 class SynthRuntime : public SeShellDsp
@@ -65,8 +67,12 @@ public:
 	}
 
 	// ISeShellDsp support.
-    virtual void ServiceDspRingBuffers() override;
-	virtual void ServiceDspWaiters2(int sampleframes, int guiFrameRateSamples) override;
+    void ServiceDspRingBuffers() override;
+	void ServiceDspWaiters2(int sampleframes, int guiFrameRateSamples) override;
+	void EnableIgnoreProgramChange() override
+	{
+		shell_->EnableIgnoreProgramChange();
+	}
 
 	virtual void RequestQue( class QueClient* client, bool noWait = false ) override;
 
@@ -83,8 +89,8 @@ public:
 	// For VST process side automation.
 	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value, int32_t flags )
 	{
-		if(generator)
-			generator->setParameterNormalizedDsp( timestamp, paramIndex, value, flags );
+		assert(generator);
+		generator->setParameterNormalizedDsp( timestamp, paramIndex, value, flags );
 	}
 
 	void UpdateTempo( my_VstTimeInfo * ti )
@@ -92,8 +98,6 @@ public:
 		generator->UpdateTempo( ti );
 	}
     
-	void getPresetState(std::string& chunk, bool processorActive);
-	void setPresetStateFromUiThread(const std::string& chunk, bool processorActive);
 	void setPresetUnsafe(DawPreset const* preset);
 
 	int getNumInputs()
@@ -121,6 +125,7 @@ public:
 	int getLatencySamples();
 	int32_t SeMessageBox(const wchar_t* msg, const wchar_t* title, int flags) override;
 	int RegisterIoModule(ISpecialIoModule*) override { return 1; } // nothing special to do in plugin
+	void onSetParameter(int32_t handle, RawView rawValue, int voiceId)  override;
 
 private:
 	class SeAudioMaster* generator;

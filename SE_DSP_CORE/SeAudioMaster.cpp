@@ -1200,27 +1200,11 @@ void SeAudioMaster::HandleInterrupt()
 
 #if defined(SE_TARGET_PLUGIN)
 
-	if(interrupt_preset_)
+	if (auto preset = interrupt_preset_.exchange(nullptr, std::memory_order_relaxed); preset)
 	{
-		auto preset = interrupt_preset_;
-		interrupt_preset_ = nullptr;
-
 		gmpi_sdk::AutoCriticalSection cs(audioMasterLock_);
 		Patchmanager_->setPreset(preset);
 	}
-
-	if( interrupt_getchunk_ )
-	{
-		interrupt_getchunk_ = false;
-		getPresetStateDspHelper();
-	}
-
-	if( interrupt_setchunk_ )
-	{
-		interrupt_setchunk_ = false;
-		setPresetStateDspHelper();
-	}
-
 #endif
 
 	if( interupt_start_fade_out )
@@ -1341,6 +1325,13 @@ void SeAudioMaster::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 {
 #if defined(SE_TARGET_PLUGIN)
 	if (p_msg_id == id_to_long2("EIPC")) // Emulate Ignore Program Change
+	{
+		Patchmanager_->OnUiMsg(p_msg_id, p_stream);
+		getShell()->EnableIgnoreProgramChange();
+		return;
+	}
+
+	if (p_msg_id == id_to_long2("PROG"))  // Program Change (from VST3 controller preset browser only)
 	{
 		Patchmanager_->OnUiMsg(p_msg_id, p_stream);
 		return;
@@ -2505,83 +2496,6 @@ void SeAudioMaster::setLatencyCompensation(int ElatencyCompensation)
 }
 #endif
 
-#if defined(SE_TARGET_PLUGIN)
-void SeAudioMaster::getPresetState_UI_THREAD( std::string& chunk, bool processorActive, bool saveRestartState)
-{
-    if( processorActive )
-    {
-        dsp_getchunk_completed_ = false;
-        interrupt_getchunk_ = true;
-        TriggerInterrupt();
-            
-        int timeout = 50;
-        while( !dsp_getchunk_completed_ && timeout-- > 0 )
-        {
-#ifdef _WIN32
-            Sleep(10);
-#else
-            usleep( 10 * 1000 );
-#endif
-        }
-            
-        if( timeout < 0 )
-        {
-            interrupt_getchunk_ = false;
-                
-            // FAIL. Assume DSP is suspended due to inactivity?
-			const bool saveRestartState = false;
-			m_shell->OnSaveStateDspStalled();
-			Patchmanager_->getPresetState( chunk, saveRestartState);
-        }
-        else
-        {
-            audioMasterLock_.Enter();
-            chunk = presetChunkOut_;
-            presetChunkOut_.clear();
-            audioMasterLock_.Leave();
-        }
-    }
-    else
-    {
-        Patchmanager_->getPresetState( chunk, saveRestartState);
-    }
-}
-    
-void SeAudioMaster::setPresetState_UI_THREAD( const std::string& chunk, bool processorActive)
-{
-    if( processorActive )
-    {
-        audioMasterLock_.Enter();
-        presetChunkIn_ = chunk;
-        audioMasterLock_.Leave();
-        interrupt_setchunk_ = true;
-        TriggerInterrupt();
-    }
-    else
-    {
-        Patchmanager_->setPresetState(chunk);
-    }
-}
-    
-void SeAudioMaster::setPresetStateDspHelper()
-{
-    audioMasterLock_.Enter();
-	const bool saveRestartState = false;
-	Patchmanager_->setPresetState( presetChunkIn_);
-    presetChunkIn_.clear();
-    audioMasterLock_.Leave();
-}
-    
-void SeAudioMaster::getPresetStateDspHelper()
-{
-    audioMasterLock_.Enter();
-	const bool saveRestartState = false;
-	Patchmanager_->getPresetState( presetChunkOut_, saveRestartState);
-    audioMasterLock_.Leave();
-    dsp_getchunk_completed_ = true;
-}
-#endif
-   
 #if !defined(SE_EDIT_SUPPORT)
 int SeAudioMaster::getNumInputs()
 {

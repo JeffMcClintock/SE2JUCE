@@ -56,14 +56,14 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
             dawStateManager.init(parameters_xml);
         }
 
-        dawStateManager.callbacks.push_back([this](DawPreset const* preset)
+        dawStateManager.callback = [this](DawPreset const* preset)
             {
                 // update Processor when preset changes
                 processor.setPresetUnsafe(preset);
 
                 // update Controller when preset changes
                 controller.setPresetUnsafe(preset);
-            });
+            };
     }
 
     controller.Initialize(this);
@@ -352,9 +352,11 @@ void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 
-    const bool active = true; // guess. ??
-    std::string chunk;
-    processor.getPresetState(chunk, active);
+    //const bool active = true; // guess. ??
+    //std::string chunk;
+    //processor.getPresetState(chunk, active);
+
+    const auto chunk = dawStateManager.getPreset()->toString(BundleInfo::instance()->getPluginId());
 
     destData.replaceAll(chunk.data(), chunk.size());
 }
@@ -364,5 +366,5 @@ void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
     const std::string chunk(static_cast<const char*>(data), sizeInBytes);
 	//controller.setPresetFromDaw(chunk, true);
 
-    dawStateManager.setPreset(chunk);
+    dawStateManager.setPresetFromXml(chunk);
 }
