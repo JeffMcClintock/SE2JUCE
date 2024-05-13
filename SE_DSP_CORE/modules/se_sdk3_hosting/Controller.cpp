@@ -1025,7 +1025,8 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 
 				if (presets[preset].isSession)
 				{
-					setPreset(&session_preset);
+					// set Preset(&session_preset);
+					setPresetFromSelf(&session_preset);
 				}
 				else if (presets[preset].isFactory)
 				{
@@ -1043,18 +1044,11 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 					{
 						xml = loadNativePreset(presets[preset].filename);
 					}
-//#ifdef SE_USE_DAW_STATE_MGR
-//					dawStateManager.setPresetFromXml(xml);
-//#else
 					setPresetXmlFromSelf(xml);
-//#endif
 				}
 
-//#ifndef SE_USE_DAW_STATE_MGR
-				// don't work with DAW state manager, as it operates async, new preset is not set yet.
-				// TODO: need to do this some other way?
 				undoManager.initial(this, getPreset());
-//#endif
+
 				setModified(false);
 			}
 		}
@@ -2301,29 +2295,21 @@ void MpController::syncPresetControls(const std::string& xml, bool updateProcess
 
 			// put original as undo state
 			std::string newXml;
-			if (presets[presetIndex].isFactory)
+			if (presets[presetIndex].isFactory) // preset is contained in binary
 			{
-#ifdef SE_USE_DAW_STATE_MGR
 				newXml = getFactoryPresetXml(presets[presetIndex].name + ".xmlpreset");
-//				preset = dawStateManager.xmlToPreset(xml);
-#endif
 			}
 			else
 			{
-				const platform_string nativePath = toPlatformString(presets[presetIndex].filename);
-#if 0 //def SE_USE_DAW_STATE_MGR
-				const auto filename_utf8 = ToUtf8String(nativePath);
-				preset = dawStateManager.fileToPreset(filename_utf8.c_str());
-			}
-
-			//			auto preset = dawStateManager.retainPreset(newXml);
-			//			auto preset = dawStateManager.retainPreset(new DawPreset(dawStateManager.parameterInfos, hDoc.ToNode(), presetIndex))
-			if (preset)
-				undoManager.initial(this, preset);
-#else
-				FileToString(nativePath, newXml);
-//				undoManager.initialFromXml(this, newXml);
-#endif
+				if (presets[presetIndex].filename.find(L".xmlpreset") != string::npos)
+				{
+					platform_string nativePath = toPlatformString(presets[presetIndex].filename);
+					FileToString(nativePath, newXml);
+				}
+				else
+				{
+					newXml = loadNativePreset(presets[presetIndex].filename);
+				}
 			}
 			auto unmodifiedPreset = std::make_unique<DawPreset>(parametersInfo, newXml);
 			undoManager.initial(this, std::move(unmodifiedPreset));

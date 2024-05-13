@@ -295,13 +295,7 @@ public:
 	MpParameter* getHostParameter(int32_t hostControl);
 
 	void ImportPresetXml(const char* filename, int presetIndex = -1);
-#if 0 //ndef SE_USE_DAW_STATE_MGR
-	void setPreset(class TiXmlNode* parentXml, bool updateProcessor, int preset);
-	void setPreset(const std::string& xml, bool updateProcessor = true, int preset = 0);
-	std::string getPreset(std::string presetNameOverride = {});
-#else
 	std::unique_ptr<const DawPreset> getPreset(std::string presetNameOverride = {});
-#endif
 	void ExportPresetXml(const char* filename, std::string presetNameOverride = {});
 	void ImportBankXml(const char * filename);
 	void setModified(bool presetIsModified);

@@ -1508,13 +1508,6 @@ void DspPatchManager::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 	}
 	break;
 
-	case id_to_long2("PROG"):  // Program Change (from VST3 controller preset browser only)
-	{
-		std::string chunk;
-		p_stream >> chunk;
-		setPresetState(chunk, false);
-	}
-	break;
 	};
 }
 

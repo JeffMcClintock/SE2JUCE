@@ -1331,11 +1331,6 @@ void SeAudioMaster::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 		return;
 	}
 
-	if (p_msg_id == id_to_long2("PROG"))  // Program Change (from VST3 controller preset browser only)
-	{
-		Patchmanager_->OnUiMsg(p_msg_id, p_stream);
-		return;
-	}
 #endif
 
 	dsp_msg_target::OnUiMsg( p_msg_id, p_stream );
