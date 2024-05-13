@@ -4,6 +4,7 @@
 #include <vector>
 #include "Controller.h"
 #include "IProcessorMessageQues.h"
+#include "./ProcessorStateManager.h"
 
 struct IHasDirty
 {
@@ -75,11 +76,11 @@ class SeJuceController : public MpController, public IHasDirty, private juce::Ti
 	class SE2JUCE_Processor* processor = {};
     interThreadQue queueToDsp_;
 	std::atomic<DawPreset const*> interrupt_preset_ = {};
-	DawStateManager& dawStateManager;
+	ProcessorStateMgrVst3& dawStateManager;
 
 public:
 	SeJuceController(
-		DawStateManager& dawState
+		ProcessorStateMgrVst3& dawState
 	);
 
 	void Initialize(SE2JUCE_Processor* pprocessor) 

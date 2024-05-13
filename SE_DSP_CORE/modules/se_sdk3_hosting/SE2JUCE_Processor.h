@@ -28,7 +28,7 @@ protected:
     gmpi::midi_2_0::MidiConverter2 midiConverter;
 
     SeJuceController controller;
-    DawStateManager dawStateManager;
+    ProcessorStateMgrVst3 dawStateManager;
 
 public:
     //==============================================================================

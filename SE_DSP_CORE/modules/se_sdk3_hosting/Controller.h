@@ -17,7 +17,7 @@
 #include "MpParameter.h"
 #include "../../modules/se_sdk3_hosting/ControllerHost.h"
 #include "../../my_msg_que_output_stream.h"
-#include "DawStateManager.h"
+#include "ProcessorStateManager.h"
 
 namespace SynthEdit2
 {
@@ -145,11 +145,11 @@ public:
 	{
 		std::string name;
 		std::string category;
-		int index;			// Internal Factory presets only.
+		int index = -1;			// Internal Factory presets only.
 		std::wstring filename;	// External disk presets only.
-		std::size_t hash;
-		bool isFactory;
-		bool isSession = false; // is temporary preset to accomodate preset loaded from DAW session (but not an existing preset)
+		std::size_t hash = 0;
+		bool isFactory = false;
+		bool isSession = false; // is temporary preset to accommodate preset loaded from DAW session (but not an existing preset)
 	};
 
 protected:
@@ -199,11 +199,7 @@ protected:
 
 public:
 
-	MpController(
-#ifdef SE_USE_DAW_STATE_MGR
-		DawStateManager& dawState
-#endif
-	) :
+	MpController() :
 		message_que_dsp_to_ui(SeAudioMaster::UI_MESSAGE_QUE_SIZE2)
 	{
 		semControllers.patchManager = this;

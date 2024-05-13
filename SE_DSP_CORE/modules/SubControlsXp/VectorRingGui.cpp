@@ -70,19 +70,13 @@ protected:
 			coarseness = 0.001f;
 
 		float new_pos = pinAnimationPosition;
-		new_pos = new_pos - coarseness * (float)offset.y;
-
-		if (new_pos < 0.f)
-			new_pos = 0.f;
-
-		if (new_pos > 1.f)
-			new_pos = 1.f;
-
-		pinAnimationPosition = new_pos;
+		new_pos = std::clamp(new_pos - coarseness * (float)offset.y, 0.0f, 1.0f);
 
 		pointPrevious = point;
 
 		invalidateRect();
+
+		pinAnimationPosition = new_pos;
 
 		return gmpi::MP_OK;
 	}

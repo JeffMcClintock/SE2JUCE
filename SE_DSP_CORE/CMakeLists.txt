@@ -98,8 +98,6 @@ set(srcs
 ../Shared/AuPreset.h
 ../Shared/AuPreset.cpp
 
-modules/se_sdk3_hosting/DawStateManager.h
-modules/se_sdk3_hosting/DawStateManager.cpp
 modules/se_sdk3_hosting/gmpi_gui_hosting.h
 modules/se_sdk3_hosting/gmpi_gui_hosting.cpp
 modules/se_sdk3_hosting/DirectXGfx.h

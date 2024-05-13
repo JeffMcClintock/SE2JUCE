@@ -502,6 +502,51 @@ void MpController::FileToString(const platform_string& path, std::string& buffer
 
 MpController::presetInfo MpController::parsePreset(const std::wstring& filename, const std::string& xml)
 {
+	// file name overrides the name from XML
+	std::string presetName;
+	{
+		std::wstring shortName, path_unused, extension;
+		decompose_filename(filename, shortName, path_unused, extension);
+
+		presetName = JmUnicodeConversions::WStringToUtf8(shortName);
+
+		// Remove preset number prefix if present. "0023_Sax" -> "Sax"
+		if (presetName.size() > 6
+			&& presetName[4] == '_'
+			&& isdigit(presetName[0])
+			&& isdigit(presetName[1])
+			&& isdigit(presetName[2])
+			&& isdigit(presetName[3])
+			)
+		{
+			presetName = presetName.substr(5);
+		}
+	}
+
+	// load preset into a temporary object to get hash.
+	auto preset = std::make_unique<DawPreset>(parametersInfo, xml);
+
+	if (preset->name != presetName && !presetName.empty())
+	{
+		preset->name = presetName;
+
+		// recalc hash with new name
+		preset->calcHash();
+	}
+
+	return
+	{
+		preset->name,
+		preset->category,
+		-1,
+		filename,
+		preset->hash,
+		false, // isFactory
+		false  // isSession
+	};
+
+#if 0
+
 #if 0 //def SE_USE_DAW_STATE_MGR
 	std::unique_ptr<const DawPreset> preset(dawStateManager.xmlToPreset(xml, false));
 	if(!preset)
@@ -575,6 +620,7 @@ MpController::presetInfo MpController::parsePreset(const std::wstring& filename,
 		false, // isFactory
 		false // isSession
 	};
+#endif
 #endif
 }
 
@@ -812,7 +858,12 @@ void UndoManager::snapshot(MpController* controller, std::string description)
 	if (!enabled)
 		return;
 
+	const auto couldUndo = canUndo();
+
 	push(description, controller->getPreset());
+
+	if(!couldUndo) // enable undo button
+		UpdateGui(controller);
 
 #ifdef _DEBUG
 	_RPT0(0, "UndoManager::snapshot\n");
@@ -1618,7 +1669,6 @@ std::unique_ptr<const DawPreset> MpController::getPreset(std::string presetNameO
 {
 	auto preset = std::make_unique<DawPreset>();
 
-	// Sort for export consistency.
 	for (auto& p : parameters_)
 	{
 		if (p->getHostControl() == HC_PROGRAM_NAME)
@@ -2166,8 +2216,11 @@ void MpController::setPreset(DawPreset const* preset)
 		}
 	}
 
-	if(preset->resetUndo)
-		undoManager.initial(this, getPreset()); // hmm, don't want to reset undo *during* undo/redo !!!!!! only when DAW loads a preset of user loads a fresh preset.
+	if (preset->resetUndo)
+	{
+		auto copyofpreset = std::make_unique<DawPreset>(*preset);
+		undoManager.initial(this, std::move(copyofpreset));
+	}
 
 	syncPresetControls(preset);
 }
@@ -2179,23 +2232,29 @@ void MpController::syncPresetControls(DawPreset const* preset)
 void MpController::syncPresetControls(const std::string& xml, bool updateProcessor)
 #endif
 {
+	// if this is an undo/redo, no need to update preset list
+	if (!preset->resetUndo)
+		return;
+
 #if 1 //def SE_USE_DAW_STATE_MGR
 	constexpr bool updateProcessor = false;
-	auto& hash = preset->hash;
+//	auto& hash = preset->hash;
 #else
 	auto hash = std::hash<std::string>{}(xml);
 #endif
 
-	std::string presetName;
-	{
-		auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM_NAME);
-		if (auto it = ParameterHandleIndex.find(parameterHandle) ; it != ParameterHandleIndex.end())
-		{
-			const auto raw = (*it).second->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0);
-			auto presetNameW = RawToValue<std::wstring>(raw.data(), raw.size());
-			presetName = WStringToUtf8(presetNameW);
-		}
-	}
+	_RPTN(0, "syncPresetControls Preset: %s hash %d\n", preset->name.c_str(), preset->hash);
+
+	const std::string presetName = preset->name.empty() ? "Default" : preset->name;
+	//{
+	//	auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM_NAME);
+	//	if (auto it = ParameterHandleIndex.find(parameterHandle) ; it != ParameterHandleIndex.end())
+	//	{
+	//		const auto raw = (*it).second->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0);
+	//		auto presetNameW = RawToValue<std::wstring>(raw.data(), raw.size());
+	//		presetName = WStringToUtf8(presetNameW);
+	//	}
+	//}
 
 	// When DAW loads preset XML, try to determine if it's a factory preset, and update browser to suit.
 	int32_t presetIndex = -1; // exact match
@@ -2207,24 +2266,24 @@ void MpController::syncPresetControls(const std::string& xml, bool updateProcess
   //  _RPT2(_CRT_WARN, "setPresetFromDaw: hash=%d\nXML:\n%s\n", (int) std::hash<std::string>{}(xml), xml.c_str());
 
 	// If preset has no name, treat it as a (modified) "Default"
-	if (presetName.empty())
-		presetName = "Default";
+	//if (presetName.empty())
+	//	presetName = "Default";
 
 	// Check if preset coincides with a factory preset, if so update browser to suit.
 	int idx = 0;
-	for (const auto& preset : presets)
+	for (const auto& factoryPreset : presets)
 	{
-		assert(preset.hash);
+		assert(factoryPreset.hash);
 
-		if (preset.hash == hash)
+		_RPTN(0, "                   factoryPreset: %s hash %d\n", factoryPreset.name.c_str(), factoryPreset.hash);
+		if (factoryPreset.hash == preset->hash)
 		{
 			presetIndex = idx;
 			break;
 		}
-		if (preset.name == presetName && !preset.isSession)
+		if (factoryPreset.name == presetName && !factoryPreset.isSession)
 		{
 			presetSameNameIndex = idx;
-			break;
 		}
 		
 		++idx;
@@ -2423,7 +2482,7 @@ void MpController::DeletePreset(int presetIndex)
 
 		auto currentPreset = (int32_t) p->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0);
 
-		// if we're delteing the current preset, switch back to preset 0
+		// if we're deleting the current preset, switch back to preset 0
 		if (currentPreset == presetIndex)
 		{
 			int32_t newCurrentPreset = 0;

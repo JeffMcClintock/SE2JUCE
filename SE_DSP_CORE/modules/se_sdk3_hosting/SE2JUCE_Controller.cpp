@@ -80,9 +80,8 @@ void MpParameterJuce::updateDawUnsafe(const std::string& rawValue)
 }
 
 
-SeJuceController::SeJuceController(DawStateManager& dawState) :
-	MpController(dawState)
-	,queueToDsp_(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
+SeJuceController::SeJuceController(ProcessorStateMgrVst3& dawState) :
+	queueToDsp_(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
 	, dawStateManager(dawState)
 {
 }
