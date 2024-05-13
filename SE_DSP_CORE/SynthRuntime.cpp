@@ -32,7 +32,7 @@ void SynthRuntime::prepareToPlay(
 	shell_ = shell;
 
 	// this can be called multiple times, e.g. when performing an offline bounce.
-	// But we need to rebuild the DSP graph from scatch only when something fundamental changes.
+	// But we need to rebuild the DSP graph from scratch only when something fundamental changes.
 	// e.g. sample-rate, block-size, polyphony, latency compensation, patch cables.
 
 	const bool mustReinitilize =
@@ -284,9 +284,13 @@ void SynthRuntime::setPresetUnsafe(DawPreset const* preset)
 {
 	std::lock_guard<std::mutex> x(generatorLock); // protect against setting preset during a restart of the processor (else preset gets lost).
 
-	// TODO!!! in stand-alone, how to get preset into processor later once it's constructed?
 	if (!generator)
+	{
+		missedPreset = preset;
 		return;
+	}
+
+	missedPreset = {};
 
 	// TODO check behaviour during DSP restart
 	generator->interrupt_preset_.store(preset, std::memory_order_release);

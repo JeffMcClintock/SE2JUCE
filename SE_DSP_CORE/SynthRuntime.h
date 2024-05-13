@@ -155,6 +155,8 @@ public:
     void OnSaveStateDspStalled() override;
     
 	bool reinitializeFlag;
+	DawPreset const* missedPreset = {};
+
 private:
 	bool usingTempo_;
 	int32_t currentPluginLatency = {}; // as at previous initialise

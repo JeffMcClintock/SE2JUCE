@@ -241,6 +241,14 @@ void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
         samplesPerBlock,
         !isNonRealtime()
     );
+
+	// JUCE standalone likes to set the state before prepareToPlay is called. (and therefore before the generator is available to accept the preset).
+    if (processor.missedPreset)
+    {
+        dawStateManager.setPresetFromUnownedPtr(processor.missedPreset); // actually a a safely owned ptr, but who cares.
+
+        assert(!processor.missedPreset);
+    }
 }
 
 void SE2JUCE_Processor::releaseResources()
@@ -364,7 +372,5 @@ void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
 void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
 {
     const std::string chunk(static_cast<const char*>(data), sizeInBytes);
-	//controller.setPresetFromDaw(chunk, true);
-
     dawStateManager.setPresetFromXml(chunk);
 }
