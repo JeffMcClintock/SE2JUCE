@@ -681,21 +681,25 @@ void dsp_patch_parameter_base::setAutomation(int controller_id, bool notifyUI)
 	}
 }
 
-void dsp_patch_parameter_base::UpdateOutputParameter(int voice, UPlug* p_plug)
+void dsp_patch_parameter_base::UpdateOutputParameter(int voiceId, UPlug* p_plug)
 {
 	assert(p_plug->Direction == DR_IN);
 
 	// fix for Scope3 polydetect (monophonic parameter on polyphonic module).
-	// TODO!!! should poly mono pamram on poly object be allowed?? !!
+	// TODO!!! should poly mono param on poly object be allowed?? !!
 	if( !isPolyphonic() )
 	{
-		voice = 0;
+		voiceId = 0;
 	}
 
-	CopyPlugValue( voice, p_plug );
-	UpdateUI( false, voice );
+	CopyPlugValue( voiceId, p_plug );
+	UpdateUI( false, voiceId );
 
-	outputMidiAutomation(false, voice);
+	outputMidiAutomation(false, voiceId);
+
+	// This does seem to double up on dsp_patch_parameter_base::SendValuePt2(), but not always (AI Master)
+	const auto raw = GetValueRaw2(0, voiceId);
+	shellDsp_->onSetParameter(Handle(), raw, voiceId);
 }
 
 void dsp_patch_parameter_base::vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, [[maybe_unused]] int32_t flags)

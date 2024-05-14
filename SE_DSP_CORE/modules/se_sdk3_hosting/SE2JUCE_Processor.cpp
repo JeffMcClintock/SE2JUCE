@@ -359,15 +359,15 @@ juce::AudioProcessorEditor* SE2JUCE_Processor::createEditor()
 //==============================================================================
 void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-
-    //const bool active = true; // guess. ??
-    //std::string chunk;
-    //processor.getPresetState(chunk, active);
-
     const auto chunk = dawStateManager.getPreset()->toString(BundleInfo::instance()->getPluginId());
+
+#if 0 //def _DEBUG
+    {
+        auto xml = chunk.substr(0, 500);
+
+        _RPTN(0, "\nSE2JUCE_Processor::getStateInformation()\n %s\n\n", xml.c_str());
+    }
+#endif
 
     destData.replaceAll(chunk.data(), chunk.size());
 }
