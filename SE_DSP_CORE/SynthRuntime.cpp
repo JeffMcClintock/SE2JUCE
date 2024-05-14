@@ -284,6 +284,15 @@ void SynthRuntime::setPresetUnsafe(DawPreset const* preset)
 {
 	std::lock_guard<std::mutex> x(generatorLock); // protect against setting preset during a restart of the processor (else preset gets lost).
 
+#if 0 //def _DEBUG
+	{
+		auto xml = preset->toString(0);
+		xml = xml.substr(0, 500);
+
+		_RPTN(0, "\nSynthRuntime::setPresetUnsafe()\n %s\n\n", xml.c_str());
+	}
+#endif
+
 	if (!generator)
 	{
 		missedPreset = preset;

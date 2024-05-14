@@ -198,22 +198,25 @@ double SE2JUCE_Processor::getTailLengthSeconds() const
 
 int SE2JUCE_Processor::getNumPrograms()
 {
-    return controller.getPresetCount();   // NB: some hosts don't cope very well if you tell them there are 0 programs,
+    return 1;
+//    return controller.getPresetCount();   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
 int SE2JUCE_Processor::getCurrentProgram()
 {
-    const auto parameterHandle = controller.getParameterHandle(-1, -1 - HC_PROGRAM);
+    return 0;
 
-    const auto program = (int32_t) controller.getParameterValue(parameterHandle, gmpi::MP_FT_VALUE);
-    // _RPT1(0, "getCurrentProgram() -> %d\n", program);
-    return program;
+    //const auto parameterHandle = controller.getParameterHandle(-1, -1 - HC_PROGRAM);
+
+    //const auto program = (int32_t) controller.getParameterValue(parameterHandle, gmpi::MP_FT_VALUE);
+    //// _RPT1(0, "getCurrentProgram() -> %d\n", program);
+    //return program;
 }
 
 void SE2JUCE_Processor::setCurrentProgram (int index)
 {
-    controller.loadFactoryPreset(index, true);
+//    controller.loadFactoryPreset(index, true);
 }
 
 const juce::String SE2JUCE_Processor::getProgramName (int index)
