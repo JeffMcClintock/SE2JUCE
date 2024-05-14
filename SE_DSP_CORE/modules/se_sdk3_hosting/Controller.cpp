@@ -783,19 +783,6 @@ void UndoManager::setPreset(MpController * controller, const std::string& preset
 }
 #endif
 
-//void UndoManager::initial(MpController* controller)
-//{
-//	history.clear();
-//	snapshot(controller, {});
-//
-//	UpdateGui(controller);
-//
-//#ifdef _DEBUG
-//	_RPT0(0, "UndoManager::initial\n");
-//	debug();
-//#endif
-//}
-
 #if 1 //def SE_USE_DAW_STATE_MGR
 void UndoManager::initial(MpController* controller, std::unique_ptr<const DawPreset> preset)
 {
@@ -832,6 +819,7 @@ void UndoManager::UpdateGui(MpController* controller)
 {
 	*(controller->getHostParameter(HC_CAN_UNDO)) = canUndo();
 	*(controller->getHostParameter(HC_CAN_REDO)) = canRedo();
+	*(controller->getHostParameter(HC_PROGRAM_MODIFIED)) = canUndo();
 }
 
 DawPreset const* UndoManager::push(std::string description, std::unique_ptr<const DawPreset> preset)
@@ -2094,23 +2082,6 @@ void MpController::OnEndPresetChange()
 		startupTimerCounter = startupTimerInit;
 	}
 }
-
-#if 0 //ndef SE_USE_DAW_STATE_MGR
-// xml may contain multiple presets, or just one.
-void MpController::setPreset(const std::string& xml, bool updateProcessor, int preset)
-{
-	TiXmlDocument doc;
-	doc.Parse(xml.c_str());
-
-	if (doc.Error())
-	{
-		assert(false);
-		return;
-	}
-
-	setPreset(&doc, updateProcessor, preset);
-}
-#endif
 
 // new: set preset UI only. Processor is updated in parallel
 void MpController::setPreset(DawPreset const* preset)

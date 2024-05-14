@@ -113,13 +113,7 @@ class UndoManager
 public:
 	bool enabled = {};
 
-//	void initial(class MpController* controller);
 
-#if 1 //def SE_USE_DAW_STATE_MGR
-#else
-//	void initialFromXml(MpController* controller, std::string xml);
-	void push(std::string description, const std::string& preset);
-#endif
 	void initial(MpController* controller, std::unique_ptr<const DawPreset> preset);
 
 	void snapshot(class MpController* controller, std::string description);
