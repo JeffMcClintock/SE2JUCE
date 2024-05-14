@@ -859,10 +859,11 @@ void UndoManager::snapshot(MpController* controller, std::string description)
 		return;
 
 	const auto couldUndo = canUndo();
+	const auto couldRedo = canRedo();
 
 	push(description, controller->getPreset());
 
-	if(!couldUndo) // enable undo button
+	if(!couldUndo || couldRedo) // enable undo button
 		UpdateGui(controller);
 
 #ifdef _DEBUG
@@ -1047,7 +1048,7 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 					setPresetXmlFromSelf(xml);
 				}
 
-				undoManager.initial(this, getPreset());
+// already done by setPresetXmlFromSelf				undoManager.initial(this, getPreset());
 
 				setModified(false);
 			}
@@ -2273,6 +2274,7 @@ void MpController::syncPresetControls(const std::string& xml, bool updateProcess
 		if (factoryPreset.hash == preset->hash)
 		{
 			presetIndex = idx;
+			presetSameNameIndex = -1;
 			break;
 		}
 		if (factoryPreset.name == presetName && !factoryPreset.isSession)
