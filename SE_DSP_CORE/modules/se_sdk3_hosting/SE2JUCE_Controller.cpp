@@ -212,11 +212,7 @@ void SeJuceController::OnStartupTimerExpired()
 	// disable updates to 'Master/Analyse' via loading presets.
 	MpController::OnStartupTimerExpired();
 
-//??	undoManager.initial(this);
-
-#ifdef SE_USE_DAW_STATE_MGR
 	dawStateManager.enableIgnoreProgramChange();
-#endif
 }
 
 void MpParameterJuce::setNormalizedUnsafe(float daw_normalized)

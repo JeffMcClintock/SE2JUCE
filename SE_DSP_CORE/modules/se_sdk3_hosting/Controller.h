@@ -81,19 +81,8 @@ class MpController;
 
 class UndoManager
 {
-#if 0
-#ifdef SE_USE_DAW_STATE_MGR
-	std::vector< std::pair< std::string, DawPreset const*> > history;
-	DawPreset const* AB_storage = {};
-#else
-	//                      description   preset XML
-	std::vector< std::pair< std::string, std::string> > history;
-	std::string AB_storage;
-#endif
-#else
 	std::vector< std::pair< std::string, std::unique_ptr<const DawPreset> >> history;
 	DawPreset AB_storage;
-#endif
 
 	int undoPosition = -1;
 	bool AB_is_A = true;
@@ -103,11 +92,7 @@ class UndoManager
 		return static_cast<int>(history.size());
 	}
 
-#if 1 //def SE_USE_DAW_STATE_MGR
 	void setPreset(MpController* controller, DawPreset const* preset);
-#else
-	void setPreset(MpController* controller, const std::string& preset);
-#endif
 	DawPreset const* push(std::string description, std::unique_ptr<const DawPreset> preset);
 
 public:
@@ -163,10 +148,6 @@ private:
 
 protected:
 	std::map<int32_t, paramInfo> parametersInfo;		// for parsing xml presets
-#ifdef SE_USE_DAW_STATE_MGR
-#else
-	bool ignoreProgramChange = false;
-#endif
 	::UndoManager undoManager;
 
     bool isInitialized = {};
