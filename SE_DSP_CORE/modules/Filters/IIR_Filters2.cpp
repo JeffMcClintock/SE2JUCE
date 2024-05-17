@@ -5,6 +5,7 @@
 using namespace gmpi;
 
 SE_DECLARE_INIT_STATIC_FILE(ButterworthLP2);
+SE_DECLARE_INIT_STATIC_FILE(ButterworthBP2);
 
 //#define ENABLE_DIAG_PINS
 
@@ -124,8 +125,8 @@ public:
 				auto lcrossfade = crossfade;
 				for (int i = 0; i < sampleFrames; ++i)
 				{
-					lcrossfade = std::min(1.0f, lcrossfade + fade_inc);
-					const auto fadeUp = std::min(1.0f, lcrossfade + 1.0f);
+					lcrossfade = (std::min)(1.0f, lcrossfade + fade_inc);
+					const auto fadeUp = (std::min)(1.0f, lcrossfade + 1.0f);
 
 					*signal++ *= fadeUp;
 				}
@@ -135,8 +136,8 @@ public:
 
 			for (int i = 0; i < sampleFrames; ++i)
 			{
-				crossfade = std::min(1.0f, crossfade + fade_inc);
-				const auto clampedCrossfade = std::max(0.0f, crossfade);
+				crossfade = (std::min)(1.0f, crossfade + fade_inc);
+				const auto clampedCrossfade = (std::max)(0.0f, crossfade);
 
 #ifdef ENABLE_DIAG_PINS
 				*diag1++ = clampedCrossfade * fadeBuffer[i];
