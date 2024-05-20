@@ -245,6 +245,8 @@ void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
         !isNonRealtime()
     );
 
+    OnLatencyChanged();
+
 	// JUCE standalone likes to set the state before prepareToPlay is called. (and therefore before the generator is available to accept the preset).
     if (processor.missedPreset)
     {
@@ -252,6 +254,11 @@ void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
         assert(!processor.missedPreset);
     }
+}
+
+void SE2JUCE_Processor::OnLatencyChanged()
+{
+    setLatencySamples(processor.getLatencySamples());
 }
 
 void SE2JUCE_Processor::releaseResources()

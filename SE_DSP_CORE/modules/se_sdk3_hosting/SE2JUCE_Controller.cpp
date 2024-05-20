@@ -323,3 +323,8 @@ void SeJuceController::initGuiParameters()
 		updateGuis(p.get(), voice);
 	}
 }
+
+void SeJuceController::OnLatencyChanged()
+{
+	processor->OnLatencyChanged();
+}

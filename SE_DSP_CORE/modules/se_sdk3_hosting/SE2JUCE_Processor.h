@@ -44,6 +44,7 @@ public:
     {
         dawStateManager.enableIgnoreProgramChange();
     }
+    void OnLatencyChanged();
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;

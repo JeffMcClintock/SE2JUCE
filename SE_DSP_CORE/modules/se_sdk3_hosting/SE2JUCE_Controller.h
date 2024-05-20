@@ -178,9 +178,9 @@ public:
 		return tagToParameter.back();
 	}
 
-//	void OnInitialPresetRecieved();
-
 	void initGuiParameters();
+
+	void OnLatencyChanged() override;
 
 	// IProcessorMessageQues
 	IWriteableQue* MessageQueToGui()  override
