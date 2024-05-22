@@ -113,6 +113,9 @@ void SeJuceController::setPresetUnsafe(DawPreset const* preset)
 
 		auto& parameter = (*it).second;
 
+		if (parameter->ignorePc_ && preset->ignoreProgramChangeActive)
+			continue;
+
 		assert(parameter->datatype_ == (int)val.dataType);
 
 		if (parameter->datatype_ != (int)val.dataType)
@@ -241,7 +244,6 @@ void MpParameterJuce::updateFromImmediate()
 		//updateProcessor(gmpi::MP_FT_VALUE, 0);
 
 		// this will update the processor only, not the DAW.
-		//juceController->ParamToDsp(this);
 		assert(juceController == controller_);
 		controller_->ParamToDsp(this);
 	}

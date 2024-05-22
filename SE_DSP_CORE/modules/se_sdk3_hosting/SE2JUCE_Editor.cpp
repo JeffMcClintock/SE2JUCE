@@ -47,7 +47,7 @@ SynthEditEditor::SynthEditEditor (SE2JUCE_Processor& p, SeJuceController& pcontr
 
 void SynthEditEditor::parentHierarchyChanged()
 {
-	// this is an oportunity to detect when parent window is available for the first time.
+	// this is an opportunity to detect when parent window is available for the first time.
 	const auto r = getBounds();
 
 #ifdef _WIN32

@@ -1614,6 +1614,8 @@ void MpController::OnEndPresetChange()
 // new: set preset UI only. Processor is updated in parallel
 void MpController::setPreset(DawPreset const* preset)
 {
+//	_RPTN(0, "MpController::setPreset. IPC %d\n", (int)preset->ignoreProgramChangeActive);
+
 	constexpr int patch = 0;
 	constexpr bool updateProcessor = false;
 
@@ -1661,6 +1663,9 @@ void MpController::setPreset(DawPreset const* preset)
 		assert(parameter->datatype_ == (int)val.dataType);
 
 		if (parameter->datatype_ != (int)val.dataType)
+			continue;
+
+		if (parameter->ignorePc_ && preset->ignoreProgramChangeActive)
 			continue;
 
 		for (int voice = 0; voice < val.rawValues_.size(); ++voice)

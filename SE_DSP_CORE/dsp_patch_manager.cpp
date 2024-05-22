@@ -1766,12 +1766,16 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncResta
 
 void DspPatchManager::setPreset(DawPreset const* preset)
 {
+//	_RPTN(0, "DspPatchManager::setPreset. IPC %d\n" , (int)preset->ignoreProgramChangeActive);
 	constexpr int patch = 0;
 
 	for(const auto& [handle, val] : preset->params)
 	{
 		if (auto parameter = GetParameter(handle); parameter)
 		{
+			if (parameter->ignorePatchChange() && preset->ignoreProgramChangeActive)
+				continue;
+
 			for(int voice = 0 ; voice < val.rawValues_.size() ; ++voice)
 			{
 				const auto& v = val.rawValues_[voice];
