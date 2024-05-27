@@ -399,8 +399,12 @@ void DawPreset::calcHash()
 	const auto xml = toString(0); // using blank (0) plugin-id to give more consistent hash if user changes plugin code in future.
 	hash = std::hash<std::string>{}(xml);
 
-	_RPTN(0, "DawPreset::calcHash Preset: %s hash %d\n", name.c_str(), hash);
-
+#if 0 //def _DEBUG
+	{
+		auto xmls = xml.substr(0, 500);
+		_RPTN(0, "DawPreset::calcHash Preset: %s hash %4x\n %s\n\n", name.c_str(), hash, xmls.c_str());
+	}
+#endif
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ProcessorStateMgr::setPresetFromUnownedPtr(DawPreset const* preset)
@@ -413,7 +417,8 @@ ProcessorStateMgrVst3::ProcessorStateMgrVst3() : messageQue(SeAudioMaster::AUDIO
 }
 
 // parameter changed from any source in real-time thread (GUI/DAW/Meters)
-// push change onto queue
+// push change onto queue.
+// The purpose is to allow the state manager to provide the preset to the DAW at any time/thread.
 void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, RawView rawValue, int32_t voiceId)
 {
 	// ignore non-stateful params
@@ -434,6 +439,60 @@ void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, RawView rawValu
 
 	strm.Send();
 }
+
+#if 0
+ProcessorStateMgrAu2::ProcessorStateMgrAu2() : messageQue(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
+{
+    
+}
+
+// communicate parameter automation to the GUI (since Apple DAWs don't bother using the parameter listener functionality).
+// value is real value, not normalised.
+void ProcessorStateMgrAu2::onParameterAutomation(int32_t paramTag, float value)
+{
+	const int32_t messageSize = sizeof(value);
+
+	my_msg_que_output_stream strm(&messageQue, paramTag, "norm");
+	strm << messageSize;
+	strm << value;
+
+	strm.Send();
+}
+
+// GUI to call this on a timer to get any parameter automation updates.
+void ProcessorStateMgrAu2::queryUpdates(IAuGui* ui)
+{
+	while (messageQue.readyBytes() > 0)
+	{
+		int32_t paramTag;
+		int32_t recievingMessageId;
+		int32_t recievingMessageLength;
+
+		my_msg_que_input_stream strm(&messageQue);
+		strm >> paramTag;
+		strm >> recievingMessageId;
+		strm >> recievingMessageLength;
+
+		assert(recievingMessageId != 0);
+		assert(recievingMessageLength >= 0);
+
+		switch (recievingMessageId)
+		{
+		case id_to_long2("norm"):
+		{
+			float value;
+			strm >> value;
+
+			ui->OnParameterUpdateFromDaw(paramTag, value);
+		}
+		break;
+
+		default:
+			assert(false);
+		};
+	}
+}
+#endif
 
 // only for debugging
 std::string RawToXml(gmpi::PinDatatype dataType, RawView rawVal)

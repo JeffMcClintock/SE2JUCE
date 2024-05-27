@@ -209,7 +209,7 @@ void SvFilter2::StabilityCheck()
 	for (auto* state : { &low_pass1, &band_pass1, &low_pass2, &band_pass2 })
 	{
 		if (isnan(*state) || !isfinite(*state)) // overload?
-	{
+		{
 			*state = 0.f;
 		}
 	}

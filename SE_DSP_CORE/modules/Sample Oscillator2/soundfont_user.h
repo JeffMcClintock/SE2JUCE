@@ -9,49 +9,141 @@ class Jzone;
 class SoundfontPatch;
 struct sfSample;
 
-struct partial
+struct sampleChannel
 {
-	// Section dealing with loop-point better not inline
-	// because it happens relativly rarely.
-	void DoLoop( bool gateState );
+	int s_increment = 1;
+	short* s_ptr = {};
+	unsigned int s_ptr_fine = 0;
+	short* s_end_section = {};
+	short* s_loop_st = {};
+	short* s_loop_end = {};
+	short* s_end = {};
+	sfSample* cur_sample = {};
+	char loop_mode = 0;
 
-	inline void IncrementPointer( bool gateState )
+	static short silence[8];
+
+#if defined( _DEBUG )
+	short* sampleStartAddress = {};
+#endif
+
+	short* const IncrementPointer(bool gateState)
 	{
 		s_ptr_fine += s_increment;
-		if( s_ptr_fine > 0xffffff )
+		if (s_ptr_fine > 0xffffff)
 		{
-			s_ptr_r += s_ptr_fine >> 24;
+			s_ptr += s_ptr_fine >> 24;
 			s_ptr_fine &= 0xffffff;
 
-			if( s_ptr_r >= s_end_section )
+			if (s_ptr >= s_end_section)
 			{
-				DoLoop( gateState );
+				DoLoop(gateState);
 			}
-			s_ptr_l = s_ptr_r + s_ptr_l_offset;
+			//			s_ptr_l = s_ptr_r + s_ptr_l_offset;
 		}
 
-		assert(	(s_ptr_r >= sampleStartAddressRight && s_ptr_r <= s_end)
-			||  (s_ptr_r >= silence + 3 && s_ptr_r <= silence + 7)
+		assert((s_ptr >= sampleStartAddress && s_ptr <= s_end)
+			|| (s_ptr >= silence + 3 && s_ptr <= silence + 7)
 		);
-	};
+
+#if 0
+		// near loop point?
+		const auto distToLoop = s_loop_end - s_ptr_r;
+		if (distToLoop <= 4)
+		{
+			return { clickBufferL + 8 - distToLoop , clickBufferR + 8 - distToLoop };
+		}
+#endif
+		return s_ptr;
+	}
+
+	void DoLoop(bool gateState)
+	{
+		// has loop ended, or entire sample ended?
+		// loop mode 0 - None, 1 - continuous loop, 3 loop while key on
+		if (loop_mode == 0 || (loop_mode == 3 && gateState == false))
+		{
+			s_end_section = s_end;
+
+			// has entire sample ended?
+			if (s_ptr >= s_end)
+			{
+				// switch output to silent sample.
+				s_ptr = /*s_ptr_l =*/ s_loop_st = &(silence[3]);
+				s_loop_end = &(silence[7]);
+				s_increment = 0;
+
+#if defined( _DEBUG )
+				sampleStartAddress = silence;
+#endif
+			}
+		}
+		else
+		{
+			// very safe way to loop, even with extreme increments
+			s_ptr = s_loop_st + ((s_ptr - s_loop_end) % (s_loop_end - s_loop_st));
+			assert(s_ptr >= sampleStartAddress && s_ptr <= s_end);
+		}
+	}
+
 
 	inline bool IsDone()
 	{
-		return s_loop_st == &( silence[3] );
-	};
+		return s_loop_st == &(silence[3]);
+	}
 
+#if 0
+	// buffer enough samples to avoid clicks near start of end of sample.
+	// 4 before loop, 4 after.
+	short clickBufferL[12];
+	short clickBufferR[12];
+
+	void init()
+	{
+		// init loop-end declicking buffers. 8 samples before loop-end thru 4 samples after loop-start
+		if (s_loop_st && s_loop_end)
+		{
+			assert(s_loop_st < s_loop_end);
+
+			const int loopLength = s_loop_end - s_loop_st;
+			auto r = s_loop_st;
+			for (int i = 8; i < 12; i++)
+			{
+				clickBufferR[i] = *r;
+				clickBufferL[i] = *(r + s_ptr_l_offset);
+				if (++r >= s_loop_end)
+					r = s_loop_st;
+			}
+
+			r = s_loop_end - 1;
+			for (int i = 7; i >= 0; i--)
+			{
+				clickBufferR[i] = *r;
+				clickBufferL[i] = *(r + s_ptr_l_offset);
+				if (--r < s_loop_st)
+					r = s_loop_end - 1;
+			}
+		}
+	}
+
+#endif
+};
+
+struct partial
+{
 	inline bool IsStereo()
 	{
-		return cur_sample_l != 0;
-	};
+		return left.cur_sample != 0;
+	}
 
 	inline void CalculateIncrement( float p_pitch )
 	{
 		float transposition = scale_tune * (p_pitch - root_pitch);
 		float ratio = powf(2.f,transposition) * relative_sample_rate;
 		float temp_float = 0x1000000 * ratio;
-		s_increment = (int) temp_float;
-	};
+		left.s_increment = (int)temp_float;
+		right.s_increment = (int)temp_float;
+	}
 
 	void SetPan( float pan ); // 0.5 = hard right. -0.5 = hard left.
 	bool UsesPanning()
@@ -59,20 +151,13 @@ struct partial
 //		return pan_right_level != 1.0f; ??WTF??
 		return pan_right_level != pan_left_level;
 	}
+	bool IsDone()
+	{
+		return right.IsDone() && (left.cur_sample == 0 || left.IsDone());
+	}
 
-	sfSample* cur_sample_r;
-	sfSample* cur_sample_l;
-	short* s_ptr_r;
-	short* s_ptr_l;
-	char loop_mode;
-	int s_increment;
-	unsigned int s_ptr_fine;
-	short* s_loop_st;
-	short* s_loop_end;
-	short* s_end;
-	short* s_end_section;
-	int s_ptr_l_offset;
-	static short silence[8];
+	sampleChannel left;
+	sampleChannel right;
 
 	float root_pitch; // the input voltage coresponding to root pitch
 	float scale_tune;
@@ -82,10 +167,6 @@ struct partial
 	float pan_right_level;
 
 	Jzone* zone = {};
-	#if defined( _DEBUG )
-	short* sampleStartAddressRight;
-	short* sampleStartAddressLeft;
-	#endif
 };
 
 typedef std::vector<partial> activePartialListType;

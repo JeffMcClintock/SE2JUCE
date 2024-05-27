@@ -4,6 +4,8 @@
 #include "./DspFilters/Butterworth.h"
 #include "../shared/FilterBase.h"
 
+// newer version of filters: https://github.com/berndporr/iir1
+
 template <typename FilterClass>
 class DspFilterBase : public FilterBase
 {

@@ -92,6 +92,7 @@ public:
 };
 
 // additional support for retrieving the preset from the processor in a thread-safe manner.
+// Also used by SE2JUCE
 class ProcessorStateMgrVst3 : public ProcessorStateMgr, public TimerClient
 {
 	DawPreset presetMutable;
@@ -117,3 +118,24 @@ public:
 
 	DawPreset const* getPreset();
 };
+
+#if 0
+struct IAuGui
+{
+	virtual void OnParameterUpdateFromDaw(int32_t tag, float normalised) = 0;
+};
+
+// Additional support for passing parameter updates to the UI in a thread-safe manner.
+class ProcessorStateMgrAu2 : public ProcessorStateMgr
+{
+	lock_free_fifo messageQue; // from real-time thread
+
+public:
+    ProcessorStateMgrAu2();
+    
+	void onParameterAutomation(int32_t dawParameterId, float value);
+	void queryUpdates(IAuGui* ui);
+//	void OnTimer();
+//	void serviceQueue();
+};
+#endif

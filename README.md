@@ -89,6 +89,15 @@ Finally add the *SE_DECLARE_INIT_STATIC_FILE* macro line to each module file (if
 Build and run the Standalone app. The Keyboard module now works in the JUCE plugin.
 <img src="Docs/Images/SE2JUCE_AddModule4.png"/>
 
+# Presets
+The plugin you build with SE2JUCE will save presets in xmlformat. Any preset the user saves will go to the folder:
+
+Windows: C:\ProgramData\\*YourVendorName*\\*YourPluginName*\USER Presets
+
+Mac: /Library/Application Support/*YourVendorName*/*YourPluginName*/USER Presets
+
+Your plugin can also include read-only factory presets. To include any factory preset into the plugin binary, add it to the folder Resources/presets
+
 
 # Further help and information
 

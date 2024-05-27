@@ -382,5 +382,14 @@ void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
 void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
 {
     const std::string chunk(static_cast<const char*>(data), sizeInBytes);
+
+#if 0 //def _DEBUG
+    {
+        auto xml = chunk.substr(0, 500);
+
+        _RPTN(0, "\nSE2JUCE_Processor::setStateInformation()\n %s\n\n", xml.c_str());
+    }
+#endif
+
     dawStateManager.setPresetFromXml(chunk);
 }

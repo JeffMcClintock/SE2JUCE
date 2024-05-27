@@ -649,7 +649,7 @@ private:
 
 	void onSetShape()
 	{
-		if( widgets.size() > 0 )
+		if (widgets.size() > 0)
 		{
 			const auto textU = JmUnicodeConversions::WStringToUtf8(pinShape.getValue());
 			dynamic_cast<WsGraphWidget*>(widgets[1].get())->shape = textU;

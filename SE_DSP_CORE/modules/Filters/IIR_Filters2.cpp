@@ -2,6 +2,9 @@
 #include "./DspFilters/Butterworth.h"
 #include "../shared/FilterBase.h"
 
+// TODO checkout newer version of filters: https://github.com/berndporr/iir1
+
+
 using namespace gmpi;
 
 SE_DECLARE_INIT_STATIC_FILE(ButterworthLP2);

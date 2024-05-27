@@ -1733,7 +1733,7 @@ void MpController::syncPresetControls(DawPreset const* preset)
 
 	constexpr bool updateProcessor = false;
 
-	_RPTN(0, "syncPresetControls Preset: %s hash %d\n", preset->name.c_str(), preset->hash);
+//	_RPTN(0, "syncPresetControls Preset: %s hash %4x\n", preset->name.c_str(), preset->hash);
 
 	const std::string presetName = preset->name.empty() ? "Default" : preset->name;
 	//{
@@ -1765,7 +1765,7 @@ void MpController::syncPresetControls(DawPreset const* preset)
 	{
 		assert(factoryPreset.hash);
 
-		_RPTN(0, "                   factoryPreset: %s hash %d\n", factoryPreset.name.c_str(), factoryPreset.hash);
+//		_RPTN(0, "                   factoryPreset: %s hash %4x\n", factoryPreset.name.c_str(), factoryPreset.hash);
 		if (factoryPreset.hash == preset->hash)
 		{
 			presetIndex = idx;
@@ -1849,8 +1849,10 @@ void MpController::syncPresetControls(DawPreset const* preset)
 		{
 			auto p = (*it).second;
 			inhibitProgramChangeParameter = true;
+//			_RPTN(0, "syncPresetControls Preset index: %d\n", presetIndex);
 			if(p->setParameterRaw(gmpi::FieldType::MP_FT_VALUE, RawView(presetIndex)))
 			{
+				updateGuis(p, gmpi::FieldType::MP_FT_VALUE);
 // VST2 only I think				p->updateProcessor(gmpi::FieldType::MP_FT_VALUE, 0); // Unusual. Informs VST2 DAW of program number.
 			}
 

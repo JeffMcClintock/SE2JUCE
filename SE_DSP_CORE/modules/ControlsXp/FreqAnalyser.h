@@ -32,7 +32,7 @@ protected:
 	AudioInPin pinSignalA;
 	IntInPin pinCaptureSize;
 	IntInPin pinUpdateRate;
-
+	
 	int index_;
 	int timeoutCount_;
 	int sleepCount;

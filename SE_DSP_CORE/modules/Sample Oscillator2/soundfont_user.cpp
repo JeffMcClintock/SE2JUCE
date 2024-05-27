@@ -3,42 +3,10 @@
 #include "csoundfont.h"
 #include "SampleManager.h"
 
-
 #define RIGHT 1
 #define LEFT 0
 
-short partial::silence[8] = {0,0,0,0,0,0,0,0};
-
-void partial::DoLoop( bool gateState )
-{
-	// has loop ended, or entire sample ended?
-	// loop mode 0 - None, 1 - continuous loop, 3 loop while key on
-	if( loop_mode == 0 || ( loop_mode == 3 && gateState == false ) )
-	{
-		s_end_section = s_end;
-
-		// has entire sample ended?
-		if( s_ptr_r >= s_end )
-		{
-			// switch output to silent sample.
-			s_ptr_r = s_ptr_l = s_loop_st = &( silence[3] );
-			s_loop_end = & ( silence[7] );
-			s_increment = 0;
-			s_ptr_l_offset = 0;
-
-			#if defined( _DEBUG )
-			sampleStartAddressRight = sampleStartAddressLeft = silence;
-			#endif
-		}
-	}
-	else
-	{
-		// very safe way to loop, even with extreme increments
-		s_ptr_r = s_loop_st + ((s_ptr_r - s_loop_end) % (s_loop_end - s_loop_st));
-		assert( s_ptr_r >= sampleStartAddressRight && s_ptr_r <= s_end );
-	}
-}
-
+short sampleChannel::silence[8] = {0,0,0,0,0,0,0,0};
 
 void soundfontUser::GetZone(short p_chan, short p_note, short p_vel)
 {
@@ -67,10 +35,10 @@ void soundfontUser::GetZone(short p_chan, short p_note, short p_vel)
 		auto& partial = partials.back();
 
 		partial.zone = zone;
-		partial.cur_sample_r = sampleHeader;
+		partial.right.cur_sample = sampleHeader;
 
 		#if defined( DEBUG_ZONES )
-//			_RPT2(_CRT_WARN, "SampleHeader R %d = %x\n", z.Get(53).wAmount, partial.cur_sample_r );
+//			_RPT2(_CRT_WARN, "SampleHeader R %d = %x\n", z.Get(53).wAmount, partial.right.cur_sample );
 		#endif
 
 		/*
@@ -80,24 +48,22 @@ void soundfontUser::GetZone(short p_chan, short p_note, short p_vel)
 			respectively. Both samples should be played entirely syncrhonously, with their pitch controlled by the
 			right sample’s generators.
 		*/
-		if( (partial.cur_sample_r->sfSampleType & monoSample) == 0 ) // stereo sample?
+		if( (partial.right.cur_sample->sfSampleType & monoSample) == 0 ) // stereo sample?
 		{
-			partial.cur_sample_l = SampleManager::Instance()->GetSampleHeader( sampleHandle, partial.cur_sample_r->wSampleLink );
+			partial.left.cur_sample = SampleManager::Instance()->GetSampleHeader( sampleHandle, partial.right.cur_sample->wSampleLink );
 			#if defined( DEBUG_ZONES )
-//					_RPT2(_CRT_WARN, "SampleHeader L %d = %x\n", partial.cur_sample_r->wSampleLink, partial.cur_sample_l );
+//					_RPT2(_CRT_WARN, "SampleHeader L %d = %x\n", partial.right.cur_sample->wSampleLink, partial.left.cur_sample );
 			#endif
 
-			if( partial.cur_sample_l != 0 && (partial.cur_sample_r->sfSampleType & leftSample) != 0 ) // left sample, need to swap
+			if( partial.left.cur_sample != 0 && (partial.right.cur_sample->sfSampleType & leftSample) != 0 ) // left sample, need to swap
 			{
 				// Swap Left/Right Samples.
-				sfSample *t = partial.cur_sample_r;
-				partial.cur_sample_r = partial.cur_sample_l;
-				partial.cur_sample_l = t;
+				std::swap(partial.right.cur_sample, partial.left.cur_sample);
 			}
 		}
 		else
 		{
-			partial.cur_sample_l = 0;
+			partial.left.cur_sample = {};
 		}
 
 		#if defined( DEBUG_ZONES )
@@ -117,50 +83,47 @@ void soundfontUser::GetZone(short p_chan, short p_note, short p_vel)
 //				_RPT1(_CRT_WARN,"   %d   zone_endloopAddrsOffset\n", (int)zone_endloopAddrsOffset);
 		#endif
 
-		partial.s_end		 = partial.s_loop_st = partial.s_loop_end = partial.s_ptr_r = (short *) SampleManager::Instance()->GetSampleChunk( sampleHandle );
-		partial.s_ptr_r		+= partial.cur_sample_r->dwStart	+ zone_startAddrsOffset;
-		partial.s_loop_st	+= partial.cur_sample_r->dwStartloop+ zone_startloopAddrsOffset;
-		partial.s_loop_end	+= partial.cur_sample_r->dwEndloop	+ zone_endloopAddrsOffset;
-		partial.s_end		+= partial.cur_sample_r->dwEnd		+ zone_endAddrsOffset;
+		const auto sampleChunk = (short*)SampleManager::Instance()->GetSampleChunk(sampleHandle);
 
+		partial.right.s_end = partial.right.s_loop_st = partial.right.s_loop_end = partial.right.s_ptr = sampleChunk;
+		partial.right.s_ptr		+= partial.right.cur_sample->dwStart	+ zone_startAddrsOffset;
+		partial.right.s_loop_st	+= partial.right.cur_sample->dwStartloop+ zone_startloopAddrsOffset;
+		partial.right.s_loop_end+= partial.right.cur_sample->dwEndloop	+ zone_endloopAddrsOffset;
+		partial.right.s_end		+= partial.right.cur_sample->dwEnd		+ zone_endAddrsOffset;
 
-		/*
-		// Fix for bad loop points. (need 4 samples on either side for interpolation).
-		if( partial.s_loop_st < partial.s_ptr_r + 4 )
+		if( partial.left.cur_sample )
 		{
-			partial.s_loop_st = partial.s_ptr_r + 4;
-			_RPT0(_CRT_WARN, "Loop start out of bounds, moved.\n" );
-		}
-		//if( partial.s_loop_end > partial.s_end - 4 )
-		//{
-		//	partial.s_loop_end = partial.s_end - 4;
-		//	_RPT0(_CRT_WARN, "Loop end out of bounds, moved.\n" );
-		//}
-*/
-		// left and right pointer are locked together. just work out offset between them
-		if( partial.cur_sample_l )
-		{
-			partial.s_ptr_l_offset = partial.cur_sample_l->dwStart - partial.cur_sample_r->dwStart;
-			partial.s_ptr_l = partial.s_ptr_r + partial.s_ptr_l_offset;
+			partial.left.s_end       = partial.left.s_loop_st = partial.left.s_loop_end = partial.left.s_ptr = sampleChunk;
+			partial.left.s_ptr      += partial.left.cur_sample->dwStart     + zone_startAddrsOffset;
+			partial.left.s_loop_st  += partial.left.cur_sample->dwStartloop + zone_startloopAddrsOffset;
+			partial.left.s_loop_end += partial.left.cur_sample->dwEndloop   + zone_endloopAddrsOffset;
+			partial.left.s_end      += partial.left.cur_sample->dwEnd       + zone_endAddrsOffset;
 		}
 
 		// Note sample startpoint for debugging purposes.
 		#if defined( _DEBUG )
-		partial.sampleStartAddressRight = partial.s_ptr_r;
-		partial.sampleStartAddressLeft = partial.s_ptr_l;
-		assert( partial.s_ptr_r >= partial.sampleStartAddressRight && partial.s_ptr_r <= partial.s_end );
+		partial.left.sampleStartAddress = partial.left.s_ptr;
+		partial.right.sampleStartAddress = partial.right.s_ptr;
+
+		assert(partial.right.s_ptr >= partial.right.sampleStartAddress && partial.right.s_ptr <= partial.right.s_end );
 		#endif
 
-		partial.loop_mode = z.Get( ZoneGenerator::SAMPLE_MODES /*54*/).wAmount & 3; // low 2 bits
+		partial.left.loop_mode = partial.right.loop_mode = z.Get( ZoneGenerator::SAMPLE_MODES /*54*/).wAmount & 3; // low 2 bits
 		// loop mode 0 - None, 1 - continuous loop, 3 loop while key on
 //			_RPT1(_CRT_WARN,"Sample Play:Loop Mode %d\n",partial.loop_mode);
-		if( (partial.loop_mode & 1) == 0 )
-			partial.s_loop_end = partial.s_end; // just in case
+		if ((partial.right.loop_mode & 1) == 0)
+		{
+			partial.left.s_loop_end  = partial.left.s_end; // just in case
+			partial.right.s_loop_end = partial.right.s_end;
+		}
 
-		//partial.s_end_section = min( partial.s_loop_end, partial.s_end ); // when to consider next move
-		partial.s_end_section = partial.s_end; // when to consider next move
-		if( partial.s_end_section > partial.s_loop_end )
-			partial.s_end_section = partial.s_loop_end;
+		partial.left.s_end_section = partial.left.s_end; // when to consider next move
+		partial.right.s_end_section = partial.right.s_end;
+		if (partial.left.s_end_section > partial.left.s_loop_end)
+			partial.left.s_end_section = partial.left.s_loop_end;
+
+		if (partial.right.s_end_section > partial.right.s_loop_end)
+			partial.right.s_end_section = partial.right.s_loop_end;
 
 		// Panning.
 		partial.SetPan( 0.001f * (float) z.Get( ZoneGenerator::PAN ).shAmount );  // 500 = hard right. -500=hard left.

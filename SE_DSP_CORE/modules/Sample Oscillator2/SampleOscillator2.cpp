@@ -177,7 +177,7 @@ void SoundfontOscillator2::NoteOn( int blockPosistion )
 		{
 			Jzone &z = *partial.zone;
 
-			assert(0 == (partial.cur_sample_r->sfSampleType & 0x8000)); // no ROM samples allowed.
+			assert(0 == (partial.right.cur_sample->sfSampleType & 0x8000)); // no ROM samples allowed.
 
 /*todo			if( ((SoundfontOscillator2*) CloneOf())->m_status != 0 )
 			{
@@ -187,8 +187,8 @@ void SoundfontOscillator2::NoteOn( int blockPosistion )
 */
 			sample_playing = true;
 
-			float root_key = partial.cur_sample_r->byOriginalKey;
-			float pitch_correction = partial.cur_sample_r->chCorrection;
+			float root_key = partial.right.cur_sample->byOriginalKey;
+			float pitch_correction = partial.right.cur_sample->chCorrection;
 
 			float overiding_root_key = z.Get(58).shAmount;
 			if( overiding_root_key >= 0.0 )
@@ -200,7 +200,7 @@ void SoundfontOscillator2::NoteOn( int blockPosistion )
 			float tune = course_tune + ( fine_tune + pitch_correction ) / 100.f;
 			/*
 				_RPT3(_CRT_WARN, "root_key %f, course_tune %f fine_tune %f\n", root_key, course_tune,fine_tune, );
-				_RPT1(_CRT_WARN, "sample rate %d\n", cur_sample_r->dwSampleRate );
+				_RPT1(_CRT_WARN, "sample rate %d\n", right.cur_sample->dwSampleRate );
 				_RPT1(_CRT_WARN, "bend %f\n", bend );
 			*/
 			float transposition = ( (float) NoteNum - root_key + tune ) / 120.f ;
@@ -208,9 +208,10 @@ void SoundfontOscillator2::NoteOn( int blockPosistion )
 			partial.root_pitch = 0.5f + (NoteNum - MIDDLE_A) / 120.f;
 			partial.root_pitch -= transposition;
 
-			partial.relative_sample_rate = (float) partial.cur_sample_r->dwSampleRate / getSampleRate();
+			partial.relative_sample_rate = (float) partial.right.cur_sample->dwSampleRate / getSampleRate();
 			partial.CalculateIncrement( p_pitch );
-			partial.s_ptr_fine = -partial.s_increment;
+			partial.left.s_ptr_fine = -partial.left.s_increment;
+			partial.right.s_ptr_fine = -partial.right.s_increment;
 		}
 	}
 
@@ -272,7 +273,7 @@ void SoundfontOscillator2::ChooseSubProcess( int blockPosistion )
 				partial &partial = *it;
                 usesPanning = (std::max)( usesPanning, partial.UsesPanning() );
 			}
-			// if( cur_sample_l ) // no mono-optimised loop yet.
+			// if( left.cur_sample ) // no mono-optimised loop yet.
 			{
 				switch( pinQuality )
 				{
@@ -364,7 +365,7 @@ void SoundfontOscillator2::ChooseSubProcess( int blockPosistion )
                 usesPanning = (std::max)( usesPanning, partial.UsesPanning() );
 			}
 
-			// if( cur_sample_l ) // no mono-optimised loop yet.
+			// if( left.cur_sample ) // no mono-optimised loop yet.
 			{
 				int test = pinQuality;
 				switch( pinQuality )

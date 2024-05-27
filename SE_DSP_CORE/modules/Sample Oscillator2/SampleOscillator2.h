@@ -159,28 +159,29 @@ public:
 			{
 				PitchModulationPolicy::CalculateIncrement(partial, pitch);
 
-				partial.IncrementPointer(gate_state);
+				auto sR = partial.right.IncrementPointer(gate_state);
 
 				float left, right;
 
 				if (partial.IsStereo())
 				{
-					assert(partial.s_ptr_l == partial.s_ptr_r + partial.s_ptr_l_offset);
+					auto sL = partial.left.IncrementPointer(gate_state);
+					//					assert(partial.s_ptr_l == sR + partial.s_ptr_l_offset);
 
-					right = InterpolationPolicy::Interpolate(partial.s_ptr_r, partial.s_ptr_fine);
-					left = InterpolationPolicy::Interpolate(partial.s_ptr_l, partial.s_ptr_fine);
+					right = InterpolationPolicy::Interpolate(sR, partial.right.s_ptr_fine);
+					left  = InterpolationPolicy::Interpolate(sL, partial.left.s_ptr_fine);
 				}
 				else
 				{
 					if (PanningSupport == Panning)
 					{
-						float output = InterpolationPolicy::Interpolate(partial.s_ptr_r, partial.s_ptr_fine);
+						float output = InterpolationPolicy::Interpolate(sR, partial.right.s_ptr_fine);
 						left = output * partial.pan_left_level;
 						right = output * partial.pan_right_level;
 					}
 					else
 					{
-						left = right = InterpolationPolicy::Interpolate(partial.s_ptr_r, partial.s_ptr_fine);
+						left = right = InterpolationPolicy::Interpolate(sR, partial.right.s_ptr_fine);
 					}
 				}
 
