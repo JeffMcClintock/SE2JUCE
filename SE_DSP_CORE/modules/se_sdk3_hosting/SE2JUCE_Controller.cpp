@@ -154,7 +154,7 @@ std::vector< MpController::presetInfo > SeJuceController::scanFactoryPresets()
 		const std::string filename{ BinaryData::originalFilenames[i] };
 		if (filename.find(xmlPresetExt) != std::string::npos)
 		{
-			const std::wstring fullpath = L"BinaryData/" + ToWstring(filename);
+			const std::wstring fullpath = /*L"BinaryData/" +*/ ToWstring(filename);
 
 			int dataSizeInBytes = {};
 			const auto data = BinaryData::getNamedResource(BinaryData::namedResourceList[i], dataSizeInBytes);
@@ -167,6 +167,7 @@ std::vector< MpController::presetInfo > SeJuceController::scanFactoryPresets()
 	return returnValues;
 }
 
+#if 0
 void SeJuceController::loadFactoryPreset(int index, bool fromDaw)
 {
 	const char* xmlPresetExt = ".xmlpreset";
@@ -208,6 +209,7 @@ void SeJuceController::loadFactoryPreset(int index, bool fromDaw)
 		}
 	}
 }
+#endif
 
 // Mode should remain on 'Master' unless explicitly set by user.
 void SeJuceController::OnStartupTimerExpired()

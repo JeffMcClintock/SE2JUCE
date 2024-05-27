@@ -918,7 +918,9 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 				}
 				else if (presets[preset].isFactory)
 				{
-					loadFactoryPreset(preset, false);
+					//loadFactoryPreset(preset, false);
+					auto xml = getFactoryPresetXml(WStringToUtf8(presets[preset].filename));
+					setPresetXmlFromSelf(xml);
 				}
 				else
 				{
