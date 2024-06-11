@@ -23,7 +23,7 @@
 #include "ResizeAdorner.h"
 #include "modules/shared/xp_simd.h"
 #include "modules/shared/GraphHelpers.h"
-#include "../SE_DSP_CORE/IGuiHost2.h"
+#include "IGuiHost2.h"
 #include "modules/se_sdk3_hosting/PresenterCommands.h"
 
 using namespace gmpi;

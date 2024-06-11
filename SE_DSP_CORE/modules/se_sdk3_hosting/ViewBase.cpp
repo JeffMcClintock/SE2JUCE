@@ -565,7 +565,7 @@ namespace SynthEdit2
 			return mouseCaptureObject->onPointerDown(flags, point);
 		}
 
-		// account for objects apearing without mouse moving (e.g. show-on-parent changing on previous click).
+		// account for objects appearing without mouse moving (e.g. show-on-parent changing on previous click).
 		calcMouseOverObject(flags);
 
 		IViewChild* hitObject = nullptr;

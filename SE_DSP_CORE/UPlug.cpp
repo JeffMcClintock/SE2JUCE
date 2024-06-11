@@ -9,6 +9,7 @@
 #include "./modules/shared/RawView.h"
 #include "SeAudioMaster.h"
 #include "BundleInfo.h"
+#include "Base64.h"
 
 using namespace std;
 
@@ -680,6 +681,7 @@ void UPlug::SetDefault(const char* utf8val)
 	}
 }
 
+#if 0
 // Send an event to pins as if it was connected to a default setter (but don't bother to actually connect it).
 // !! not working polyphonic !! perhaps need to clone events on unconnected inputs too
 void UPlug::SetDefaultDirect(const char* utf8val)
@@ -754,6 +756,7 @@ void UPlug::SetDefaultDirect(const char* utf8val)
 
 	UG->SetPinValue(UG->AudioMaster()->NextGlobalStartClock(), getPlugIndex(), DataType, raw.data(), static_cast<int32_t>(raw.size()));
 }
+#endif
 
 void UPlug::AssignBuffer(float* buffer)
 {
@@ -951,9 +954,22 @@ void UPlug::SetBufferValue( const char* p_val )
 	}
 	break;
 
-	case DT_BLOB: // not handled, perhaps could support hex !!!
+	case DT_BLOB:
+	{
+		auto blob = (MpBlob*)io_variable;
+		const auto raw = Base64::decode(std::string(p_val));
+		blob->setValueRaw(raw.size(), raw.data());
+	}
+	break;
+
 	case DT_BLOB2:
-		break;
+	{
+		// TODO figure this out.
+		//gmpi::ISharedBlob* blob = *(gmpi::ISharedBlob**)io_variable;
+		//const auto raw = Base64::decode(std::string(p_val));
+		//blob->(raw.size(), raw.data());
+	}
+	break;
 
 	default:
 		assert(false); // you are using an undefined datatype

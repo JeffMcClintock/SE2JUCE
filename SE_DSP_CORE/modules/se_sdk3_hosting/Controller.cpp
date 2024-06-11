@@ -15,7 +15,6 @@
 #include "../../modules/shared/string_utilities.h"
 #include "../shared/unicode_conversion.h"
 #include "../../UniqueSnowflake.h"
-#include "../shared/FileWatcher.h"
 #include "mfc_emulation.h"
 #if !defined(SE_USE_JUCE_UI)
 #include "GuiPatchAutomator3.h"
@@ -1923,6 +1922,8 @@ void MpController::SavePresetAs(const std::string& presetName)
 	ExportPresetXml(fullPath.c_str(), presetName);
 
 	setModified(false);
+
+	undoManager.initial(this, getPreset());
 
 	ScanPresets();
 

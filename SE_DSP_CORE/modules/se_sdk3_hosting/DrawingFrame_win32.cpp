@@ -11,7 +11,7 @@
 #include "./DrawingFrame_win32.h"
 #include "../shared/xp_dynamic_linking.h"
 #include "../shared/xp_simd.h"
-#include "../SE_DSP_CORE/IGuiHost2.h"
+#include "IGuiHost2.h"
 
 using namespace std;
 using namespace gmpi;

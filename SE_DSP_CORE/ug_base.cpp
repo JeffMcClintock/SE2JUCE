@@ -155,9 +155,9 @@ UPlug* ug_base::GetPlugById(int id)
 	for( vector<UPlug*>::iterator it = plugs.begin() ; it != plugs.end() ; ++it )
 	{
 		UPlug* p = *it;
-		assert( p->UniqueId() != -1 );
+		assert( p->Unique Id() != -1 );
 
-		if(p->UniqueId() == id )
+		if(p->Unique Id() == id )
 			return p;
 	}
 
