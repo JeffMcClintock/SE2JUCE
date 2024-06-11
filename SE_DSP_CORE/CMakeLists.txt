@@ -126,6 +126,7 @@ modules/se_sdk3_hosting/GmpiResourceManager.h
 modules/se_sdk3_hosting/GmpiResourceManager.cpp
 modules/se_sdk3_hosting/GuiPatchAutomator3.h
 modules/se_sdk3_hosting/GuiPatchAutomator3.cpp
+modules/se_sdk3_hosting/IGuiHost2.h
 modules/se_sdk3_hosting/IViewChild.h
 modules/se_sdk3_hosting/IViewChild.cpp
 
@@ -171,7 +172,6 @@ HostControls.cpp
 HostControls.h
 HostVoiceControl.h
 IDspPatchManager.h
-IGuiHost2.h
 InterfaceObject.cpp
 InterfaceObject.h
 interThreadQue.cpp
