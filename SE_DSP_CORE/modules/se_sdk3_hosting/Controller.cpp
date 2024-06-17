@@ -124,7 +124,7 @@ void MpController::ScanPresets()
 			}
 		}
 #endif
-		// sort all presets by category.
+		// sort all presets by category/index.
 		std::sort(presets.begin(), presets.end(),
 			[=](const presetInfo& a, const presetInfo& b) -> bool
 			{
@@ -1734,18 +1734,9 @@ void MpController::syncPresetControls(DawPreset const* preset)
 
 	constexpr bool updateProcessor = false;
 
-//	_RPTN(0, "syncPresetControls Preset: %s hash %4x\n", preset->name.c_str(), preset->hash);
+	_RPTN(0, "syncPresetControls Preset: %s hash %4x\n", preset->name.c_str(), preset->hash);
 
 	const std::string presetName = preset->name.empty() ? "Default" : preset->name;
-	//{
-	//	auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM_NAME);
-	//	if (auto it = ParameterHandleIndex.find(parameterHandle) ; it != ParameterHandleIndex.end())
-	//	{
-	//		const auto raw = (*it).second->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0);
-	//		auto presetNameW = RawToValue<std::wstring>(raw.data(), raw.size());
-	//		presetName = WStringToUtf8(presetNameW);
-	//	}
-	//}
 
 	// When DAW loads preset XML, try to determine if it's a factory preset, and update browser to suit.
 	int32_t presetIndex = -1; // exact match
@@ -1766,17 +1757,21 @@ void MpController::syncPresetControls(DawPreset const* preset)
 	{
 		assert(factoryPreset.hash);
 
-//		_RPTN(0, "                   factoryPreset: %s hash %4x\n", factoryPreset.name.c_str(), factoryPreset.hash);
+		_RPTN(0, "                   factoryPreset: %s hash %4x", factoryPreset.name.c_str(), factoryPreset.hash);
 		if (factoryPreset.hash == preset->hash)
 		{
 			presetIndex = idx;
 			presetSameNameIndex = -1;
+			_RPT0(0, " same HASH!");
 			break;
 		}
 		if (factoryPreset.name == presetName && !factoryPreset.isSession)
 		{
 			presetSameNameIndex = idx;
+			_RPT0(0, " same name");
 		}
+
+		_RPT0(0, "\n");
 		
 		++idx;
 	}
@@ -1822,7 +1817,6 @@ void MpController::syncPresetControls(DawPreset const* preset)
 				std::remove_if(presets.begin(), presets.end(), [](presetInfo& preset) { return preset.isSession; })
 				, presets.end()
 			);
-//			session_preset_xml.clear();
 			
 			// preset not available and not the same name as any existing ones, add it to presets as 'session' preset.
 			presetIndex = static_cast<int32_t>(presets.size());
