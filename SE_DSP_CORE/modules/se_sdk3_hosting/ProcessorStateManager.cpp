@@ -414,7 +414,7 @@ void ProcessorStateMgr::setPresetFromUnownedPtr(DawPreset const* preset)
 
 ProcessorStateMgrVst3::ProcessorStateMgrVst3() : messageQue(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
 {
-	presetMutable.name = "Init";
+	presetMutable.name = "Full Reset";
 }
 
 // parameter changed from any source in real-time thread (GUI/DAW/Meters)
