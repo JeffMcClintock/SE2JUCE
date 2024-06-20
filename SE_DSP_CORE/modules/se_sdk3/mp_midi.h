@@ -1416,6 +1416,7 @@ namespace gmpi
 
 		// Convert 'fat' MPE to MIDI 2.0
 		// i.e. MPE that has already been naively converted into MIDI 2.0
+		// see also MPEToMIDI2 module
 		class FatMpeConverter : public gmpi::midi_2_0::NoteMapper
 		{
 			std::function<void(const midi::message_view, int timestamp)> sink;
@@ -1638,11 +1639,10 @@ namespace gmpi
 				{
 					channelPressure[header.channel] = gmpi::midi_2_0::decodeController(msg).value;
 
-					// find whatever note is playing on this channel. Assumption is only held notes can receive benders etc.
-					// might not hold true for DAW automation which is drawn-on after note-off time
+					// find whatever note/s are playing on this channel.
 					for (auto& info : noteIds)
 					{
-						if (info.held && header.channel == (info.noteId >> 7))
+						if (/*info.held &&*/ header.channel == (info.noteId >> 7))
 						{
 							//					_RPTN(0, "MPE: Pressure %d %f\n", info.MidiKeyNumber, normalised);
 							const auto msgout = gmpi::midi_2_0::makePolyPressure(
@@ -1666,11 +1666,10 @@ namespace gmpi
 
 					channelBrightness[header.channel] = controller.value;
 
-					// find whatever note is playing on this channel. Assumption is only held notes can receive benders etc.
-					// might not hold true for DAW automation which is drawn-on after note-off time
+					// find whatever note/s are playing on this channel.
 					for (auto& info : noteIds)
 					{
-						if (info.held && header.channel == (info.noteId >> 7))
+						if (/*info.held &&*/ header.channel == (info.noteId >> 7))
 						{
 							const auto msgout = gmpi::midi_2_0::makePolyController(
 								info.MidiKeyNumber,

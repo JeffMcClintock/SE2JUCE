@@ -28,7 +28,7 @@ namespace midi_2_0
 
 
 
-
+// see also: FatMpeConverter class
 class MPEToMIDI2 final : public MpBase2, public gmpi::midi_2_0::NoteMapper
 {
 	MidiInPin pinMIDIIn;
@@ -84,7 +84,7 @@ public:
 			const auto MpeId = note.noteNumber | (header.channel << 7);
 			auto& keyInfo = allocateNote(MpeId, note.noteNumber);
 
-//			_RPTN(0, "MPE Note-on %d => %d\n", note.noteNumber, keyInfo.MidiKeyNumber);
+			//_RPTN(0, "MPE Note-on chn %d key %d => MIDI2 Key %d\n", header.channel, note.noteNumber, keyInfo.MidiKeyNumber);
 
 			// MIDI 2.0 does not automatically reset per-note controls. MPE is expected to.
 
@@ -159,6 +159,8 @@ public:
 			const auto MpeId = note.noteNumber | (header.channel << 7);
 			auto keyInfo = findNote(MpeId);
 
+			//_RPTN(0, "MPE Note-off chn %d key %d => MIDI2 Key %d\n", header.channel, note.noteNumber, keyInfo ? keyInfo->MidiKeyNumber : -1);
+
 			if (keyInfo)
 			{
 				keyInfo->held = false;
@@ -205,7 +207,7 @@ public:
 			// might not hold true for DAW automation which is drawn-on after note-off time
 			for (auto& info : noteIds)
 			{
-				if (info.held && header.channel == (info.noteId >> 7))
+				if (/*info.held &&*/ header.channel == (info.noteId >> 7))
 				{
 //					_RPTN(0, "MPE: Pressure %d %f\n", info.MidiKeyNumber, normalised);
 					const auto out = gmpi::midi_2_0::makePolyPressure(
@@ -224,13 +226,15 @@ public:
 			if (74 != msg[1])
 				break;
 
+			//_RPTN(0, "MPE brightness chn %d => %d\n", header.channel, msg[2]);
+
 			channelBrightness[header.channel] = midi::utils::U7ToFloat(msg[2]);
 
 			// find whatever note is playing on this channel. Assumption is only held notes can receive benders etc.
 			// might not hold true for DAW automation which is drawn-on after note-off time
 			for (auto& info : noteIds)
 			{
-				if (info.held && header.channel == (info.noteId >> 7))
+				if (/*info.held &&*/ header.channel == (info.noteId >> 7))
 				{
 					const auto out = gmpi::midi_2_0::makePolyController(
 						info.MidiKeyNumber,

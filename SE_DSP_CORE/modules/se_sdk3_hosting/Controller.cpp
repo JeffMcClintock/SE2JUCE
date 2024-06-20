@@ -1734,7 +1734,7 @@ void MpController::syncPresetControls(DawPreset const* preset)
 
 	constexpr bool updateProcessor = false;
 
-	_RPTN(0, "syncPresetControls Preset: %s hash %4x\n", preset->name.c_str(), preset->hash);
+//	_RPTN(0, "syncPresetControls Preset: %s hash %4x\n", preset->name.c_str(), preset->hash);
 
 	const std::string presetName = preset->name.empty() ? "Default" : preset->name;
 
@@ -1757,7 +1757,7 @@ void MpController::syncPresetControls(DawPreset const* preset)
 	{
 		assert(factoryPreset.hash);
 
-		_RPTN(0, "                   factoryPreset: %s hash %4x", factoryPreset.name.c_str(), factoryPreset.hash);
+//		_RPTN(0, "                   factoryPreset: %s hash %4x\n", factoryPreset.name.c_str(), factoryPreset.hash);
 		if (factoryPreset.hash == preset->hash)
 		{
 			presetIndex = idx;

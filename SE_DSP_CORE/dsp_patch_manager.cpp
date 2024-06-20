@@ -1175,9 +1175,11 @@ void DspPatchManager::DoNoteOn(timestamp_t timestamp, ug_container* voiceControl
 	int automation_id = ( ControllerType::VelocityOn << 24 ) | voiceId;
 	vst_Automation(voiceControlContainer, timestamp, automation_id, velocity);
 
+#if 0 // attempt to get poly controllers persistent over many notes (requested by Davidson)
 	// Reset poly-aftertouch automation
 	automation_id = ( ControllerType::PolyAftertouch << 24 ) | voiceId;
 	vst_Automation(voiceControlContainer, timestamp, automation_id, 0.0f);
+#endif
 
 	// Send gate automation.
 	automation_id = ( ControllerType::Gate << 24 ) | voiceId;
