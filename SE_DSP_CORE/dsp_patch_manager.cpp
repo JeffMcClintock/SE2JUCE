@@ -1773,7 +1773,7 @@ void DspPatchManager::setPreset(DawPreset const* preset)
 	{
 		if (auto parameter = GetParameter(handle); parameter)
 		{
-			if (parameter->ignorePatchChange() && preset->ignoreProgramChangeActive)
+			if (parameter->ignorePatchChange() && preset->ignoreProgramChangeActive && !preset->isInitPreset)
 				continue;
 
 			for(int voice = 0 ; voice < val.rawValues_.size() ; ++voice)

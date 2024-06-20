@@ -1666,7 +1666,7 @@ void MpController::setPreset(DawPreset const* preset)
 		if (parameter->datatype_ != (int)val.dataType)
 			continue;
 
-		if (parameter->ignorePc_ && preset->ignoreProgramChangeActive)
+		if (parameter->ignorePc_ && preset->ignoreProgramChangeActive && !preset->isInitPreset)
 			continue;
 
 		for (int voice = 0; voice < val.rawValues_.size(); ++voice)
