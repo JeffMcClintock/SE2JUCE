@@ -7,8 +7,8 @@
 
 using namespace gmpi;
 
-SE_DECLARE_INIT_STATIC_FILE(ButterworthLP2);
-SE_DECLARE_INIT_STATIC_FILE(ButterworthBP2);
+SE_DECLARE_INIT_STATIC_FILE(ButterworthLP2)
+SE_DECLARE_INIT_STATIC_FILE(ButterworthBP2)
 
 //#define ENABLE_DIAG_PINS
 
