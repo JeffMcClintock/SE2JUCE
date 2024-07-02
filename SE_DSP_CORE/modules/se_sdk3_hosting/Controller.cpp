@@ -1762,16 +1762,16 @@ void MpController::syncPresetControls(DawPreset const* preset)
 		{
 			presetIndex = idx;
 			presetSameNameIndex = -1;
-			_RPT0(0, " same HASH!");
+			//_RPT0(0, " same HASH!");
 			break;
 		}
 		if (factoryPreset.name == presetName && !factoryPreset.isSession)
 		{
 			presetSameNameIndex = idx;
-			_RPT0(0, " same name");
+			//_RPT0(0, " same name");
 		}
 
-		_RPT0(0, "\n");
+		//_RPT0(0, "\n");
 		
 		++idx;
 	}

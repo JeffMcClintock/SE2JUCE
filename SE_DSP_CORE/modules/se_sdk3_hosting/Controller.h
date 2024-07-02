@@ -171,6 +171,10 @@ protected:
 
 	void OnFileDialogComplete(int mode, int32_t result);
 	virtual void OnStartupTimerExpired();
+	bool ignoreProgramChangeActive()
+	{
+		return startupTimerCounter <= 0;
+	}
 
 public:
 
