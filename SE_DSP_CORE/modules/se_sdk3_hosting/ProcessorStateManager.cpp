@@ -590,45 +590,6 @@ void ProcessorStateMgrVst3::serviceQueue()
 
 		switch (recievingMessageId)
 		{
-#if 0 // seems redundant provided param update ALWAYS get through to patch-manager
-		case id_to_long2("norm"):
-		{
-			float normalized;
-			strm >> normalized;
-
-			const auto it = tagToHandle.find(paramHandle);
-			if (it == tagToHandle.end())
-				continue;
-
-			const auto paramHandle = it->second;
-			const auto it2 = parametersInfo.find(paramHandle);
-			if (it2 == parametersInfo.end())
-				continue;
-
-			const auto& info = it2->second;
-
-			// convert normalized to actual value.
-			auto& rawVal = presetMutable.params[paramHandle].rawValues_[0];
-
-			rawVal
-				= normalizedToRaw(
-					(int32_t)info.dataType
-					, normalized
-					, info.maximum
-					, info.minimum
-					, info.meta
-				);
-
-#ifdef DEBUG
-			const auto asString = RawToXml(info.dataType, rawVal);
-			_RPTN(0, "PSM: param:%d norm:%f val:%s\n", paramHandle, normalized, asString.c_str());
-#endif
-			// update normalized value
-			//normalizedValues[paramHandle]->store(normalized, std::memory_order_relaxed);
-		}
-		break;
-#endif
-
 		case id_to_long2("ppc"):
 		{
 			int32_t voiceId;
@@ -666,7 +627,11 @@ void ProcessorStateMgrVst3::serviceQueue()
 				assert(presetMutable.params.find(paramHandle) != presetMutable.params.end());
 				assert(!presetMutable.params[paramHandle].rawValues_.empty());
 
-				presetMutable.params[paramHandle].rawValues_[0] = rawValue;
+                auto& currentValues = presetMutable.params[paramHandle].rawValues_;
+                if(!currentValues.empty()) // prevent crashes with corrupt data.
+                {
+                    currentValues[0] = rawValue;
+                }
 			}
 			else
 			{
@@ -904,6 +869,8 @@ void ProcessorStateMgrVst3::init(TiXmlElement* parameters_xml)
 {
 	ProcessorStateMgr::init(parameters_xml);
 
+    const std::lock_guard<std::mutex> lock{ presetMutex };
+    
 	// init the current preset
 	for (auto& p : parametersInfo)
 	{

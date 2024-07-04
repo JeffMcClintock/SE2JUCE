@@ -99,7 +99,6 @@ class ProcessorStateMgrVst3 : public ProcessorStateMgr, public TimerClient
 	lock_free_fifo messageQue; // from real-time thread
 	bool presetDirty = true;
 	std::atomic<DawPreset const*> currentPreset;
-//	std::unordered_map<int32_t, int32_t> tagToHandle;
 
 	bool OnTimer() override;
 	void serviceQueue();
