@@ -1261,7 +1261,7 @@ template <typename T>
 inline void VariableFromRaw( int size, const void* data, T& returnValue )
 {
 	assert( size == sizeof(T) && "check pin datatype matches XML" ); // Have you re-scanned modules since last change?
-	memcpy( &returnValue, data, size );
+	memcpy( &returnValue, data, static_cast<size_t>(size));
 }
 
 template <>

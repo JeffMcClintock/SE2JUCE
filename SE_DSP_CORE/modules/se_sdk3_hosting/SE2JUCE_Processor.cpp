@@ -134,6 +134,11 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
         juceParameter->addListener(this);
         sequentialIndex++;
     }
+
+    // sync controller preset
+    {
+        controller.setPreset(dawStateManager.getPreset());
+    }
 }
 
 // Ableton: called on main thread when manipulating param from generic panel.

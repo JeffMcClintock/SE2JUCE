@@ -42,7 +42,6 @@ class UPlug
 public:
 	void SetDefault(const char* utf8val);
 	void SetDefault2(const char* utf8val);
-	void SetDefaultDirect(const char* utf8val);
 
 	void AssignBuffer(float* buffer);
 

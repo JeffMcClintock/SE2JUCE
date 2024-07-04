@@ -10,7 +10,7 @@
 #include "../se_sdk3/TimerManager.h"
 #include "../se_sdk3/mp_gui.h"
 #include "../shared/FileWatcher.h"
-#include "../../IGuiHost2.h"
+#include "IGuiHost2.h"
 #include "../../interThreadQue.h"
 #include "../../SeAudioMaster.h"
 #include "../../mfc_emulation.h"
@@ -171,6 +171,10 @@ protected:
 
 	void OnFileDialogComplete(int mode, int32_t result);
 	virtual void OnStartupTimerExpired();
+	bool ignoreProgramChangeActive()
+	{
+		return startupTimerCounter <= 0;
+	}
 
 public:
 

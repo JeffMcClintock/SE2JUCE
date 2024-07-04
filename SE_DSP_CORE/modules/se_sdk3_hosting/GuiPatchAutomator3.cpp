@@ -1,5 +1,5 @@
 #include "GuiPatchAutomator3.h"
-#include "../SE_DSP_CORE/IGuiHost2.h"
+#include "IGuiHost2.h"
 
 using namespace gmpi;
 using namespace std;

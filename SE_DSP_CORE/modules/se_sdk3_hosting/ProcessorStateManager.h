@@ -55,6 +55,7 @@ struct DawPreset
 	std::string category;
 	std::map<int32_t, paramValue> params;
 	std::size_t hash = 0;
+	bool isInitPreset = false;
 	mutable bool ignoreProgramChangeActive = false;
 	mutable bool resetUndo = true;
 

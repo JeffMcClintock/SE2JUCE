@@ -3,8 +3,7 @@
 #include "../se_sdk3_hosting/ControllerHost.h"
 */
 #include "../se_sdk3/mp_sdk_common.h"
-#include "../../IGuiHost2.h"
-//#include "../se_sdk3_hosting/Controller.h"
+#include "IGuiHost2.h"
 
 class ControllerIterator :
 	public gmpi::IMpControllerIterator

@@ -113,7 +113,7 @@ void SeJuceController::setPresetUnsafe(DawPreset const* preset)
 
 		auto& parameter = (*it).second;
 
-		if (parameter->ignorePc_ && preset->ignoreProgramChangeActive)
+		if (parameter->ignorePc_ && preset->ignoreProgramChangeActive && !preset->isInitPreset)
 			continue;
 
 		assert(parameter->datatype_ == (int)val.dataType);

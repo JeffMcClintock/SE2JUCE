@@ -5,7 +5,6 @@
 #include "./DrawingFrame_win32.h"
 #include "../se_sdk3_hosting/GraphicsRedrawClient.h"
 
-class IGuiHost2;
 namespace SynthEdit2
 {
 	class IPresenter;

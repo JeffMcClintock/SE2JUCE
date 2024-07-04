@@ -5,7 +5,7 @@
 #include "ViewBase.h"
 #include "modules/se_sdk3_hosting/gmpi_gui_hosting.h"
 #include "IPluginGui.h"
-#include "../SE_DSP_CORE/IGuiHost2.h"
+#include "IGuiHost2.h"
 #include "../shared/xplatform_modifier_keys.h"
 #include "BundleInfo.h"
 
