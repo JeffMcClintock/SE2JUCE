@@ -59,9 +59,12 @@ namespace SynthEdit2
 
 		// Clear out previous view.
 		assert(!isIteratingChildren);
-		children.clear();
+
+		mouseOverObject = nullptr;
 		elementBeingDragged = nullptr;
 		patchAutomatorWrapper_ = nullptr;
+
+		children.clear();
 
 		if (mouseCaptureObject)
 		{

@@ -23,6 +23,9 @@ namespace SynthEdit2
 	// Base of any view that displays modules. Itself behaving as a standard graphics module.
 	class ViewBase : public gmpi_gui::MpGuiGfxBase
 	{
+		friend class ResizeAdorner;
+		friend class ViewChild;
+		
 		GmpiDrawing::Point pointPrev;
 		GmpiGuiHosting::ContextItemsSink2 contextMenu;
 		GmpiDrawing_API::MP1_POINT lastMovePoint = { -1, -1 };
@@ -101,11 +104,15 @@ bool isIteratingChildren = false;
 		virtual std::string getSkinName() = 0;
 
 		virtual int32_t setCapture(IViewChild* module);
-		int32_t releaseCapture();
-		bool isMouseCaptured()
+		bool isCaptured(IViewChild* module)
 		{
-			return mouseCaptureObject != nullptr;
+			return mouseCaptureObject == module;
 		}
+		int32_t releaseCapture();
+		//bool isMouseCaptured()
+		//{
+		//	return mouseCaptureObject != nullptr;
+		//}
 
 		virtual int32_t StartCableDrag(IViewChild* fromModule, int fromPin, GmpiDrawing::Point dragStartPoint, bool isHeldAlt, CableType type = CableType::PatchCable);
 		void OnCableMove(ConnectorViewBase * dragline);

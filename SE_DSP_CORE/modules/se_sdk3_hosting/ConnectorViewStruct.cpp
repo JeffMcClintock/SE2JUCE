@@ -470,7 +470,7 @@ void ConnectorView2::OnRender(GmpiDrawing::Graphics& g)
 int32_t ConnectorView2::onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 {
 	// dragging something.
-	if (parent->getCapture())
+	if (imCaptured()) //if (parent->getCapture())
 	{
 		// dragging a node.
 		if (draggingNode != -1)
@@ -513,7 +513,7 @@ int32_t ConnectorView2::onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT 
 
 int32_t ConnectorView2::onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 {
-	if (!parent->getCapture() || draggingNode == -1)
+	if (imCaptured() || draggingNode == -1) //if (!parent->getCapture() || draggingNode == -1)
 	{
 		return ConnectorViewBase::onPointerUp(flags, point);
 	}
@@ -666,7 +666,7 @@ int32_t ConnectorView2::onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT 
 {
 //		_RPT0(_CRT_WARN, "ConnectorView2::onPointerDown\n");
 
-	if (parent->getCapture()) // then we are *already* draging.
+	if (imCaptured()) //if (parent->getCapture()) // then we are *already* draging.
 	{
 		parent->autoScrollStop();
 		parent->releaseCapture();

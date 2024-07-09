@@ -25,4 +25,14 @@ namespace SynthEdit2
 	{
 		return Presenter()->editEnabled();
 	}
+
+	bool ViewChild::imCaptured()
+	{
+		return parent->isCaptured(this);
+	}
+
+	ViewChild::~ViewChild()
+	{
+		assert(!parent || parent->mouseOverObject != this);
+	}
 }

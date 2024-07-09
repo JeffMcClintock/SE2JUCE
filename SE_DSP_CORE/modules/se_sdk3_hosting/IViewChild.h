@@ -92,6 +92,8 @@ namespace SynthEdit2
 		{
 		}
 
+		~ViewChild() override;
+
 		// IViewChild
 		virtual int32_t measure(GmpiDrawing::Size availableSize, GmpiDrawing::Size* returnDesiredSize) override { return gmpi::MP_OK; };
 		int32_t arrange(GmpiDrawing::Rect finalRect) override
@@ -153,6 +155,8 @@ namespace SynthEdit2
 		{
 			return GmpiDrawing::Point();
 		}
+
+		bool imCaptured();
 	};
 
 }

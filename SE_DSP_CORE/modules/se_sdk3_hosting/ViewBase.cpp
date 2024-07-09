@@ -647,6 +647,11 @@ namespace SynthEdit2
 
 	void ViewBase::RemoveChild(IViewChild* child)
 	{
+		if (mouseOverObject == child)
+		{
+			mouseOverObject = nullptr;
+		}
+
 		for (auto it = children.begin(); it != children.end(); ++it)
 		{
 			if ((*it).get() == child)
@@ -698,29 +703,30 @@ namespace SynthEdit2
 		if(mouseCaptureObject)
 		{
 			mouseCaptureObject->onPointerMove(flags, point);
-			return gmpi::MP_OK;
 		}
-
-		if(elementBeingDragged) // could this be handled with custom mouseCaptureObject? to remove need for check here?
+		else
 		{
-			// Snap-to-grid logic.
-			const auto snapGridSize = Presenter()->GetSnapSize();
-			GmpiDrawing::Size delta(point.x - pointPrev.x, point.y - pointPrev.y);
-			if(delta.width != 0.0f || delta.height != 0.0f) // avoid false snap on selection
+			if (elementBeingDragged) // could this be handled with custom mouseCaptureObject? to remove need for check here?
 			{
-				GmpiDrawing::Point snapReference(elementBeingDragged->getLayoutRect().left, elementBeingDragged->getLayoutRect().top);
+				// Snap-to-grid logic.
+				const auto snapGridSize = Presenter()->GetSnapSize();
+				GmpiDrawing::Size delta(point.x - pointPrev.x, point.y - pointPrev.y);
+				if (delta.width != 0.0f || delta.height != 0.0f) // avoid false snap on selection
+				{
+					GmpiDrawing::Point snapReference(elementBeingDragged->getLayoutRect().left, elementBeingDragged->getLayoutRect().top);
 
-				GmpiDrawing::Point newPoint = snapReference + delta;
-				newPoint.x = floorf((snapGridSize / 2 + newPoint.x) / snapGridSize) * snapGridSize;
-				newPoint.y = floorf((snapGridSize / 2 + newPoint.y) / snapGridSize) * snapGridSize;
-				GmpiDrawing::Size snapDelta = newPoint - snapReference;
+					GmpiDrawing::Point newPoint = snapReference + delta;
+					newPoint.x = floorf((snapGridSize / 2 + newPoint.x) / snapGridSize) * snapGridSize;
+					newPoint.y = floorf((snapGridSize / 2 + newPoint.y) / snapGridSize) * snapGridSize;
+					GmpiDrawing::Size snapDelta = newPoint - snapReference;
 
-				pointPrev += snapDelta;
+					pointPrev += snapDelta;
 
-				if(snapDelta.width != 0.0 || snapDelta.height != 0.0)
-					Presenter()->DragSelection(snapDelta);
+					if (snapDelta.width != 0.0 || snapDelta.height != 0.0)
+						Presenter()->DragSelection(snapDelta);
+				}
+				return gmpi::MP_OK;
 			}
-			return gmpi::MP_OK;
 		}
 
 		calcMouseOverObject(flags);

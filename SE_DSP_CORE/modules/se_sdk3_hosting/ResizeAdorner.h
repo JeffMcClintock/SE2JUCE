@@ -93,6 +93,11 @@ namespace SynthEdit2
 
 			bounds = clientBoundsToAdorner(module->getLayoutRect());
 		}
+		
+		~ResizeAdorner()
+		{
+			assert(!parent || parent->mouseOverObject != this);
+		}
 
 		virtual int32_t measure(GmpiDrawing::Size availableSize, GmpiDrawing::Size* returnDesiredSize) override
 		{
@@ -297,9 +302,9 @@ namespace SynthEdit2
 			return gmpi::MP_OK;
 		}
 
-		virtual int32_t onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
+		int32_t onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
 		{
-			if (parent->getCapture())
+			if (parent->isCaptured(this))
 			{
 				auto snapGridSize = parent->Presenter()->GetSnapSize();
 				GmpiDrawing::Size delta(point.x - pointPrev.x, point.y - pointPrev.y);
@@ -376,7 +381,7 @@ namespace SynthEdit2
 
 		virtual int32_t onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
 		{
-			if (parent->getCapture())
+			if (parent->isCaptured(this))
 			{
 				parent->releaseCapture();
 				parent->autoScrollStop();
