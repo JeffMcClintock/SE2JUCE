@@ -21,10 +21,37 @@ extern const char* se2juce_getNamedResource(const char* name, int& returnBytes);
 #include "Shlobj.h"
 #endif
 
-#if !defined( _WIN32 )
+#if __APPLE__
 #include <dlfcn.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <pwd.h>
+#include <sysdir.h>  // for sysdir_start_search_path_enumeration
+#include <glob.h>    // for glob needed to expand ~ to user dir
+
+std::string expandTilde(const char* str) {
+    if (!str) return {};
+
+    glob_t globbuf;
+    if (glob(str, GLOB_TILDE, nullptr, &globbuf) == 0) {
+        std::string result(globbuf.gl_pathv[0]);
+        globfree(&globbuf);
+        return result;
+    } else {
+        return {};
+    }
+}
+
+// ~/Library/Application Support/
+std::string settingsPath() {
+    char path[PATH_MAX];
+    auto state = sysdir_start_search_path_enumeration(SYSDIR_DIRECTORY_APPLICATION_SUPPORT,
+                                                      SYSDIR_DOMAIN_MASK_USER);
+    if ((state = sysdir_get_next_search_path_enumeration(state, path))) {
+        return expandTilde(path);
+    } else {
+        return {};
+    }
+}
 
 // inspired by: public.sdk/source/vst/vstguieditor.cpp
 //void* gBundleRef = 0;
@@ -244,7 +271,9 @@ void BundleInfo::initPresetFolder(const char* manufacturer, const char* product)
 #ifdef _WIN32
     std::wstring res{ L"C:\\ProgramData\\" };
 #else
-    std::wstring res{ L"/Library/Application Support/" };
+//    std::wstring res{ L"~/Library/Application Support/" };
+    
+    auto res = Utf8ToWstring(settingsPath()) + PLATFORM_PATH_SLASH_L;
 #endif
 
     res += Utf8ToWstring(manufacturer) + PLATFORM_PATH_SLASH_L + Utf8ToWstring(product) + PLATFORM_PATH_SLASH_L;
