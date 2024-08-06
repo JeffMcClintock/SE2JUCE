@@ -2632,12 +2632,15 @@ void SeAudioMaster::AssignPinBuffers()
 		audioPins.end(),
 		[](const UPlug* p1, const UPlug* p2)
 		{
-			if (p1->UG != p2->UG)
+			if (p1->UG->SortOrder2 != p2->UG->SortOrder2)
 			{
 				return p1->UG->SortOrder2 < p2->UG->SortOrder2;
 			}
 
-			return p1->getPlugIndex() < p2->getPlugIndex();
+            if (p1->getPlugIndex() != p2->getPlugIndex())
+                return p1->getPlugIndex() < p2->getPlugIndex();
+            
+            return p1 < p2;
 		}
 	);
 
