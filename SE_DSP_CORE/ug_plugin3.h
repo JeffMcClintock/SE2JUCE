@@ -315,14 +315,14 @@ inline void ug_plugin3<gmpi::IMpAudioPlugin, gmpi::MpEvent>::receiveMessageFromG
 	// not supported, but could be done with an extension method 'IMessageSender' or whatever
 }
 template<>
-inline void ug_plugin3<gmpi::api::IAudioPlugin, gmpi::api::Event>::receiveMessageFromGui(int32_t /*id*/, int32_t /*size*/, const void* /*messageData*/)
+inline void ug_plugin3<gmpi::api::IProcessor, gmpi::api::Event>::receiveMessageFromGui(int32_t /*id*/, int32_t /*size*/, const void* /*messageData*/)
 {
 	// not supported, but could be done with an extension method 'IMessageSender' or whatever
 }
 
 // specialization. GMPI needs host passed in Open
 template<>
-inline int ug_plugin3<gmpi::api::IAudioPlugin, gmpi::api::Event>::Open()
+inline int ug_plugin3<gmpi::api::IProcessor, gmpi::api::Event>::Open()
 {
 	ug_base::Open();
 	const int32_t res2 = (int32_t) plugin_->open(reinterpret_cast<gmpi::api::IUnknown*>(static_cast<gmpi::IMpHost*>(this)));

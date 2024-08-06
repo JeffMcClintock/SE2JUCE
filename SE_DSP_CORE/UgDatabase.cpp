@@ -1572,6 +1572,12 @@ tinyxml2::XMLElement* Module_Info::Export(tinyxml2::XMLElement* element, ExportF
 	{
 		auto DspXml = doc->NewElement("Audio");
 		pluginXml->LinkEndChild(DspXml);
+
+		if (latency)
+		{
+			DspXml->SetAttribute("latency", latency);
+		}
+
 		int id = 0;
 		for (auto it = plugs.begin(); it != plugs.end(); ++it)
 		{

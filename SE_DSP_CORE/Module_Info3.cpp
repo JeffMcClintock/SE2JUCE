@@ -372,7 +372,7 @@ gmpi::IMpUnknown* Module_Info3::Build( int subType, bool quietFail )
 		// GMPI IPluginFactory uses a utf8 ID (not wstring).
 		auto gmpi_com_object = (gmpi::api::IUnknown*)com_object.get();
 		gmpi::shared_ptr<gmpi::api::IPluginFactory> factory;
-		const auto r = gmpi_com_object->queryInterface(&gmpi::api::IPluginFactory::guid, factory.asIMpUnknownPtr());
+		const auto r = gmpi_com_object->queryInterface(&gmpi::api::IPluginFactory::guid, factory.put_void());
 		if (r == gmpi::ReturnCode::Ok && factory)
 		{
 			const auto uniqueIdUtf8 = WStringToUtf8(m_unique_id);
@@ -491,13 +491,13 @@ int32_t r;
 			const auto uniqueIdUtf8 = WStringToUtf8(m_unique_id);
 
 			gmpi::shared_ptr<gmpi::api::IUnknown> plugin;
-			const auto r2 = factory->createInstance(uniqueIdUtf8.c_str(), gmpi::api::PluginSubtype::Audio, plugin.asIMpUnknownPtr());
+			const auto r2 = factory->createInstance(uniqueIdUtf8.c_str(), gmpi::api::PluginSubtype::Audio, plugin.put_void());
 			if (!plugin || r2 != gmpi::ReturnCode::Ok)
 			{
 				return {};
 			}
 
-			auto gmpi_plugin = plugin.As<gmpi::api::IAudioPlugin>();
+			auto gmpi_plugin = plugin.as<gmpi::api::IProcessor>();
 			if (!gmpi_plugin)
 			{
 				return {};

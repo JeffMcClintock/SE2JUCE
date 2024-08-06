@@ -46,7 +46,7 @@
 // To simplify plugin development. All the headers for the GMPI/SEM
 // API and SDK are inlined together here. You need only include this one header to make a plugin.
 #include <assert.h>
-//#include <string.h> // for memcpy()
+#include <string.h> // for memcpy()
 #include <string>	// for std::wstring
 
 //==== cross-platform integer datatypes =====

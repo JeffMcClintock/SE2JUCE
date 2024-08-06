@@ -1,56 +1,95 @@
 #include "mp_sdk_gui2.h"
 #include "../se_sdk3/mp_gui.h"
+#include "TimerManager.h"
 
 using namespace gmpi;
 
-#if 0 //TODO: expose OK/Cancel dialog
-
-<Plugin id = "SE OK Cancel Dialog" name = "OK Cancel Dialog" category = "Sub-Controls" >
-<GUI>
-<Pin name = "Heading" datatype = "string" />
-<Pin name = "Text" datatype = "string" />
-<Pin name = "Trigger" datatype = "bool" direction = "out" />
-</GUI>
-</Plugin>
-
-class OkCancelDialogGui : public gmpi_gui::MpGuiGfxBase //SeGuiInvisibleBase
+class ConfirmationDialogGui final : public SeGuiInvisibleBase, public TimerClient
 {
+	void onSetFileName()
+	{
+		// pinFileName changed
+	}
+
+	void onSetFileExtension()
+	{
+		// pinFileExtension changed
+	}
+
  	void onSetTrigger()
 	{
-		GmpiGui::GraphicsHost host(getGuiHost());
-		nativeDialog = host.createPlatformDialog();
+		// trigger on mouse-up
+		if (pinTrigger == false && m_prev_trigger == true) // dialog triggered on mouse-up (else dialog grabs focus, button never resets)
+		{
+			std::wstring filename = pinTitle;
+			std::wstring file_extension = pinBodytext;
 
-		//nativeFileDialog.AddExtensionList(pinExtension);
-		//nativeFileDialog.SetInitialFullPath(pinpatchValue);
+			gmpi_gui::IMpGraphicsHost* dialogHost = 0;
+			getHost()->queryInterface(gmpi_gui::SE_IID_GRAPHICS_HOST, reinterpret_cast<void**>(&dialogHost));
+
+			if (dialogHost != 0)
+			{
+				dialogHost->createOkCancelDialog(0, nativeDialog.GetAddressOf());
+
+				if (!nativeDialog.isNull())
+				{
+					const auto title = JmUnicodeConversions::WStringToUtf8(pinTitle.getValue());
+					const auto text = JmUnicodeConversions::WStringToUtf8(pinBodytext.getValue());
+					nativeDialog.SetTitle(title.c_str());
+					nativeDialog.SetText(text.c_str());
 
 		nativeDialog.ShowAsync([this](int32_t result) -> void { this->OnDialogComplete(result); });
+	}
+			}
+		}
+
+		m_prev_trigger = pinTrigger;
 	}
 
 	void OnDialogComplete(int32_t result)
 	{
 		if (result == gmpi::MP_OK)
 		{
-//			OnWidgetUpdate(nativeFileDialog.GetSelectedFilename());
+			pinOK = true;
+		}
+		else
+		{
+			pinCancel = true;
 		}
 
 		nativeDialog.setNull(); // release it.
+
+		StartTimer();
 	}
 
- 	StringGuiPin pinHeading;
- 	StringGuiPin pinText;
+	bool OnTimer() override
+	{
+		pinOK = false;
+		pinCancel = false;
+		return false;
+	}
+
+	StringGuiPin pinTitle;
+	StringGuiPin pinBodytext;
  	BoolGuiPin pinTrigger;
+	BoolGuiPin pinOK;
+	BoolGuiPin pinCancel;
+
+	GmpiGui::OkCancelDialog nativeDialog;
+	bool m_prev_trigger{};
 
 public:
-	OkCancelDialogGui()
+	ConfirmationDialogGui()
 	{
-		initializePin( pinHeading );
-		initializePin( pinText );
-		initializePin( pinTrigger, static_cast<MpGuiBaseMemberPtr2>(&OkCancelDialogGui::onSetTrigger) );
+		initializePin(pinTitle);
+		initializePin(pinBodytext);
+		initializePin(pinTrigger, static_cast<MpGuiBaseMemberPtr2>(&ConfirmationDialogGui::onSetTrigger));
+		initializePin(pinOK);
+		initializePin(pinCancel);
 	}
 };
 
 namespace
 {
-	auto r = Register<OkCancelDialogGui>::withId(L"SE OK Cancel Dialog");
+	auto r = Register<ConfirmationDialogGui>::withId(L"SE Confirmation Dialog");
 }
-#endif

@@ -52,7 +52,7 @@ bool isIteratingChildren = false;
 
 	public:
 		ViewBase();
-		virtual ~ViewBase() {}
+		virtual ~ViewBase() { mouseOverObject = {}; }
 
 		virtual int32_t MP_STDCALL setHost(gmpi::IMpUnknown* host) override;
 

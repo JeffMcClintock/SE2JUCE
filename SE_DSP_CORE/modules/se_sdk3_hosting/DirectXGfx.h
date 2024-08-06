@@ -509,8 +509,8 @@ namespace gmpi
 		{
 			bool alphaPremultiplied;
 			IWICBitmap* bitmap;
-			UINT bytesPerRow;
-			BYTE *ptr;
+			UINT bytesPerRow{};
+			BYTE* ptr{};
 			IWICBitmapLock* pBitmapLock;
 			ID2D1Bitmap* nativeBitmap_;
 			int flags;
@@ -553,6 +553,10 @@ namespace gmpi
 					alphaPremultiplied = _alphaPremultiplied;
 					if (!alphaPremultiplied)
 						unpremultiplyAlpha();
+				}
+				else
+				{
+					alphaPremultiplied = true; // prevent possible null deference of 'bitmap' in destructor
 				}
 			}
 

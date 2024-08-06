@@ -2219,6 +2219,10 @@ bool ModuleViewStruct::EndCableDrag(GmpiDrawing_API::MP1_POINT unused, Connector
 		auto toPin = getPinUnderMouse(p);
 		if (toPin.first >= 0 && toPin.second == 0)
 		{
+			// redraw the line as though it were a normal connection, to give immediate visual feedback to the user.
+			dragline->draggingFromEnd = -1;
+			dragline->parent->ChildInvalidateRect(dragline->bounds_);
+
 			Presenter()->AddConnector(dragline->fromModuleHandle(), dragline->fromPin(), getModuleHandle(), toPin.first, false);
 			return true;
 		}

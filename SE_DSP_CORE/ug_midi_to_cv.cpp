@@ -223,6 +223,23 @@ int ug_midi_to_cv_redirect::Open()
 
 void ug_midi_to_cv_redirect::OnMidiData(int size, unsigned char* midi_bytes)
 {
+	int midiChannel = -1;
+	if (gmpi::midi_2_0::isMidi2Message(midi_bytes, size))
+	{
+		const gmpi::midi::message_view msg(midi_bytes, size);
+		const auto header = gmpi::midi_2_0::decodeHeader(msg);
+		midiChannel = header.channel;
+	}
+	else
+	{
+		midiChannel = midi_bytes[0] & 0x0f;
+	}
+
+	if( midiChannel != midi_channel && midi_channel != -1 )
+	{
+		return;
+	}
+
 	get_patch_manager()->OnMidi(&voiceState_, SampleClock(), midi_bytes, size, true);
 }
 

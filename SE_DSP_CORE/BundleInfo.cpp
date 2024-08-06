@@ -271,9 +271,13 @@ void BundleInfo::initPresetFolder(const char* manufacturer, const char* product)
 #ifdef _WIN32
     std::wstring res{ L"C:\\ProgramData\\" };
 #else
-//    std::wstring res{ L"~/Library/Application Support/" };
-    
+#if defined( GMPI_IS_PLATFORM_JUCE )
+	// "~/Library/Application Support/" solves issues with permissions in macOS
     auto res = Utf8ToWstring(settingsPath()) + PLATFORM_PATH_SLASH_L;
+#else
+    std::wstring res{ L"/Library/Application Support/" };
+#endif
+    
 #endif
 
     res += Utf8ToWstring(manufacturer) + PLATFORM_PATH_SLASH_L + Utf8ToWstring(product) + PLATFORM_PATH_SLASH_L;

@@ -7,7 +7,7 @@
 #include "ProtectedFile.h"
 
 
-ug_gmpi::ug_gmpi(class Module_Info* p_moduleType, gmpi::api::IAudioPlugin* p_plugin) : plugin_(p_plugin)
+ug_gmpi::ug_gmpi(class Module_Info* p_moduleType, gmpi::api::IProcessor* p_plugin) : plugin_(p_plugin)
 {
 	setModuleType(p_moduleType);
 }
@@ -124,9 +124,9 @@ gmpi::ReturnCode ug_gmpi::queryInterface(const gmpi::api::Guid* iid, void** retu
 {
 	*returnInterface = {};
 
-	if (*iid == gmpi::api::IAudioPluginHost::guid || *iid == gmpi::api::IUnknown::guid)
+	if (*iid == gmpi::api::IProcessorHost::guid || *iid == gmpi::api::IUnknown::guid)
 	{
-		*returnInterface = static_cast<gmpi::api::IAudioPluginHost*>(this);
+		*returnInterface = static_cast<gmpi::api::IProcessorHost*>(this);
 		addRef();
 		return gmpi::ReturnCode::Ok;
 	}
@@ -146,7 +146,7 @@ void ug_gmpi::OnBufferReassigned()
 	localBufferOffset_ = -1; // invalidate it so that buffers get re-sent to plugin. (editor changed a default)
 }
 
-//void ug_gmpi::AttachGmpiPlugin(gmpi::api::IAudioPlugin* p_plugin)
+//void ug_gmpi::AttachGmpiPlugin(gmpi::api::IProcessor* p_plugin)
 //{
 //	plugin_ = p_plugin;
 //}
@@ -296,7 +296,7 @@ int ug_gmpi::Open()
 {
 	ug_base::Open();
 
-	const auto res2 = (int32_t)plugin_->open(static_cast<gmpi::api::IAudioPluginHost*>(this));
+	const auto res2 = (int32_t)plugin_->open(static_cast<gmpi::api::IProcessorHost*>(this));
 
 	// Modules with autoduplicating plugs won't have pins until after open();
 	setupBuffers(0);
