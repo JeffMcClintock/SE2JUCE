@@ -25,4 +25,6 @@ public:
 	virtual void serviceGuiQueue() = 0;
 	virtual void LoadNativePresetFile(std::string /*presetName*/) {}
 	virtual void setMainPresenter(SynthEdit2::IPresenter* presenter) = 0;
+	virtual void undoTransanctionStart() = 0;
+	virtual void undoTransanctionEnd() = 0;
 };

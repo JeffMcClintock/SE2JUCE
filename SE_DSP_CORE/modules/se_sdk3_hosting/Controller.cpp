@@ -860,6 +860,18 @@ void UndoManager::copyAB(MpController* controller)
 	}
 }
 
+void MpController::undoTransanctionStart()
+{
+	assert(undoManager.enabled);
+	undoManager.enabled = false;
+}
+
+void MpController::undoTransanctionEnd()
+{
+	undoManager.enabled = true;
+	undoManager.snapshot(this, "Change Parameters");
+}
+
 gmpi_gui::IMpGraphicsHost* MpController::getGraphicsHost()
 {
 #if !defined(SE_USE_JUCE_UI)

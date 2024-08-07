@@ -281,6 +281,8 @@ public:
 	void ExportBankXml(const char * filename);
 
 	void setParameterValue(RawView value, int32_t parameterHandle, gmpi::FieldType moduleFieldId = gmpi::MP_FT_VALUE, int32_t voice = 0) override;
+	void undoTransanctionStart() override;
+	void undoTransanctionEnd() override;
 	gmpi_gui::IMpGraphicsHost * getGraphicsHost();
 	virtual int32_t resolveFilename(const wchar_t* shortFilename, int32_t maxChars, wchar_t* returnFullFilename) override;
 
