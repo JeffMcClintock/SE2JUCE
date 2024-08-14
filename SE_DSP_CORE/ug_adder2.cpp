@@ -211,75 +211,7 @@ void ug_adder2::sub_process_mixed(int start_pos, int sampleframes)
 			*o++ += *i++;
 		}
 	}
-
 #endif
-
-	/*
-		float *out1 = output_ptr + start_pos;
-		// direct copy one input to output
-		// NOT as fast as ASM
-		float *i = running_inputs[0] + start_pos;
-		float *o = out1;
-		const float static_ins = static_input_sum;
-		for(int s = sampleframes ; s > 0 ; s-- )
-		{
-			*o++ = *i++ + static_ins;
-		}
-	* /
-
-		float *i = running_inputs[0];
-		__as m
-		{
-			mov     eax, dword ptr i
-			mov     edx, dword ptr start_pos
-			lea     ecx,[eax+edx*4]				// ecx in source ptr
-			mov     edi, dword ptr out1			// edi is dest   ptr
-			mov     eax, dword ptr sampleframes
-			dec		eax
-
-			mov     esi, dword ptr [this]				; get 'this' pointer
-			fld     dword ptr [esi].static_input_sum // push to st(1) l_static_input_sum
-
-			ContinueLoop:
-			fld     dword ptr [ecx+eax*4]		// load a float from source buffer
-			fadd    st(0), st(1)				// add sta-tic inputs
-			fstp	DWORD PTR [edi+eax*4]		// save to dest buffer
-			dec		eax
-			jge     ContinueLoop				// loop for next conversion
-
-			fstp    st(0)						// Pop first pushed FP value
-		}
-
-		// add further inputs to output block
-		for( int c = running_input_size; c > 0 ; --c )
-		{
-	/ *
-			i = running_inputs[c] + start_pos;
-			o = out1;
-			while( o != last_output_ptr )
-			{
-				*o++ += *i++;
-			}
-	* /
-			i = running_inputs[c];
-
-			__as m
-			{
-				mov     eax, dword ptr i
-				mov     edx, dword ptr start_pos
-				lea     ecx,[eax+edx*4]
-				mov     edi, dword ptr out1   //edi is pointer index to dest buf
-				mov     eax, dword ptr sampleframes
-				dec		eax
-
-			ContinueLoop3:
-				fld     dword ptr [ecx+eax*4]   // load a float from source buffer
-				fadd    DWORD PTR [edi+eax*4]   // add dest buffer
-				fstp	DWORD PTR [edi+eax*4]	// save to dest buffer
-				dec		eax
-				jge     ContinueLoop3			// loop for next conversion
-			}
-		}*/
 }
 
 // compiler pushing ebx, esi, edi. avoid use if pos (still does, why?)

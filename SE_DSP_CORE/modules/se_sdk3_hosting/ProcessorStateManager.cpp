@@ -254,12 +254,12 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 			// MIDI learn. part of a preset?????
 			if (formatVersion > 0)
 			{
-				// TODO
-				int32_t midiController = -1;
-				ParamElement->QueryIntAttribute("MIDI", &midiController);
+				ParamElement->QueryIntAttribute("MIDI", &values.MidiAutomation);
 
 				std::string sysexU;
 				ParamElement->QueryStringAttribute("MIDI_SYSEX", &sysexU);
+				if (!sysexU.empty())
+					values.MidiAutomationSysex = Utf8ToWstring(sysexU);
 			}
 		}
 	}
@@ -376,16 +376,14 @@ std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride
 
 		paramElement->SetAttribute("val", val);
 
-#if 0  // TODO??
 		// MIDI learn.
-		if (parameter->MidiAutomation != -1)
+		if (parameter.MidiAutomation != -1)
 		{
-			paramElement->SetAttribute("MIDI", parameter->MidiAutomation);
+			paramElement->SetAttribute("MIDI", parameter.MidiAutomation);
 
-			if (!parameter->MidiAutomationSysex.empty())
-				paramElement->SetAttribute("MIDI_SYSEX", WStringToUtf8(parameter->MidiAutomationSysex));
+			if (!parameter.MidiAutomationSysex.empty())
+				paramElement->SetAttribute("MIDI_SYSEX", WStringToUtf8(parameter.MidiAutomationSysex));
 		}
-#endif
 	}
 
 	TiXmlPrinter printer;
@@ -422,7 +420,7 @@ ProcessorStateMgrVst3::ProcessorStateMgrVst3() : messageQue(SeAudioMaster::AUDIO
 // parameter changed from any source in real-time thread (GUI/DAW/Meters)
 // push change onto queue.
 // The purpose is to allow the state manager to provide the preset to the DAW at any time/thread.
-void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, RawView rawValue, int32_t voiceId)
+void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, int32_t field, RawView rawValue, int32_t voiceId)
 {
 	// ignore non-stateful params
 	auto it = parametersInfo.find(paramHandle);
@@ -434,6 +432,7 @@ void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, RawView rawValu
 	my_msg_que_output_stream strm(&messageQue, paramHandle, "ppc");
 	strm << messageSize;
 	strm << voiceId;
+	strm << field;
 	strm << static_cast<int32_t>(rawValue.size());
 	strm.Write(
 		rawValue.data(),
@@ -596,9 +595,11 @@ void ProcessorStateMgrVst3::serviceQueue()
 		case id_to_long2("ppc"):
 		{
 			int32_t voiceId;
+			int32_t fieldId;
 			std::string rawValue;
 
 			strm >> voiceId;
+			strm >> fieldId;
 			strm >> rawValue;
 
 			const auto it = parametersInfo.find(paramHandle);
@@ -613,28 +614,31 @@ void ProcessorStateMgrVst3::serviceQueue()
 #endif
 			if (info.hostControl != HC_PROGRAM_NAME && HC_PROGRAM_CATEGORY != info.hostControl)
 			{
-#if 0
-				// convert raw to normalized
-				const auto normalized = rawToNormalized(
-					(int32_t)info.dataType
-					, rawValue
-					, info.maximum
-					, info.minimum
-					, info.meta
-				);
-
-				// update normalized value
-				normalizedValues[info.tag]->store(normalized, std::memory_order_relaxed);
-#endif
 				// update preset
 				assert(presetMutable.params.find(paramHandle) != presetMutable.params.end());
-				assert(!presetMutable.params[paramHandle].rawValues_.empty());
 
-                auto& currentValues = presetMutable.params[paramHandle].rawValues_;
-                if(!currentValues.empty()) // prevent crashes with corrupt data.
-                {
-                    currentValues[0] = rawValue;
-                }
+				if (fieldId == gmpi::FieldType::MP_FT_VALUE)
+				{
+					assert(!presetMutable.params[paramHandle].rawValues_.empty());
+
+					auto& currentValues = presetMutable.params[paramHandle].rawValues_;
+					if (!currentValues.empty()) // prevent crashes with corrupt data.
+					{
+						currentValues[0] = rawValue;
+					}
+				}
+				else if (fieldId == gmpi::FieldType::MP_FT_AUTOMATION)
+				{
+					presetMutable.params[paramHandle].MidiAutomation = RawToValue<int32_t>(rawValue.data());
+				}
+				else if (fieldId == gmpi::FieldType::MP_FT_AUTOMATION_SYSEX)
+				{
+					presetMutable.params[paramHandle].MidiAutomationSysex = RawToValue<std::wstring>(rawValue.data(), rawValue.size());
+				}
+				else
+				{
+					assert(false);
+				}
 			}
 			else
 			{
@@ -814,8 +818,7 @@ void init(std::map<int32_t, paramInfo>& parametersInfo, class TiXmlElement* para
 		//	//			normalizedValues[p.tag] = std::make_unique<std::atomic<float>>(0.0f);
 		//	tagToHandle[p.tag] = ParameterHandle;
 		//}
-
-#if 0
+#if 0 // paraminfo don't need to store midi learn, as it starts off blank anyhow
 		parameter_xml->QueryIntAttribute("MIDI", &(p.MidiAutomation));
 		if (p.MidiAutomation != -1)
 		{
@@ -881,6 +884,9 @@ void ProcessorStateMgrVst3::init(TiXmlElement* parameters_xml)
 	{
 		auto& presetMutableParam = presetMutable.params[p.first];
 		presetMutableParam.dataType = p.second.dataType;
+		presetMutableParam.MidiAutomation = -1;
+		presetMutableParam.MidiAutomationSysex.clear();
+
 		for (auto& v : p.second.defaultRaw)
 			presetMutableParam.rawValues_.push_back({ v.data(), v.size() });
 	}

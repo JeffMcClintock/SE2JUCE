@@ -55,7 +55,7 @@ public:
 	virtual std::unordered_map<int32_t, int32_t>& GetModuleLatencies() = 0;
 
 	virtual int RegisterIoModule(ISpecialIoModule*) = 0;
-	virtual void onSetParameter(int32_t handle, RawView rawValue, int voiceId) = 0;
+	virtual void onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId) = 0;
 	virtual void EnableIgnoreProgramChange() = 0;
 };
 

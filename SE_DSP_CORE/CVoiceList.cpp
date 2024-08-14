@@ -257,7 +257,7 @@ VoiceList::VoiceList( ) :
 	}
 	
 	#if defined( DEBUG_VOICE_ALLOCATION )
-	!!! can open 100's of log files !!!!
+	    // !!! can open 100's of log files !!!!
 		loggingFile.open("c:\\temp\\log.txt");
 		loggingFile << "SynthEdit" << std::endl;
 	#endif
@@ -423,15 +423,16 @@ void Voice::DoneCheck(timestamp_t timeStamp)
 
 	// output is silent, and output buffer is full of silence.
 
-	// is key held? don't shut off voice.
-	if (voiceActive_ == 1.0f && (NoteOffTime == 0 || container_->HoldPedalState()))
+	// note-off might be scheduled during this coming block. i.e. not quite yet.
+	// Also catches notes which are held (except by sustain pedal)
+	if(NoteOffTime >= timeStamp - container_->AudioMaster()->BlockSize()) // 2 blocks ago to account for PF_PARAMETER_1_BLOCK_LATENCY (a MIDI-CV upstream of a MIDI-CV which has signals delayed by 1 block)
+		return;
+
+	// is key held by sustain? don't shut off voice.
+	if (voiceActive_ == 1.0f && container_->HoldPedalState())
 	{
 		return;
 	}
-
-	// note-off might be scheduled during this coming block. i.e. not quite yet.
-	if(NoteOffTime >= timeStamp)
-		return;
 
 	container_->suspendVoice(timeStamp, m_voice_number);
 }

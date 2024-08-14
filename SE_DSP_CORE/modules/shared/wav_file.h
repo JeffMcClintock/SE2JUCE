@@ -123,9 +123,9 @@ public:
     void write( const std::string & filename, unsigned int bps = 16 );
 
 private:
-    double rate_;     // sample rate
-    unsigned int numchans_;
-	int numFrames_;
+    double rate_ = 44100.0;     // sample rate
+    unsigned int numchans_ = 1;
+	int numFrames_ = 0;
     samples_type samples_;      // floating point samples [-1.0, 1.0]
 
 	//	Import data from an file on disk.

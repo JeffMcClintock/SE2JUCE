@@ -1786,6 +1786,9 @@ void DspPatchManager::setPreset(DawPreset const* preset)
 					parameter->OnValueChangedFromGUI(false, voice);
 				}
 			}
+
+			parameter->setAutomation(val.MidiAutomation);
+			parameter->setAutomationSysex(val.MidiAutomationSysex);
 		}
 	}
 }

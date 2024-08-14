@@ -32,10 +32,11 @@ struct paramInfo
 
 struct paramValue
 {
-	//	std::vector< std::string > rawValues_; // rawValues_[voice] where voice is 0 - 127
-	std::vector< RawData > rawValues_; // rawValues_[voice] where voice is 0 - 127
+	std::vector< RawData > rawValues_; // where voice is 0 - 127
 
 	gmpi::PinDatatype dataType = gmpi::PinDatatype::Float32;
+	int32_t MidiAutomation = -1;
+	std::wstring MidiAutomationSysex;
 };
 
 struct DawPreset
@@ -114,7 +115,7 @@ public:
 
 	// Processor informing me of self-initiated parameter changes
 	// from the real-time thread
-	void SetParameterRaw(int32_t handle, RawView rawValue, int voiceId);
+	void SetParameterRaw(int32_t handle, int32_t field, RawView rawValue, int voiceId);
 
 	DawPreset const* getPreset();
 };

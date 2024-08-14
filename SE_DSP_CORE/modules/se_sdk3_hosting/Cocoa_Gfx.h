@@ -321,12 +321,10 @@ CG_AVAILABLE_STARTING(10.12, 10.0);
             }
 #endif
             {
-                auto temp = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
-                // auto temp = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB); // no difference on big sur
+                // kCGColorSpaceExtendedLinearSRGB caused image to turn dark after intial draw on macOS Sequoia, like OS was compressing non-extended colors
+                // auto temp = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
+                auto temp = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
                 gmpiColorSpace = [[NSColorSpace alloc] initWithCGColorSpace:temp];
-                
-// no diff on big sur               CGContextRef ctx = (CGContextRef) [[NSGraphicsContext currentContext] graphicsPort];
-//                CGContextSetFillColorSpace(ctx, temp);
                 
                 if(temp)
                     CFRelease(temp);

@@ -275,9 +275,9 @@ int32_t SynthRuntime::SeMessageBox(const wchar_t* msg, const wchar_t* title, int
 	return 0;
 }
 
-void SynthRuntime::onSetParameter(int32_t handle, RawView rawValue, int voiceId)
+void SynthRuntime::onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId)
 {
-	shell_->onSetParameter(handle, rawValue, voiceId);
+	shell_->onSetParameter(handle, field, rawValue, voiceId);
 }
 
 void SynthRuntime::setPresetUnsafe(DawPreset const* preset)

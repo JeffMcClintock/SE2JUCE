@@ -93,12 +93,10 @@ void WavFile::write( const std::string & filename, unsigned int bps )
 	{
 		bool floatFormat = bps == 32; // false for 16-bit PCM
 		int bits_per_sample = bps;
-		uint16_t n_channels = 1;
-		int sample_count = 0;
 		int sample_rate = (int) rate_;
 		float* src = 0;
 
-		sample_count = (int) samples_.size();
+		const auto sample_count = samples_.size() / numchans_;
 		src = samples_.data();
 
 		wave_file_header wav_head;
@@ -120,7 +118,7 @@ void WavFile::write( const std::string & filename, unsigned int bps )
 
 		wav_head.wBitsPerSample = static_cast<uint16_t>(bits_per_sample);
 		wav_head.chnk3_size = 16;
-		wav_head.nChannels = n_channels;
+		wav_head.nChannels = numchans_;
 		wav_head.chnk4_size = (int32_t)(sample_count * wav_head.wBitsPerSample / 8 * wav_head.nChannels);
 		wav_head.chnk1_size = wav_head.chnk4_size + 36;
 		wav_head.nSamplesPerSec = sample_rate;
@@ -138,7 +136,7 @@ void WavFile::write( const std::string & filename, unsigned int bps )
 		float* samples[2];
 		for (int c = 0; c < wav_head.nChannels; ++c)
 		{
-			samples[c] = src;
+			samples[c] = src + c * sample_count;
 		}
 
 		if (floatFormat)

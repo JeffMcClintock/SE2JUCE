@@ -23,7 +23,7 @@ class IShellServices
 public:
     virtual void onQueDataAvailable() = 0;
     virtual void flushPendingParameterUpdates() = 0;
-	virtual void onSetParameter(int32_t handle, RawView rawValue, int voiceId) = 0;
+	virtual void onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId) = 0;
 	virtual void EnableIgnoreProgramChange() = 0;
 };
 
@@ -125,7 +125,7 @@ public:
 	int getLatencySamples();
 	int32_t SeMessageBox(const wchar_t* msg, const wchar_t* title, int flags) override;
 	int RegisterIoModule(ISpecialIoModule*) override { return 1; } // nothing special to do in plugin
-	void onSetParameter(int32_t handle, RawView rawValue, int voiceId)  override;
+	void onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId) override;
 
 private:
 	class SeAudioMaster* generator;

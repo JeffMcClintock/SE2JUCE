@@ -699,18 +699,18 @@ int32_t ConnectorView2::onPointerDown(int32_t flags, GmpiDrawing_API::MP1_POINT 
 			else
 			{
 				// When already selected, clicks add new nodes.
-					assert(hoverSegment >= 0); // shouldn't get mouse-down without previously calling hit-test
+				assert(hoverSegment >= 0); // shouldn't get mouse-down without previously calling hit-test
 
-					Presenter()->InsertNode(handle, hoverSegment + 1, point);
+				Presenter()->InsertNode(handle, hoverSegment + 1, point);
 
-					nodes.insert(nodes.begin() + hoverSegment, point);
+				nodes.insert(nodes.begin() + hoverSegment, point);
 
-					draggingNode = hoverSegment;
-					parent->setCapture(this);
-					CalcBounds();
-					parent->ChildInvalidateRect(bounds_); // sometimes bounds don't change, but still need to draw new node.
+				draggingNode = hoverSegment;
+				parent->setCapture(this);
+				CalcBounds();
+				parent->ChildInvalidateRect(bounds_); // sometimes bounds don't change, but still need to draw new node.
 
-					hitTest(flags, point); // re-hit-test to get new hoverNode.
+				hitTest(flags, point); // re-hit-test to get new hoverNode.
 
 #if 0 // clicking end, not using yet
 				int hitEnd = -1;

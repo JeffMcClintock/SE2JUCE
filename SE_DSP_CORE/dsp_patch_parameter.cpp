@@ -208,9 +208,10 @@ void dsp_patch_parameter_base::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 
 	case code_to_long('C','C','I','D'): // "CCID" Controller ID change
 	{
-		int controller_id = {};
+		int32_t controller_id{};
 		p_stream >> controller_id;
 		setAutomation(controller_id);
+		shellDsp_->onSetParameter(Handle(), gmpi::FieldType::MP_FT_AUTOMATION, RawView(m_controller_id), 0);
 	}
 	break;
 
@@ -342,7 +343,7 @@ void dsp_patch_parameter_base::SendValuePt2( timestamp_t unadjusted_timestamp, V
 		}
 	}
 
-	shellDsp_->onSetParameter(Handle(), raw, voiceId);
+	shellDsp_->onSetParameter(Handle(), gmpi::FieldType::MP_FT_VALUE, raw, voiceId);
 }
 
 void dsp_patch_parameter_base::SendValuePoly(timestamp_t unadjusted_timestamp, int physicalVoiceNumber, RawView value, bool isInitialUpdate)
@@ -672,6 +673,9 @@ void dsp_patch_parameter_base::setAutomation(int controller_id, bool notifyUI)
 
 	if(notifyUI)
 	{
+		// update the preset
+		shellDsp_->onSetParameter(Handle(), gmpi::FieldType::MP_FT_AUTOMATION, RawView(m_controller_id), 0);
+
 		// send new controller ID to UI.
 		my_msg_que_output_stream strm( m_patch_mgr->Container()->AudioMaster()->getShell()->MessageQueToGui(), Handle(), "lern");
 		strm << (int) sizeof(m_controller_id); // message length.
@@ -699,7 +703,7 @@ void dsp_patch_parameter_base::UpdateOutputParameter(int voiceId, UPlug* p_plug)
 
 	// This does seem to double up on dsp_patch_parameter_base::SendValuePt2(), but not always (AI Master)
 	const auto raw = GetValueRaw2(0, voiceId);
-	shellDsp_->onSetParameter(Handle(), raw, voiceId);
+	shellDsp_->onSetParameter(Handle(), gmpi::FieldType::MP_FT_VALUE, raw, voiceId);
 }
 
 void dsp_patch_parameter_base::vst_automate2(timestamp_t timestamp, int voice, const void* data, int size, [[maybe_unused]] int32_t flags)

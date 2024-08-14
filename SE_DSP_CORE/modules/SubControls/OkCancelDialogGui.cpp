@@ -16,7 +16,7 @@ class ConfirmationDialogGui final : public SeGuiInvisibleBase, public TimerClien
 		// pinFileExtension changed
 	}
 
- 	void onSetTrigger()
+	void onSetTrigger()
 	{
 		// trigger on mouse-up
 		if (pinTrigger == false && m_prev_trigger == true) // dialog triggered on mouse-up (else dialog grabs focus, button never resets)
@@ -38,8 +38,8 @@ class ConfirmationDialogGui final : public SeGuiInvisibleBase, public TimerClien
 					nativeDialog.SetTitle(title.c_str());
 					nativeDialog.SetText(text.c_str());
 
-		nativeDialog.ShowAsync([this](int32_t result) -> void { this->OnDialogComplete(result); });
-	}
+					nativeDialog.ShowAsync([this](int32_t result) -> void { this->OnDialogComplete(result); });
+				}
 			}
 		}
 
@@ -71,7 +71,7 @@ class ConfirmationDialogGui final : public SeGuiInvisibleBase, public TimerClien
 
 	StringGuiPin pinTitle;
 	StringGuiPin pinBodytext;
- 	BoolGuiPin pinTrigger;
+	BoolGuiPin pinTrigger;
 	BoolGuiPin pinOK;
 	BoolGuiPin pinCancel;
 

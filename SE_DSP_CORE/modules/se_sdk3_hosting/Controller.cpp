@@ -688,7 +688,6 @@ void UndoManager::debug()
 
 void UndoManager::setPreset(MpController* controller, DawPreset const* preset)
 {
-//	controller->dawStateManager.setPreset(preset);
 	controller->setPresetFromSelf(preset);
 
 #ifdef _DEBUG
@@ -1654,12 +1653,6 @@ void MpController::setPreset(DawPreset const* preset)
 		{
 			auto p = (*it).second;
 			p->setParameterRaw(gmpi::FieldType::MP_FT_VALUE, RawView(nameW)); // don't check changed flag, if even originated from GUI, param is already changed. Still need top go to DSP.
-/*
-			if (updateProcessor)
-			{
-				p->updateProcessor(gmpi::MP_FT_VALUE, voiceId);
-			}
-*/
 		}
 	}
 
@@ -1688,6 +1681,11 @@ void MpController::setPreset(DawPreset const* preset)
 			// This block seems messy. Should updating a parameter be a single function call?
 			// (would need to pass 'updateProcessor')
 			{
+				const auto midiUpd = parameter->MidiAutomation != val.MidiAutomation;
+				parameter->MidiAutomation = val.MidiAutomation; // setParameterRaw(gmpi::MP_FT_AUTOMATION, val.MidiAutomation);
+				const auto sysxUpd = parameter->MidiAutomationSysex != val.MidiAutomationSysex; 
+				parameter->MidiAutomationSysex = val.MidiAutomationSysex; // setParameterRaw(gmpi::MP_FT_AUTOMATION_SYSEX, val.MidiAutomationSysex);
+
 				// calls controller_->updateGuis(this, voice)
 				parameter->setParameterRaw(gmpi::MP_FT_VALUE, (int32_t)raw.size(), raw.data(), voice);
 
@@ -1696,7 +1694,23 @@ void MpController::setPreset(DawPreset const* preset)
 
 				if (updateProcessor) // For non-private parameters, update DAW.
 				{
-					parameter->updateProcessor(gmpi::MP_FT_VALUE, voice);
+					if(midiUpd)
+					{
+						my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCID");
+						s << static_cast<uint32_t>(sizeof(val.MidiAutomation));
+						s << val.MidiAutomation;
+						s.Send();
+					}
+
+					if(sysxUpd)
+					{
+						const auto& sysex = val.MidiAutomationSysex;
+
+						my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCSX");
+						s << static_cast<uint32_t>(sizeof(int32_t) + sizeof(wchar_t) * sysex.size());
+						s << sysex;
+						s.Send();
+					}
 				}
 			}
 #if 0

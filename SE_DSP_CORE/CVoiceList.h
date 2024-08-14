@@ -53,7 +53,7 @@ public:
 	}
 	bool IsRefreshing() const
 	{
-		return NoteNum == -1 && voiceState_ == VS_ACTIVE;/*&& voiceActive_ == 1.0f*/;
+		return NoteNum == -1 && voiceState_ == VS_ACTIVE;
 	}
 	inline bool isHeld()
 	{

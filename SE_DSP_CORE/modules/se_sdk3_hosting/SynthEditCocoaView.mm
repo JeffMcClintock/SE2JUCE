@@ -319,11 +319,10 @@ public:
 
         // kCGColorSpaceGenericRGBLinear - middle gray is darker, blend seems correct.
         // kCGColorSpaceExtendedLinearSRGB, kCGColorSpaceLinearDisplayP3 - same
-        // kCGColorSpaceGenericRGB - actually sRGB
-        
-        // kCGColorSpaceExtendedLinearSRGB might be best since float color values should match SE's linear RGB
-        CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
-        
+        // kCGColorSpaceGenericRGB - actually sRGB     
+        // kCGColorSpaceExtendedLinearSRGB caused image to turn dark after intial draw on macOS Sequoia, like OS was compressing non-extended colors
+
+        CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
         NSColorSpace *linearRGBColorSpace = [[NSColorSpace alloc] initWithCGColorSpace:colorSpace];
 
         NSBitmapImageRep* imagerep1 = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
