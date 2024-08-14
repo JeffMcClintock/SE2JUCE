@@ -36,9 +36,9 @@ public:
     ~SE2JUCE_Processor() override;
 
     // IShellServices interface
-    void onSetParameter(int32_t handle, RawView rawValue, int voiceId) override
+    void onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId) override
     {
-		dawStateManager.SetParameterRaw(handle, rawValue, voiceId);
+		dawStateManager.SetParameterRaw(handle, field, rawValue, voiceId);
     }
     void EnableIgnoreProgramChange() override
     {

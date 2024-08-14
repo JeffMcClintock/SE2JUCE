@@ -221,7 +221,6 @@ SeAudioMaster.h
 SerializationHelper_XML.h
 se_types.h
 SincFilter.h
-SincFilter.cpp
 smart_output.h
 srange.h
 SynthRuntime.cpp
