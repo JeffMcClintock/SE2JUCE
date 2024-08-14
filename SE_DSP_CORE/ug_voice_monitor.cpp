@@ -117,10 +117,9 @@ void ug_voice_monitor::HandleEvent(SynthEditEvent* e)
 			
 #ifdef DEBUG_VOICEWATCHER
 			{
-//				connector*	c = to_plug->connectors.front();
 				auto	fromUg = to_plug->connections.front()->UG;
 				int		voice = fromUg->pp_voice_num;
-				if(new_state == ST_RUN)
+				if(isStreaming)
 				{
 					_RPTW3(_CRT_WARN, L"ug_voice_monitor voice %d pin %d RUN (from %s)\n", voice, to_plug->getPlugIndex(), DebugPrintMonitoredModules(to_plug->connections.front()).c_str());
 				}
