@@ -104,7 +104,7 @@ struct SincFilterCoefs
 class SincFilter
 {
 public:
-	static const int sseCount = 4; // allocate a few entries off end for SSE.
+	static constexpr int sseCount = 4; // allocate a few entries off end for SSE.
 	int readahead = 4;
 
 	std::vector<float> hist_;
@@ -183,84 +183,22 @@ public:
 		}
     }
 
+	float ProcessIISingle_pt2(const float* __restrict pSignal, const float* __restrict pCoefs_f, int todo, int histSize) const;
+
 	// Process single sample returning filter output.
-	inline float ProcessIISingle( const int oversampleFactor_)
+	inline float ProcessIISingle(const int oversampleFactor_)
 	{
 		const int histSize = (int)hist_.size();
 
 		// convolution.
-#ifndef GMPI_SSE_AVAILABLE
-		int x = readIndex_;
-		float sum = 0;
-		for( int t = 0 ; t < coefs->numCoefs_ ; ++t )
-		{
-			sum += hist_[x++] * coefs->coefs_[t];
-			if( x == histSize)
-			{
-				x = sseCount;
-			}
-		}
-#else
+		// Auto-vectorized C++.
 		const int numCoefs = coefs->numCoefs_;
-		assert( ( numCoefs & 0x03 ) == 0 ); // factor of 4?
+		assert((numCoefs & 0x03) == 0); // factor of 4?
 
-		// SSE intrinsics
-		__m128 sum1 = _mm_setzero_ps( );
-		__m128* pCoefs = ( __m128* ) coefs->coefs_;
+		const float* pCoefs_f = coefs->coefs_;
+		const float* pSignal = &(hist_[readIndex_]);
 
-        const float* pSignal = &( hist_[readIndex_] );
-
-#if 1 // non-unrolled
-    	// Operate on as many as we can up to end of buffer (but no more than num coefs)
-		int todo = (std::min)(numCoefs, histSize - readIndex_) & 0xfffffffc;
-
-		for( int i = todo; i > 0; i -= 4 )
-		{
-			// History samples are unaligned, hence _mm_loadu_ps().
-			sum1 = _mm_add_ps( _mm_mul_ps( _mm_loadu_ps( pSignal ), *pCoefs++ ), sum1 );
-			pSignal += 4;
-		}
-
-		// Process any leftover from start of hist buffer. (wrap).
-		pSignal -= histSize - sseCount;
-		int remain = numCoefs - todo;
-		for( ; remain > 0; remain -= 4)
-		{
-			sum1 = _mm_add_ps( _mm_mul_ps( _mm_loadu_ps( pSignal ), *pCoefs++ ), sum1 );
-			pSignal += 4;
-		}
-
-#else
-		//slower
-		__m128 sum2 = _mm_setzero_ps( );
-		for( int i = numCoefs >> 3; i > 0; --i )
-		{
-			// History samples are unaligned, hence _mm_loadu_ps().
-			sum1 = _mm_add_ps( _mm_mul_ps( _mm_loadu_ps( pIn1 ), *pIn2++ ), sum1 );
-			pIn1 += 4;
-			if( pIn1 > histEnd )
-			{
-				pIn1 -= numCoefs;
-			}
-
-			sum2 = _mm_add_ps( _mm_mul_ps( _mm_loadu_ps( pIn1 ), *pIn2++ ), sum2 );
-			pIn1 += 4;
-			if( pIn1 > histEnd )
-			{
-				pIn1 -= numCoefs;
-			}
-		}
-		sum1 = _mm_add_ps( sum2, sum1 );
-#endif
-        // fail on mac		return sum1.m128_f32[0] + sum1.m128_f32[1] + sum1.m128_f32[2] + sum1.m128_f32[3];
-		//return ((float*)&sum1)[0] + ((float*)&sum1)[1] + ((float*)&sum1)[2] + ((float*)&sum1)[3];
-
-		// more correct to use _mm_store_ss. (not meant to access contents of __m128 directly, might be in register).
-		__m128 t = _mm_add_ps(sum1, _mm_movehl_ps(sum1, sum1));
-		auto sum2 = _mm_add_ss(t, _mm_shuffle_ps(t, t, 1));
-		float sum;
-		_mm_store_ss(&sum, sum2);
-#endif
+		const int todo = (std::min)(numCoefs, histSize - readIndex_) & 0xfffffffc;
 
 		readIndex_ += oversampleFactor_;
 		if (readIndex_ >= histSize)
@@ -268,54 +206,8 @@ public:
 			readIndex_ -= histSize - sseCount;
 		}
 
-		return sum;
+		return ProcessIISingle_pt2(pSignal, pCoefs_f, todo, histSize);
 	}
-	/*
-	// Process single sample returning filter output.
-	inline float ProcessDownsample( const SincFilterCoefs& coefs, int convPhase, int oversampleFactor )
-	{
-		// convolution.
-		int x = writeIndex_ - coefs.numCoefs_ / oversampleFactor;
-		if( x < 0 )
-		{
-			x += coefs.numCoefs_;
-		}
-		float sum = 0;
-
-		for (int t = convPhase; t < coefs.numCoefs_; t += oversampleFactor)
-		{
-			sum += hist_[x++] * coefs.coefs_[t];
-			if (x == coefs.numCoefs_)
-			{
-				x = 0;
-			}
-		}
-
-
-		/ * bit faster
-		int total = (coefs.numCoefs_ - convPhase) / oversampleFactor;
-		int todo = coefs.numCoefs_ - x;
-		if(todo > total)
-			todo = total;
-		//int todo2 = total - todo;
-
-
-		int t;
-		for(t = convPhase; todo > 0; --todo)
-		{
-			sum += hist_[x++] * coefs.coefs_[t];
-			t += oversampleFactor;
-		}
-
-		for(x = 0; t < coefs.numCoefs_; t += oversampleFactor)
-		{
-			sum += hist_[x++] * coefs.coefs_[t];
-		}
-
-		* /
-		return sum;
-	}
-	*/
 
 	int Init(int numCoefs, int /*oversampleFactor*/, int maxBufferSize, int preadahead, const SincFilterCoefs* pcoefs)
 	{

@@ -67,32 +67,28 @@ public:
 		SleepIfOutputStatic(sampleframes);
 	}
 
-	void sub_process_silence(int start_pos, int sampleFrames)
+	void sub_process_silence(int start_pos, int sampleframes)
 	{
-		float* output = plugs[0]->GetSamplePtr() + start_pos;
 		assert(currentActiveVoiceNumber < 0);
+		auto* __restrict out = plugs[0]->GetSamplePtr() + start_pos;
 
-#ifdef GMPI_SSE_AVAILABLE
-		while (sampleFrames > 0 && reinterpret_cast<intptr_t>(output) & 0x0f)
+		// auto-vectorized copy.
+		while (sampleframes > 3)
 		{
-			*output++ = 0.0f;
-			--sampleFrames;
+			out[0] = 0.0f;
+			out[1] = 0.0f;
+			out[2] = 0.0f;
+			out[3] = 0.0f;
+
+			out += 4;
+			sampleframes -= 4;
 		}
 
-		auto pDest = (__m128*) output;
-		const __m128 staticSum = _mm_set_ps1(0.0f);
-
-		while (sampleFrames > 0)
+		while (sampleframes > 0)
 		{
-			*pDest++ = staticSum;
-			sampleFrames -= 4;
+			*out++ = 0.0f;
+			--sampleframes;
 		}
-#else
-		for (int s = sampleFrames; s > 0; s--)
-		{
-			*output++ = 0.0f;
-		}
-#endif
 	}
 
 	void sub_process_static(int start_pos, int sampleframes)
@@ -102,36 +98,30 @@ public:
 		SleepIfOutputStatic(sampleframes);
 	}
 
-	void sub_process(int start_pos, int sampleFrames)
+	void sub_process(int start_pos, int sampleframes)
 	{
 		assert(currentActiveVoiceNumber >= 0);
-		const float* input = plugs[2 + currentActiveVoiceNumber]->GetSamplePtr() + start_pos;
-		float* output = plugs[0]->GetSamplePtr() + start_pos;
+		const float* in = plugs[2 + currentActiveVoiceNumber]->GetSamplePtr() + start_pos;
+		float* __restrict out = plugs[0]->GetSamplePtr() + start_pos;
 
-#ifdef GMPI_SSE_AVAILABLE
-		while (sampleFrames > 0 && reinterpret_cast<intptr_t>(output) & 0x0f)
+		// auto-vectorized copy.
+		while (sampleframes > 3)
 		{
-			*output++ = *input++;
-			--sampleFrames;
+			out[0] = in[0];
+			out[1] = in[1];
+			out[2] = in[2];
+			out[3] = in[3];
+
+			out += 4;
+			in += 4;
+			sampleframes -= 4;
 		}
 
-		auto pSource = (__m128*) input;
-		auto pDest = (__m128*) output;
-
-		while (sampleFrames > 0)
+		while (sampleframes > 0)
 		{
-			*pDest++ = *pSource++;
-			sampleFrames -= 4;
+			*out++ = *in++;
+			--sampleframes;
 		}
-#else
-		for (int s = sampleFrames; s > 0; s--)
-		{
-			*output = *input;
-
-			++input;
-			++output;
-		}
-#endif
 	}
 
 	void OnVoiceUpdate(int voice, bool active, timestamp_t p_clock)

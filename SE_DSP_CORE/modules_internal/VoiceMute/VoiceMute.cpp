@@ -208,89 +208,69 @@ void VoiceMute::subProcessMuting(int bufferOffset, int sampleFrames)
 	}
 }
 
-void VoiceMute::subProcess(int bufferOffset, int sampleFrames)
+void VoiceMute::subProcess(int bufferOffset, int sampleframes)
 {
-	float* in1  = bufferOffset + pinInput1.getBuffer();
-	float* out1 = bufferOffset + pinOutput1.getBuffer();
+	float* in = bufferOffset + pinInput1.getBuffer();
+	float* __restrict out = bufferOffset + pinOutput1.getBuffer();
 
 #ifdef _DEBUG
 	if (!pinInput1.isStreaming())
 	{
-		for (int s = 1; s < sampleFrames; ++s) // consistant?
+		for (int s = 1; s < sampleframes; ++s) // consistant?
 		{
-			assert(in1[0] == in1[s]);
+			assert(in[0] == in[s]);
 		}
 	}
 #endif
 
-#ifndef GMPI_SSE_AVAILABLE
-	// No SSE. Use C++ instead.
-	for(int s = sampleFrames ; s > 0 ; --s)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*out1++ = *in1++;
-	}
-#else
-	// Use SSE instructions.
-	// ..or copy aside extra values, and restore later.
-	// process fiddly non-aligned prequel.
-	while (sampleFrames > 0 && reinterpret_cast<intptr_t>(out1) & 0x0f)
-	{
-		*out1++ = *in1++;
-		--sampleFrames;
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = in[3];
+
+		out += 4;
+		in += 4;
+		sampleframes -= 4;
 	}
 
-	assert( (((intptr_t)in1) & 0x0f) == 0 || sampleFrames == 0); // correct alignment?
-
-	// SSE intrinsics
-	const __m128* pSource = (__m128*) in1;
-	__m128* pDest = (__m128*) out1;
-
-	while (sampleFrames > 0)
+	while (sampleframes > 0)
 	{
-		*pDest++ = *pSource++;
-		sampleFrames -= 4;
+		*out++ = *in++;
+		--sampleframes;
 	}
-#endif
 
 #if defined( _DEBUG )
-	clock_ += sampleFrames;
+	clock_ += sampleframes;
 #endif
 }
 
-void VoiceMute::subProcessSilence(int bufferOffset, int sampleFrames)
+void VoiceMute::subProcessSilence(int bufferOffset, int sampleframes)
 {
-	float* out1 = bufferOffset + pinOutput1.getBuffer();
+	auto* __restrict out = bufferOffset + pinOutput1.getBuffer();
 
-#ifndef GMPI_SSE_AVAILABLE
-
-	// No SSE. Use C++ instead.
-	for (int s = sampleFrames; s > 0; --s)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*out1++ = 0.0f;
-	}
-#else
+		out[0] = 0.0f;
+		out[1] = 0.0f;
+		out[2] = 0.0f;
+		out[3] = 0.0f;
 
-	// process fiddly non-sse-aligned prequel.
-	while (sampleFrames > 0 && reinterpret_cast<intptr_t>(out1) & 0x0f)
-	{
-		*out1++ = 0.0f;
-		--sampleFrames;
+		out += 4;
+		sampleframes -= 4;
 	}
 
-	// SSE intrinsics
-	__m128* pDest = (__m128*) out1;
-	const __m128 staticLevel = _mm_set_ps1( 0.0f );
-
-	// move first running input plus static sum.
-	while (sampleFrames > 0)
+	while (sampleframes > 0)
 	{
-		*pDest++ = staticLevel;
-		sampleFrames -= 4;
+		*out++ = 0.0f;
+		--sampleframes;
 	}
-#endif
 
 #if defined( _DEBUG )
-	clock_ += sampleFrames;
+	clock_ += sampleframes;
 #endif
 }
 

@@ -2,7 +2,6 @@
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <math.h>
-//#include <cmath>
 #include "ug_base.h"
 #include "conversion.h"
 
@@ -28,7 +27,7 @@ public:
 		history[16] = 1234.0f;
 	}
 
-	void process(int outSampleframes, float* from, float* to, int subSample, int oversampleFactor, float* /*coefs_unused*/)
+	void process(int outSampleframes, float* from, float* __restrict to, int subSample, int oversampleFactor, float* /*coefs_unused*/)
 	{
 //		_RPT0(_CRT_WARN, "XXX UpsamplingInterpolator\n");
 
@@ -39,7 +38,7 @@ public:
 		const double inveseOsFactor = 1.0 / (double) oversampleFactor;
 		for (int s = outSampleframes; s > 0; --s)
 		{
-			double fraction = subSample * inveseOsFactor; // / (float)oversampleFactor;
+			double fraction = subSample * inveseOsFactor;
 
 //			*to++ = from[inIdx]; // no interpolation.
 //			*to++ = buffer[inIdx] +(buffer[inIdx + 1] - buffer[inIdx]) * fraction; // linear interpolation.
@@ -109,7 +108,7 @@ public:
 template <int sincSize>
 class UpsamplingInterpolator3 // sinc SSE
 {
-	static const int sseCount = 4; // allocate a few entries off end for SSE.
+	static constexpr int sseCount = 4; // allocate a few entries off end for SSE.
 	std::vector<float> hist_;
 	int writeIndex_ = {};
 	int readIndex_ = {};
@@ -239,7 +238,7 @@ public:
 	}
 
 	// copy new samples into history buffer, wrapping if nesc.
-	void pushHistory(const float* from, int outcount, int subSample, int oversampleFactor)
+	void pushHistory(const float* __restrict from, int outcount, int subSample, int oversampleFactor)
 	{
 		auto count = (subSample + outcount) / oversampleFactor;
 
@@ -273,34 +272,39 @@ public:
 		}
 	}
 	
-	void process(int outSampleframes, float* from, float* to, int subSample, int oversampleFactor)//, float* coefs)
+	void process(int outSampleframes, float* __restrict from, float* __restrict to, int subSample, int oversampleFactor)
 	{
 		pushHistory(from, outSampleframes, subSample, oversampleFactor);
+		process_pt2(outSampleframes, to, subSample, oversampleFactor);
+	}
 
+	void process_pt2(int outSampleframes, float* __restrict to, int subSample, int oversampleFactor)
+	{
 		const int histSize = (int)hist_.size();
-//		int inIdx = 0;
 		for (int s = outSampleframes; s > 0; --s)
 		{
 			// Convolution with sinc.
-			const float* filter = coefs + sincSize * subSample;
-#if !GMPI_USE_SSE
+			const float* __restrict filter = coefs + sincSize * subSample;
+#if 0 //!GMPI_ USE_SSE
 			// C++
-			float sum = 0.0f;
+			float sum_f = 0.0f;
 			int x = readIndex_;
 			for (int i = -sincSize / 2; i < sincSize / 2; ++i)
 			{
-				sum += hist_[x++] * filter[sincSize / 2 + i];
+				sum_f += hist_[x++] * filter[sincSize / 2 + i];
 				if (x == histSize)
 				{
 					x = sseCount;
 				}
 			}
 #else
+
+#if 0
 			// SSE
 			const int numCoefs = sincSize; // coefs.numCoefs_;
 			assert((numCoefs & 0x03) == 0); // factor of 4?
 
-											// SSE intrinsics
+			// SSE intrinsics
 			__m128 sum1 = _mm_setzero_ps();
 			__m128* pCoefs = (__m128*) filter; // coefs.coefs_;
 
@@ -328,10 +332,50 @@ public:
 			// Horizontal add.
 			__m128 t = _mm_add_ps(sum1, _mm_movehl_ps(sum1, sum1));
 			auto sum2 = _mm_add_ss(t, _mm_shuffle_ps(t, t, 1));
-			float sum;
-			_mm_store_ss(&sum, sum2);
+			float sum_f;
+			_mm_store_ss(&sum_f, sum2);
+
+#else
+			// Auto-vectorized C++.
+			const int numCoefs = sincSize;
+			assert((numCoefs & 0x03) == 0); // factor of 4?
+
+			const float* __restrict pCoefs_f = filter;
+			const float* __restrict pSignal = &(hist_[readIndex_]);
+
+			// Operate on as many as we can up to end of buffer (but no more than num coefs)
+			int todo = (std::min)(numCoefs, histSize - readIndex_) & 0xfffffffc;
+
+			float sum1_f[4]{};
+			for (int i = todo; i > 0; i -= 4)
+			{
+				sum1_f[0] += pSignal[0] * pCoefs_f[0];
+				sum1_f[1] += pSignal[1] * pCoefs_f[1];
+				sum1_f[2] += pSignal[2] * pCoefs_f[2];
+				sum1_f[3] += pSignal[3] * pCoefs_f[3];
+
+				pSignal += 4;
+				pCoefs_f += 4;
+			}
+
+			// Process any leftover from start of hist buffer. (wrap).
+			pSignal -= histSize - sseCount;
+			for (int remain = numCoefs - todo; remain > 0; remain -= 4)
+			{
+				sum1_f[0] += pSignal[0] * pCoefs_f[0];
+				sum1_f[1] += pSignal[1] * pCoefs_f[1];
+				sum1_f[2] += pSignal[2] * pCoefs_f[2];
+				sum1_f[3] += pSignal[3] * pCoefs_f[3];
+
+				pSignal += 4;
+				pCoefs_f += 4;
+			}
+
+			// Horizontal add.
+			const float sum_f = sum1_f[0] + sum1_f[1] + sum1_f[2] + sum1_f[3];
 #endif
-			*to++ = sum;
+#endif
+			*to++ = sum_f;
 
 			if (++subSample == oversampleFactor)
 			{

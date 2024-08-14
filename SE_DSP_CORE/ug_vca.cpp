@@ -352,35 +352,26 @@ void ug_vca::process_vol_fixed(int start_pos, int sampleframes)
 void ug_vca::process_bypass(int start_pos, int sampleframes)
 {
 	const float* in = in1_ptr + start_pos;
-	float* out = out_ptr + start_pos;
+	float* __restrict out = out_ptr + start_pos;
 
-#ifndef GMPI_SSE_AVAILABLE
-
-	// No SSE. Use C++ instead.
-	for (int s = sampleframes; s > 0; s--)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*out++ = *in++;
-	}
-#else
-	// Use SSE instructions.
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = in[3];
 
-	// process fiddly non-sse-aligned prequel.
-	while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
+		out += 4;
+		in += 4;
+		sampleframes -= 4;
+	}
+
+	while (sampleframes > 0)
 	{
 		*out++ = *in++;
 		--sampleframes;
 	}
-
-	// SSE intrinsics
-	const __m128* pIn1 = (__m128*) in;
-	__m128* pDest = (__m128*) out;
-
-	while (sampleframes > 0)
-	{
-		*pDest++ = *pIn1++;
-		sampleframes -= 4;
-	}
-#endif
 }
 
 void ug_vca::process_both_stop(int start_pos, int sampleframes)

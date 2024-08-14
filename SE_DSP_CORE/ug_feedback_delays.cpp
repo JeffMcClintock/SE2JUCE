@@ -138,81 +138,36 @@ void BypassFeedbackModule(ug_base* u, int voice)
 
 void ug_feedback_delay::sub_process(int start_pos, int sampleframes)
 {
-	const float *signal = input1_ptr + start_pos;
-	float *output = feedback_out->output1_ptr + start_pos;
+	const float* in = input1_ptr + start_pos;
+	float* __restrict out = feedback_out->output1_ptr + start_pos;
 
 #ifdef CANCELLATION_TEST_ENABLE
 
 	for( int s = sampleframes; s > 0; s-- )
 	{
-		*output++ = 0;
+		*out++ = 0;
 	}
 
 #else
 
-#if !GMPI_USE_SSE
-    for (int s = sampleframes; s > 0; s--)
-    {
-        *output++ = *signal++;
-    }
-#else
-    
-#if 1
-
-	// process fiddly non-sse-aligned prequel.
-	while (sampleframes > 0 && reinterpret_cast<intptr_t>(output) & 0x0f)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*output++ = *signal++;
-		--sampleframes;
-	}
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = in[3];
 
-	// SSE intrinsics. 4 samples at a time.
-	__m128* pIn1 = ( __m128* ) signal;
-	__m128* pDest = ( __m128* ) output;
-
-	while( sampleframes > 0 )
-	{
-		*pDest++ = *pIn1++;
+		out += 4;
+		in += 4;
 		sampleframes -= 4;
 	}
 
-#else
-
-// OK , but same CPU. (8 at a  time MORE CPU!)
-	union pointertype
+	while (sampleframes > 0)
 	{
-		float* float_ptr;
-		__m128* sse_ptr;
-	};
-
-	pointertype signal, output;
-	signal.float_ptr = input1_ptr + start_pos;
-	output.float_ptr = feedback_out->output1_ptr + start_pos;
-
-	// process fiddly non-sse-aligned prequel.
-	while( ( (int)output.float_ptr ) & 0x1f )
-	{
-		*output.float_ptr++ = *signal.float_ptr++;
+		*out++ = *in++;
 		--sampleframes;
 	}
-
-	__m128* outputB = output.sse_ptr + 1;
-	__m128* signalB = signal.sse_ptr + 1;
-
-	// SSE intrinsics. 8 samples at a time.
-	while( sampleframes > 0 )
-	{
-		*output.sse_ptr = *signal.sse_ptr;
-		signal.sse_ptr += 2;
-		output.sse_ptr += 2;
-		*outputB = *signalB;
-		signalB += 2;
-		outputB += 2;
-		sampleframes -= 8;
-	}
-
-#endif // SSE 8-samples at a time
-#endif // GMPI_USE_SSE
 #endif // CANCELLATION_TEST_ENABLE
 }
 

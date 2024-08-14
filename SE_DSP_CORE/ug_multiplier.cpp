@@ -107,33 +107,79 @@ void ug_multiplier::process_both_run(int start_pos, int sampleframes)
 {
 	const float* in1 = in_ptr[0] + start_pos;
 	const float* in2 = in_ptr[1] + start_pos;
-	float* out = out1_ptr + start_pos;
+	float* __restrict out = out1_ptr + start_pos;
 
-	for( int s = sampleframes ; s > 0 ; s-- )
+#if 0
+	// No SSE. Use C++.
+	for (int s = sampleframes; s > 0; --s)
 	{
 		*out++ = *in1++ * *in2++;
 	}
+#else
+	// auto-vectorize.
+	while (sampleframes > 3)
+	{
+		out[0] = in1[0] * in2[0];
+		out[1] = in1[1] * in2[1];
+		out[2] = in1[2] * in2[2];
+		out[3] = in1[3] * in2[3];
+
+		out += 4;
+		in1 += 4;
+		in2 += 4;
+		sampleframes -= 4;
+	}
+
+	while (sampleframes > 0)
+	{
+		*out++ = *in1++ * *in2++;
+		--sampleframes;
+	}
+#endif
 }
 
 void ug_multiplier::process_A_run(int start_pos, int sampleframes)
 {
 	const float* in1 = in_ptr[0] + start_pos;
 	const float* in2 = in_ptr[1] + start_pos;
-	float* out = out1_ptr + start_pos;
+	float* __restrict out = out1_ptr + start_pos;
 	const float gain = *in2;
 
+#if 1
+	// No SSE. Use C++.
 	for( int s = sampleframes ; s > 0 ; s-- )
 	{
 		*out++ = *in1++ * gain;
 	}
+#else
+	// auto-vectorize (hopefully). no faster.
+	while (sampleframes > 3)
+	{
+		out[0] = in1[0] * gain;
+		out[1] = in1[1] * gain;
+		out[2] = in1[2] * gain;
+		out[3] = in1[3] * gain;
+
+		out += 4;
+		in1 += 4;
+		in2 += 4;
+		sampleframes -= 4;
+	}
+
+	while (sampleframes > 0)
+	{
+		*out++ = *in1++ * gain;
+		--sampleframes;
+	}
+#endif
 }
 
 void ug_multiplier::process_B_run(int start_pos, int sampleframes)
 {
 	const float* in1 = in_ptr[0] + start_pos;
 	const float* in2 = in_ptr[1] + start_pos;
-	float* out = out1_ptr + start_pos;
-	float gain = *in1;
+	float* __restrict out = out1_ptr + start_pos;
+	const float gain = *in1;
 
 	for( int s = sampleframes ; s > 0 ; s-- )
 	{

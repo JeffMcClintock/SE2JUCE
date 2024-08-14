@@ -20,82 +20,26 @@ public:
 	void process_bypass(int start_pos, int sampleframes)
 	{
 		const float* in = in_ptr[bypassPlug] + start_pos;
-		float* out = out1_ptr + start_pos;
+		float* __restrict out = out1_ptr + start_pos;
 
-#ifndef GMPI_SSE_AVAILABLE
-
-		// No SSE. Use C++ instead.
-		for (int s = sampleframes; s > 0; s--)
+		// auto-vectorized copy.
+		while (sampleframes > 3)
 		{
-			*out++ = *in++;
-		}
-#else
-//		apex::memcpy(out, in, sampleframes * sizeof(*in));
+			out[0] = in[0];
+			out[1] = in[1];
+			out[2] = in[2];
+			out[3] = in[3];
 
-		// Use SSE instructions.
-#if 1
-		// process fiddly non-sse-aligned prequel.
-		while (sampleframes > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
+			out += 4;
+			in += 4;
+			sampleframes -= 4;
+		}
+
+		while (sampleframes > 0)
 		{
 			*out++ = *in++;
 			--sampleframes;
 		}
-
-		// SSE intrinsics
-		const __m128* pIn1 = (__m128*) in;
-		__m128* pDest = (__m128*) out;
-
-		while (sampleframes > 0)
-		{
-			*pDest++ = *pIn1++;
-			sampleframes -= 4;
-		}
-#else
-
-#if 0
-		// more asm instructions in loop.
-		int fiddlyCount = 4 - (( reinterpret_cast<intptr_t>(out) >> 2) & 0x03);
-		sampleframes -= fiddlyCount;
-		_mm_storeu_ps(out, _mm_loadu_ps(in));
-
-		in  += fiddlyCount; //reinterpret_cast<float*>(reinterpret_cast<intptr_t>(in  + 3) & 0x0f);
-		out += fiddlyCount; //= reinterpret_cast<float*>(reinterpret_cast<intptr_t>(out + 3) & 0x0f);
-		assert((reinterpret_cast<intptr_t>(out) & 0x0f) == 0);
-
-		while (sampleframes > 0)
-		{
-			_mm_store_ps(out, _mm_load_ps(in));
-			in += 4;
-			out += 4;
-			sampleframes -= 4;
-		}
-
-#else
-		// proces initial samples with unaligned load and store, then align pointers and process remaining.
-		// equal performance, more asm instructions, harder to understand.
-		auto end = in + sampleframes;
-
-		// Process potentially unalligned prequel
-		_mm_storeu_ps(out, _mm_loadu_ps(in));
-
-		// Increment and align pointers.
-		constexpr intptr_t mask = ((intptr_t)-1) ^ 0x0f;
-		in = reinterpret_cast<const float*>(reinterpret_cast<intptr_t>(in + 4) & mask);
-		out = reinterpret_cast<float*>(reinterpret_cast<intptr_t>(out + 4) & mask);
-
-		// Process aligned remainder.
-		int count = (3 + (int)(end - in)) >> 2;
-		while (count > 0)
-		{
-			_mm_store_ps(out, _mm_load_ps(in));
-			in += 4;
-			out += 4;
-			--count;
-		}
-#endif
-
-#endif
-#endif
 	}
 
 	bool PPGetActiveFlag() override;

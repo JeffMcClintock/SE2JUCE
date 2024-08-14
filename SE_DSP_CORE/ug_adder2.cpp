@@ -91,38 +91,26 @@ void ug_adder2::NewConnection(UPlug* p_from)
 
 void ug_adder2::sub_process_static(int start_pos, int sampleframes)
 {
-	// process fiddly non-sse-aligned prequel.
-	float* o = output_ptr + start_pos;
+	auto* __restrict out = output_ptr + start_pos;
 	const float ss = static_input_sum;
 
-#ifndef GMPI_SSE_AVAILABLE
-
-	// No SSE. Use C++ instead.
-	for (int s = sampleframes; s > 0; --s)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*o++ = ss;
+		out[0] = ss;
+		out[1] = ss;
+		out[2] = ss;
+		out[3] = ss;
+
+		out += 4;
+		sampleframes -= 4;
 	}
 
-#else
-	auto s = sampleframes;
-
-	// Use SSE instructions.
-	while (s > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
+	while (sampleframes > 0)
 	{
-		*o++ = ss;
-		--s;
+		*out++ = ss;
+		--sampleframes;
 	}
-
-	__m128* pDest = (__m128*) o;
-	const __m128 staticSum = _mm_set_ps1( ss );
-
-	// move first runing input plus static sum.
-	while (s > 0)
-	{
-		*pDest++ = staticSum;
-		s -= 4;
-	}
-#endif
 
 #if 0 //def _DEBUG
 	{
@@ -290,37 +278,6 @@ void ug_adder2::sub_process(int start_pos, int sampleframes)
 	}
 	// Use SSE instructions.
 #endif
-
-	/*
-			o = out1;
-			i = running_inputs[c] + start_pos;
-			for(int s = sampleframes ; s > 0 ; s-- )
-			{
-				*o++ += *i++;
-			}
-	*/
-	/*
-		// ASM faster than C++ above
-			float* i = running_inputs[c];
-
-			__as m
-			{
-				mov     eax, dword ptr i
-				mov     edx, dword ptr start_pos
-				lea     ecx,[eax+edx*4]
-				mov     edi, dword ptr out1		// edi is pointer index to dest buf
-				mov     eax, dword ptr sampleframes
-				dec		eax
-
-			ContinueLoop4:
-				fld     dword ptr [ecx+eax*4]	//load a float from source buffer
-				fadd    DWORD PTR [edi+eax*4]	// add dest buffer
-				fstp	DWORD PTR [edi+eax*4]	// save to dest buffer
-				dec		eax
-				jge     ContinueLoop4			//loop for next conversion
-			}
-		}
-		*/
 }
 
 void ug_adder2::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p_state)

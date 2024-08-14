@@ -61,36 +61,29 @@ public:
 		initializePin(pinoutput);
 	}
 
-	void subProcess(int sampleFrames)
+	void subProcess(int sampleframes)
 	{
-		auto in = getBuffer(pinInput);
-		auto out = getBuffer(pinoutput);
+		const auto* in = getBuffer(pinInput);
+		auto* __restrict out = getBuffer(pinoutput);
 
-#ifndef GMPI_SSE_AVAILABLE
-		// No SSE. Use C++ instead.
-		for (int s = sampleFrames; s > 0; --s)
+		// auto-vectorized copy.
+		while(sampleframes > 3)
+		{
+			out[0] = in[0];
+			out[1] = in[1];
+			out[2] = in[2];
+			out[3] = in[3];
+
+			out += 4;
+			in += 4;
+			sampleframes -= 4;
+		}
+
+		while(sampleframes > 0)
 		{
 			*out++ = *in++;
+			--sampleframes;
 		}
-#else
-		// Use SSE instructions.
-		// process fiddly non-sse-aligned prequel.
-		while (sampleFrames > 0 && reinterpret_cast<intptr_t>(out) & 0x0f)
-		{
-			*out++ = *in++;
-			--sampleFrames;
-		}
-
-		// SSE intrinsics. 4 samples at a time.
-		__m128* pIn1 = (__m128*) in;
-		__m128* pDest = (__m128*) out;
-
-		while (sampleFrames > 0)
-		{
-			*pDest++ = *pIn1++;
-			sampleFrames -= 4;
-		}
-#endif
 	}
 
 	virtual void onSetPins() override

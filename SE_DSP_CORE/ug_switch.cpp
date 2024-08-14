@@ -167,44 +167,37 @@ void ug_switch::DoProcess(int buffer_offset, int sampleframes)
 void ug_switch::sub_process(int start_pos, int sampleframes)
 {
 	// process fiddly non-sse-aligned prequel.
-	float* i = in_ptr + start_pos;
-	float* o = out_ptr + start_pos;
+	float* in = in_ptr + start_pos;
+	float* __restrict out = out_ptr + start_pos;
 
-#ifndef GMPI_SSE_AVAILABLE
-	// No SSE. Use C++ instead.
-	for (int s = sampleframes; s > 0; --s)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*o++ = *i++;
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = in[3];
+
+		out += 4;
+		in += 4;
+		sampleframes -= 4;
 	}
 
-#else
-	// Use SSE instructions.
+	while (sampleframes > 0)
+	{
+		*out++ = *in++;
+		--sampleframes;
+	}
+
 #ifdef _DEBUG
 	if (!GetPlug(PLG_IN)->isStreaming())
 	{
 		for (int s = 1; s < sampleframes; ++s)
 		{
-            assert(i[0] == i[s] || (std::isnan(i[0]) && std::isnan(i[s]))); // Is input signal self-consistant? (upstream module has status bug). (weird syntax to handle Nan).
+			assert(in[0] == in[s] || (std::isnan(in[0]) && std::isnan(in[s]))); // Is input signal self-consistant? (upstream module has status bug). (weird syntax to handle Nan).
 		}
 	}
 #endif
-	while (sampleframes > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
-	{
-		*o++ = *i++;
-		--sampleframes;
-	}
-
-	// SSE intrinsics for remainder.
-	__m128* pSource = (__m128*) i;
-	__m128* pDest = (__m128*) o;
-
-	while (sampleframes > 0)
-	{
-		*pDest++ = *pSource++;
-		sampleframes -= 4;
-	}
-#endif
-
 }
 
 // feed silence out previous selected outputs, untill buffer full
@@ -336,42 +329,27 @@ void ug_switch2::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type p_st
 
 void ug_switch2::sub_process(int start_pos, int sampleframes)
 {
-	float* i = in_plg->GetSamplePtr() + start_pos; // not need to get ptr every time to cope with upstream bypass.
-	float* o = out_ptr + start_pos;
+	const float* in = in_plg->GetSamplePtr() + start_pos; // not need to get ptr every time to cope with upstream bypass.
+	float* __restrict out = out_ptr + start_pos;
 
-#ifndef GMPI_SSE_AVAILABLE
-	// No SSE. Use C++ instead.
-	for (int s = sampleframes; s > 0; --s)
+	// auto-vectorized copy.
+	while (sampleframes > 3)
 	{
-		*o++ = *i++;
-	}
-#else
-	// Use SSE instructions.
-	//	float *in1 = in_ptr + start_pos;
-	//	float *out = out_ptr + start_pos;
-	//
-	//	for( int s = sampleframes ; s > 0 ; s-- )
-	//	{
-	//		*out++ = *in1++;
-	////		*out++ = *in1++ + 1.f; // deliberate fail passthru test
-	//	}
-	// process fiddly non-sse-aligned prequel.
-	while (sampleframes > 0 && reinterpret_cast<intptr_t>(o) & 0x0f)
-	{
-		*o++ = *i++;
-		--sampleframes;
-	}
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = in[3];
 
-	// SSE intrinsics for remainder.
-	__m128* pSource = (__m128*) i;
-	__m128* pDest = (__m128*) o;
+		out += 4;
+		in += 4;
+		sampleframes -= 4;
+	}
 
 	while (sampleframes > 0)
 	{
-		*pDest++ = *pSource++;
-		sampleframes -= 4;
+		*out++ = *in++;
+		--sampleframes;
 	}
-#endif
 }
 
 void ug_switch2::sub_process_no_inputs(int start_pos, int sampleframes)
