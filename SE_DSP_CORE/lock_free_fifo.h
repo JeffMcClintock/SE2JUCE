@@ -87,6 +87,12 @@ public:
 		read_ptr = m_committed_write_ptr = m_uncommited_write_ptr = 0;
 	}
 
+	// empty the FIFO discarding contents. thread-safe from the consumer side.
+	void clear()
+	{
+		read_ptr.store(m_committed_write_ptr.load(std::memory_order_relaxed), std::memory_order_release);
+	}
+
 #if defined( _DEBUG )
 	bool isUncomitted() override
 	{

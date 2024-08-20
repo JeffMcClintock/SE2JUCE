@@ -98,15 +98,17 @@ public:
 class ProcessorStateMgrVst3 : public ProcessorStateMgr, public TimerClient
 {
 	DawPreset presetMutable;
-	lock_free_fifo messageQue; // from real-time thread
+	lock_free_fifo messageQueFromProcessor; // from real-time thread
+	lock_free_fifo messageQueFromController; // message thread
 	bool presetDirty = true;
 	std::atomic<DawPreset const*> currentPreset;
 
 	bool OnTimer() override;
-	void serviceQueue();
+	void serviceQueue(lock_free_fifo& fifo);
 
 protected:
 	void setPreset(DawPreset const* preset) override;
+	void QueueParameterUpdate(lock_free_fifo* fifo, int32_t handle, int32_t field, RawView rawValue, int voiceId);
 
 public:
 	ProcessorStateMgrVst3();
@@ -115,7 +117,11 @@ public:
 
 	// Processor informing me of self-initiated parameter changes
 	// from the real-time thread
-	void SetParameterRaw(int32_t handle, int32_t field, RawView rawValue, int voiceId);
+	void SetParameterFromProcessor(int32_t handle, int32_t field, RawView rawValue, int voiceId);
+	void ProcessorWatchdog();
+
+	// message-thread
+	void SetParameterFromController(int32_t handle, int32_t field, RawView rawValue, int voiceId);
 
 	DawPreset const* getPreset();
 };
