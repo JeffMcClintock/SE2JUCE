@@ -12,7 +12,7 @@ MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterInde
 }
 
 // After we recieve a preset, need to update native params value to DAW ASAP
-// Note there is not gaurentee what thread this happens on.
+// Note there is not guarantee what thread this happens on.
 // Note that the parameter is not updated fully yet, that happens asyncronously on UI thread.
 void MpParameterJuce::updateDawUnsafe(const std::string& rawValue)
 {
@@ -271,51 +271,28 @@ void SeJuceController::ParamGrabbed(MpParameter_native* param)
 
 void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param)
 {
-	// also need to notify JUCE and DAW.
-#if 0
-	switch (fieldId)
-	{
-	case gmpi::MP_FT_GRAB:
-		{
-			auto juceParameter = processor->getParameters()[param->getNativeTag()];
-			if (juceParameter)
-			{
-				if (param->isGrabbed())
-					juceParameter->beginChangeGesture();
-				else
-					juceParameter->endChangeGesture();
-			}
-		}
-		break;
-	case gmpi::MP_FT_VALUE:
-	case gmpi::MP_FT_NORMALIZED:
-		{
-#endif
-			// JUCE does not provide for thread-safe notification to the processor, so handle this via the message queue.
+    // JUCE does not provide for thread-safe notification to the processor, so handle this via the message queue.
 
-			// NOTE: juceParameter->setValueNotifyingHost() also updates the DSP via the timer, but *only* if it detects a change in the value (which is often won't)
-			ParamToDsp(param);
+    // NOTE: juceParameter->setValueNotifyingHost() also updates the DSP via the timer, but *only* if it detects a change in the value (which is often won't)
+    ParamToDsp(param);
 
-			// update JUCE parameter
-			auto juceParameter = processor->getParameters()[param->getNativeTag()];
-			if (juceParameter)
-			{
-				const bool handleGrabMyself = !param->isGrabbed();
-				if (handleGrabMyself)
-				{
-					juceParameter->beginChangeGesture();
-				}
+    // update JUCE parameter
+    auto juceParameter = processor->getParameters()[param->getNativeTag()];
+    if (juceParameter)
+    {
+        const bool handleGrabMyself = !param->isGrabbed();
+        if (handleGrabMyself)
+        {
+            juceParameter->beginChangeGesture();
+        }
 
-				juceParameter->setValueNotifyingHost(param->getDawNormalized());
+        juceParameter->setValueNotifyingHost(param->getDawNormalized());
 
-				if (handleGrabMyself)
-				{
-					juceParameter->endChangeGesture();
-				}
-			}
-	//	}
-	//	break;
-	//}
+        if (handleGrabMyself)
+        {
+            juceParameter->endChangeGesture();
+        }
+    }
 }
 
 // ensure GUI reflects the value of all parameters

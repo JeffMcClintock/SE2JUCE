@@ -38,7 +38,7 @@ public:
     // IShellServices interface
     void onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId) override
     {
-		dawStateManager.SetParameterRaw(handle, field, rawValue, voiceId);
+        dawStateManager.SetParameterFromProcessor(handle, field, rawValue, voiceId);
     }
     void EnableIgnoreProgramChange() override
     {

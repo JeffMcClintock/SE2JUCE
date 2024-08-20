@@ -653,12 +653,18 @@ public:
 					newMessage = newMessage.substr(lineLength) + std::wstring(L"\n                            ") + newMessage.substr(lineLength);
 				}
 
-				//				newMessage += L"\n";
-				//		_RPTW1(_CRT_WARN, L"midimon: %s\n", newMessage );
+//				_RPTW1(_CRT_WARN, L"MM: %s\n", newMessage );
 				//				Print(newMessage);
 			}
 		}
 		lines.push_back(newMessage);
+
+#ifdef _DEBUG
+		if (newMessage.find(L"Note On") != std::string::npos)
+		{
+			_RPTW1(_CRT_WARN, L"MM: %s\n", newMessage.c_str());
+		}
+#endif
 		if (lines.size() > 14)
 			lines.pop_front();
 

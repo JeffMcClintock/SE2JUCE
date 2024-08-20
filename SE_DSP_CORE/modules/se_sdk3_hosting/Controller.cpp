@@ -1126,12 +1126,32 @@ void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream
 	stream.Send();
 }
 
-void MpController::ParamToDsp(MpParameter* param, int32_t voice)
+void MpController::ParamToDsp(MpParameter* param, int32_t voiceId)
 {
 	assert(dynamic_cast<SeParameter_vst3_hostControl*>(param) == nullptr); // These have (not) "unique" handles that may map to totally random DSP parameters.
 
 	my_msg_que_output_stream s(getQueueToDsp(), param->parameterHandle_, "ppc\0"); // "ppc"
-	SerialiseParameterValueToDsp(s, param, voice);
+	SerialiseParameterValueToDsp(s, param, voiceId);
+
+	// send a copy to the stateMgr *only* in case of the processor being suspended when the DAW wants the preset.
+	if (param->stateful_)
+	{
+		const auto field = gmpi::MP_FT_VALUE;
+		const auto rawValue = param->getValueRaw(field, voiceId);
+		const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
+
+		my_msg_que_output_stream strm(ControllerToStateMgrQue(), param->parameterHandle_, "ppc");
+		strm << messageSize;
+		strm << voiceId;
+		strm << field;
+		strm << static_cast<int32_t>(rawValue.size());
+		strm.Write(
+			rawValue.data(),
+			static_cast<int32_t>(rawValue.size())
+		);
+
+		strm.Send();
+	}
 }
 
 void MpController::UpdateProgramCategoriesHc(MpParameter* param)
@@ -1627,7 +1647,16 @@ void MpController::OnEndPresetChange()
 void MpController::setPreset(DawPreset const* preset)
 {
 //	_RPTN(0, "MpController::setPreset. IPC %d\n", (int)preset->ignoreProgramChangeActive);
-
+#if 0 //def _DEBUG
+    auto xml = preset->toString(0);
+    static int count = 0;
+    count++;
+    std::string filename("/Users/jeffmcclintock/log");
+    filename += std::to_string(count) + ".txt";
+    std::ofstream out(filename.c_str());
+    out << xml;
+#endif
+    
 	constexpr int patch = 0;
 	constexpr bool updateProcessor = false;
 

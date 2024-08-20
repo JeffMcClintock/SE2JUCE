@@ -411,16 +411,28 @@ void ProcessorStateMgr::setPresetFromUnownedPtr(DawPreset const* preset)
 	setPreset(retainPreset(new DawPreset(*preset)));
 }
 
-ProcessorStateMgrVst3::ProcessorStateMgrVst3() : messageQue(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
+ProcessorStateMgrVst3::ProcessorStateMgrVst3() :
+	messageQueFromProcessor(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE),
+	messageQueFromController(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
 {
 	presetMutable.name = "Full Reset";
 	presetMutable.isInitPreset = true;
 }
 
 // parameter changed from any source in real-time thread (GUI/DAW/Meters)
-// push change onto queue.
 // The purpose is to allow the state manager to provide the preset to the DAW at any time/thread.
-void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, int32_t field, RawView rawValue, int32_t voiceId)
+void ProcessorStateMgrVst3::SetParameterFromProcessor(int32_t paramHandle, int32_t field, RawView rawValue, int32_t voiceId)
+{
+	QueueParameterUpdate(&messageQueFromProcessor, paramHandle, field, rawValue, voiceId);
+}
+
+void ProcessorStateMgrVst3::ProcessorWatchdog()
+{
+	// Processor is active, therefore only the processor message queue is relevant.
+	messageQueFromController.clear();
+}
+
+void ProcessorStateMgrVst3::QueueParameterUpdate(lock_free_fifo* fifo, int32_t paramHandle, int32_t field, RawView rawValue, int32_t voiceId)
 {
 	// ignore non-stateful params
 	auto it = parametersInfo.find(paramHandle);
@@ -429,7 +441,7 @@ void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, int32_t field, 
 
 	const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
 
-	my_msg_que_output_stream strm(&messageQue, paramHandle, "ppc");
+	my_msg_que_output_stream strm(fifo, paramHandle, "ppc");
 	strm << messageSize;
 	strm << voiceId;
 	strm << field;
@@ -441,60 +453,6 @@ void ProcessorStateMgrVst3::SetParameterRaw(int32_t paramHandle, int32_t field, 
 
 	strm.Send();
 }
-
-#if 0
-ProcessorStateMgrAu2::ProcessorStateMgrAu2() : messageQue(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE)
-{
-    
-}
-
-// communicate parameter automation to the GUI (since Apple DAWs don't bother using the parameter listener functionality).
-// value is real value, not normalised.
-void ProcessorStateMgrAu2::onParameterAutomation(int32_t paramTag, float value)
-{
-	const int32_t messageSize = sizeof(value);
-
-	my_msg_que_output_stream strm(&messageQue, paramTag, "norm");
-	strm << messageSize;
-	strm << value;
-
-	strm.Send();
-}
-
-// GUI to call this on a timer to get any parameter automation updates.
-void ProcessorStateMgrAu2::queryUpdates(IAuGui* ui)
-{
-	while (messageQue.readyBytes() > 0)
-	{
-		int32_t paramTag;
-		int32_t recievingMessageId;
-		int32_t recievingMessageLength;
-
-		my_msg_que_input_stream strm(&messageQue);
-		strm >> paramTag;
-		strm >> recievingMessageId;
-		strm >> recievingMessageLength;
-
-		assert(recievingMessageId != 0);
-		assert(recievingMessageLength >= 0);
-
-		switch (recievingMessageId)
-		{
-		case id_to_long2("norm"):
-		{
-			float value;
-			strm >> value;
-
-			ui->OnParameterUpdateFromDaw(paramTag, value);
-		}
-		break;
-
-		default:
-			assert(false);
-		};
-	}
-}
-#endif
 
 // only for debugging
 std::string RawToXml(gmpi::PinDatatype dataType, RawView rawVal)
@@ -562,27 +520,27 @@ std::string RawToXml(gmpi::PinDatatype dataType, RawView rawVal)
 // service Que
 bool ProcessorStateMgrVst3::OnTimer()
 {
-	if (messageQue.readyBytes() > 0)
-	{
-		const std::lock_guard<std::mutex> lock{ presetMutex };
-		presetDirty = true;
-
-		serviceQueue();
-	}
+	serviceQueue(messageQueFromProcessor);
 
 	return true;
 }
 
 // must be called under presetMutex lock.
-void ProcessorStateMgrVst3::serviceQueue()
+void ProcessorStateMgrVst3::serviceQueue(lock_free_fifo& fifo)
 {
-	while (messageQue.readyBytes() > 0)
+	if (fifo.readyBytes() == 0)
+		return;
+
+	const std::lock_guard<std::mutex> lock{ presetMutex };
+	presetDirty = true;
+
+	while (fifo.readyBytes() > 0)
 	{
 		int32_t paramHandle;
 		int32_t recievingMessageId;
 		int32_t recievingMessageLength;
 
-		my_msg_que_input_stream strm(&messageQue);
+		my_msg_que_input_stream strm(&fifo);
 		strm >> paramHandle;
 		strm >> recievingMessageId;
 		strm >> recievingMessageLength;
@@ -663,7 +621,11 @@ void ProcessorStateMgrVst3::setPreset(DawPreset const* preset)
 {
 	{
 		const std::lock_guard<std::mutex> lock{ presetMutex };
-		serviceQueue(); // empty the FIFO otherwise it might apply stale changes to the new preset.
+
+		// empty the FIFOs otherwise it might apply stale changes to the new preset.
+		messageQueFromProcessor.clear();
+		messageQueFromController.clear();
+
 		presetMutable = *preset;
 
 		currentPreset.store(preset, std::memory_order_release);
@@ -681,7 +643,8 @@ void ProcessorStateMgr::setPreset(DawPreset const* preset)
 DawPreset const* ProcessorStateMgrVst3::getPreset()
 {
 	// bring current preset up-to-date
-	OnTimer();
+	serviceQueue(messageQueFromProcessor);
+	serviceQueue(messageQueFromController);
 
 	if (presetDirty)
 	{
@@ -694,31 +657,7 @@ DawPreset const* ProcessorStateMgrVst3::getPreset()
 
 			presetDirty = false;
 		}
-#if 0
-		// apply latest values from DAW
-		// not synced in anyway, so might get sliced as we read them out.
-		for (auto& pn : normalizedValues)
-		{
-			const auto paramHandle = tagToHandle[pn.first];
 
-			assert(preset->params.find(paramHandle) != preset->params.end());
-			assert(parametersInfo.find(paramHandle) != parametersInfo.end());
-
-			const auto& info = parametersInfo[paramHandle];
-
-			const auto normalized = pn.second->load(std::memory_order_relaxed);
-
-			// convert normalised to actual value.
-			preset->params[paramHandle].rawValues_[0]
-				= normalizedToRaw(
-					(int32_t)info.dataType
-					, normalized
-					, info.maximum
-					, info.minimum
-					, info.meta
-				);
-		}
-#endif
 		retainPreset(preset);
 		currentPreset.store(preset, std::memory_order_release);
 	}
