@@ -12,7 +12,7 @@ MpParameterJuce::MpParameterJuce(SeJuceController* controller, int ParameterInde
 }
 
 // After we recieve a preset, need to update native params value to DAW ASAP
-// Note there is not gaurentee what thread this happens on.
+// Note there is not guarantee what thread this happens on.
 // Note that the parameter is not updated fully yet, that happens asyncronously on UI thread.
 void MpParameterJuce::updateDawUnsafe(const std::string& rawValue)
 {

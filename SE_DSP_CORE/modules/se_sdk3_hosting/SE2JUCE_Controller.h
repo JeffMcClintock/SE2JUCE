@@ -196,4 +196,8 @@ public:
 	{
 		return &queueToDsp_;
 	}
+	InterThreadQueBase* ControllerToStateMgrQue() override
+	{
+		return dawStateManager.ControllerToStateMgrQue();
+	}
 };

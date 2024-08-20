@@ -321,6 +321,7 @@ public:
 	}
 
 	virtual IWriteableQue* getQueueToDsp() = 0;
+	virtual	InterThreadQueBase* ControllerToStateMgrQue() = 0;
 
 	interThreadQue* getQueueToGui()
 	{

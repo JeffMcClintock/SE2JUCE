@@ -121,8 +121,10 @@ public:
 	void ProcessorWatchdog();
 
 	// message-thread
-	void SetParameterFromController(int32_t handle, int32_t field, RawView rawValue, int voiceId);
-
+	InterThreadQueBase* ControllerToStateMgrQue()
+	{
+		return &messageQueFromController;
+	}
 	DawPreset const* getPreset();
 };
 

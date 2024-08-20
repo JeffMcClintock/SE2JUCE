@@ -432,13 +432,6 @@ void ProcessorStateMgrVst3::ProcessorWatchdog()
 	messageQueFromController.clear();
 }
 
-// parameter changed from plugin UI
-// keeps preset up-to-date when Processor is suspended
-void ProcessorStateMgrVst3::SetParameterFromController(int32_t paramHandle, int32_t field, RawView rawValue, int32_t voiceId)
-{
-	QueueParameterUpdate(&messageQueFromProcessor, paramHandle, field, rawValue, voiceId);
-}
-
 void ProcessorStateMgrVst3::QueueParameterUpdate(lock_free_fifo* fifo, int32_t paramHandle, int32_t field, RawView rawValue, int32_t voiceId)
 {
 	// ignore non-stateful params
