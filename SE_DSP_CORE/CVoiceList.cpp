@@ -1,5 +1,3 @@
-// VoiceList.cpp
-// Class to help VoiceList keep track of cloned VList
 
 #include "pch.h"
 #include <assert.h>
