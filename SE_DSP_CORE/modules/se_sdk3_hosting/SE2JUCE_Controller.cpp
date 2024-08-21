@@ -295,6 +295,30 @@ void SeJuceController::ParamToProcessorAndHost(MpParameterJuce* param)
     }
 }
 
+void SeJuceController::ParamToDsp(MpParameter* param, int32_t voiceId)
+{
+	MpController::ParamToDsp(param, voiceId);
+
+	if (param->stateful_)
+	{
+		const auto field = gmpi::MP_FT_VALUE;
+		const auto rawValue = param->getValueRaw(field, voiceId);
+		const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
+
+		my_msg_que_output_stream strm(ControllerToStateMgrQue(), param->parameterHandle_, "ppc");
+		strm << messageSize;
+		strm << voiceId;
+		strm << field;
+		strm << static_cast<int32_t>(rawValue.size());
+		strm.Write(
+			rawValue.data(),
+			static_cast<int32_t>(rawValue.size())
+		);
+
+		strm.Send();
+	}
+}
+
 // ensure GUI reflects the value of all parameters
 void SeJuceController::initGuiParameters()
 {

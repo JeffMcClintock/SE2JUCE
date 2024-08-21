@@ -169,6 +169,7 @@ public:
 
 	void ParamGrabbed(MpParameter_native* param) override;
 	void ParamToProcessorAndHost(MpParameterJuce* param);
+	void ParamToDsp(MpParameter* param, int32_t voiceId = 0) override;
 
 	MpParameter_native* makeNativeParameter(int, bool isInverted = false) override
 	{
@@ -196,7 +197,7 @@ public:
 	{
 		return &queueToDsp_;
 	}
-	InterThreadQueBase* ControllerToStateMgrQue() override
+	InterThreadQueBase* ControllerToStateMgrQue()
 	{
 		return dawStateManager.ControllerToStateMgrQue();
 	}
