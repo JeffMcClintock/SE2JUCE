@@ -404,7 +404,7 @@ void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
         _RPTN(0, "\nSE2JUCE_Processor::setStateInformation()\n %s\n\n", xml.c_str());
     }
 #endif
-#ifdef _DEBUG
+#if 0 //def _DEBUG
     static int count = 0;
     count++;
     std::string filename("/Users/jeffmcclintock/setState");
