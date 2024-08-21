@@ -355,6 +355,8 @@ void SE2JUCE_Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
         getTotalNumInputChannels(),
         getTotalNumOutputChannels()
     );
+
+    dawStateManager.ProcessorWatchdog();
 }
 
 //==============================================================================
@@ -380,7 +382,7 @@ void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
         _RPTN(0, "\nSE2JUCE_Processor::getStateInformation()\n %s\n\n", xml.c_str());
     }
 #endif
-#ifdef _DEBUG
+#iff 0 //def _DEBUG
     static int count = 0;
     count++;
     std::string filename("/Users/jeffmcclintock/getState");
