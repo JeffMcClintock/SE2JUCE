@@ -341,7 +341,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 					const auto note = gmpi::midi_2_0::decodeNote(msg);
 
 					// _RPTN(0, "PM Note-on %d\n", note.noteNumber);
-					if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType) // !! this is only for th ecurrent note!!! not apermanet tuning change !!! TODO
+					if (gmpi::midi_2_0::attribute_type::Pitch == note.attributeType) // !! this is only for the current note!!! not a permanent tuning change !!! TODO
 					{
 						const auto timestamp_oversampled = voiceState->voiceControlContainer_->CalculateOversampledTimestamp(Container(), timestamp);
 

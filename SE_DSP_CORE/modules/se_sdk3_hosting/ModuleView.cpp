@@ -19,6 +19,7 @@
 #include "SubViewCadmium.h"
 #include "../SynthEdit/cpu_accumulator.h"
 #include "../SynthEdit/MfcDocPresenter.h"
+#include "../SynthEdit/SafeMessagebox.h"
 #endif
 #include "ResizeAdorner.h"
 #include "modules/shared/xp_simd.h"
@@ -207,6 +208,16 @@ namespace SynthEdit2
 		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI2, pluginGraphics2.asIMpUnknownPtr());
 		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI3, pluginGraphics3.asIMpUnknownPtr());
 		r = object->queryInterface(gmpi_gui_api::SE_IID_GRAPHICS_MPGUI4, pluginGraphics4.asIMpUnknownPtr());
+
+#if defined( SE_EDIT_SUPPORT )
+		if (!pluginGraphics.isNull() && moduleInfo->getWindowType() != MP_WINDOW_TYPE_XP)
+		{
+			std::wostringstream oss;
+			oss << L"ERROR. module XML file (" << mi->GetName() << L"): needs to specify graphics type. e.g.\n <GUI graphicsApi=\"GmpiGui\">.";
+
+			SafeMessagebox(0, oss.str().c_str(), L"", MB_OK | MB_ICONSTOP);
+		}
+#endif
 
 		if (!pluginParameters.isNull())
 		{

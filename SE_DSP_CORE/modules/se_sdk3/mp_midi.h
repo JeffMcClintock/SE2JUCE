@@ -1241,8 +1241,8 @@ namespace gmpi
 
 					//			_RPTN(0, "MPE Note-on %d => %d\n", note.noteNumber, keyInfo.MidiKeyNumber);
 
-					// MIDI 2.0 does not automatically reset per-note controls. MPE is expected to.
-					// reset per-note bender
+					// Values for per-note controls	must be tracked and stored on all Member Channels,
+					// even when no note is playing, to provide an initial state for a new note
 					{
 						const auto msgout = gmpi::midi_2_0::makePolyBender(
 							keyInfo.MidiKeyNumber,
@@ -1326,7 +1326,6 @@ namespace gmpi
 							note.velocity
 						);
 
-						//pinMIDIOut.send(out.begin(), out.size());
 						sink({ msgout.m }, timestamp);
 					}
 				}

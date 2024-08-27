@@ -106,7 +106,7 @@ namespace
     <Parameters>
       <Parameter id="0" datatype="int" persistant="false" />
     </Parameters>
-    <GUI>
+    <GUI graphicsApi="GmpiGui">
       <Pin name="Activity" datatype="int" parameterId="0" />
     </GUI>
     <Audio>

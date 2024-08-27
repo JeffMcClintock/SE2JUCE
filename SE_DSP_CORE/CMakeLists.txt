@@ -7,6 +7,11 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for
 
 project(SynthEditLib)
 
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GMPI_SDK}
+    )
+
 set(sdk_srcs
 ${se_sdk_folder}/mp_sdk_common.h
 ${se_sdk_folder}/mp_sdk_common.cpp
@@ -563,10 +568,10 @@ endif()
 # message(STATUS "se_sdk_folder: ${se_sdk_folder}")
 
 include_directories(
-${CMAKE_CURRENT_SOURCE_DIR}
 ${DSP_CORE}
 ${se_sdk_folder}
 ${VST3_SDK}
+${GMPI_SDK}
 ${GMPI_SDK}/Core
 )
 
