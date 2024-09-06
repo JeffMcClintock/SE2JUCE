@@ -1,0 +1,145 @@
+#include <filesystem>
+#include <fstream>
+#include "SubPresetManager.h"
+#include "BundleInfo.h"
+#include "Controller.h"
+
+void SubPresetManager::init(std::span<const int32_t> params)
+{
+	currentPresetIndex = 0;
+	parameters_.clear();
+	parameters_.insert(parameters_.end(), params.begin(), params.end());
+
+	parametersInfo.clear();
+	for (auto p : parameters_)
+	{
+		parametersInfo[p] = controller.parametersInfo[p];
+	}
+
+	ScanPresets();
+}
+
+void SubPresetManager::ScanPresets()
+{
+	const char* xmlPresetExt = ".xmlpreset";
+
+	presets.clear();
+
+	std::filesystem::path rootPresetFolder = BundleInfo::instance()->getPresetFolder();
+	std::filesystem::path subPresetFolder = rootPresetFolder / "SubPresets";
+
+	for (auto const& dir_entry : std::filesystem::directory_iterator{ subPresetFolder })
+	{
+		if (dir_entry.path().extension() != xmlPresetExt)
+			continue;
+
+		std::string xml;
+		controller.FileToString(dir_entry.path(), xml);
+
+		if (xml.empty())
+			continue;
+
+		DawPreset preset(parametersInfo, xml);
+
+		presets.push_back(
+			{
+				preset.name,
+				preset.category,
+				-1,
+				dir_entry.path().filename().wstring(),
+				0,
+				false,
+				false
+			});
+	}
+}
+
+void SubPresetManager::SavePresetAs(const std::string& presetName)
+{
+	std::filesystem::path rootPresetFolder = BundleInfo::instance()->getPresetFolder();
+	std::filesystem::path subPresetFolder = rootPresetFolder / "SubPresets";
+
+	assert(!rootPresetFolder.empty()); // you need to call BundleInfo::initPresetFolder(manufacturer, product) when initializing this plugin.
+
+	std::filesystem::create_directory(subPresetFolder);
+
+	const auto fullPath = subPresetFolder / (presetName + ".xmlpreset");
+
+	DawPreset preset = *controller.getPreset(presetName);
+
+	// filter the parameters we want to save.
+	std::map<int32_t, paramValue> params;
+	for (auto p : parameters_)
+	{
+		params[p] = preset.params[p];
+	}
+
+	std::swap(params, preset.params);
+
+	std::ofstream myfile;
+	myfile.open(fullPath);
+
+	myfile << preset.toString(BundleInfo::instance()->getPluginId());
+
+	myfile.close();
+
+//	setModified(false);
+//	undoManager.initial(this, getPreset());
+
+	ScanPresets();
+
+	currentPresetIndex = 0;
+
+	// find the new preset and select it.
+	for (int32_t presetIndex = 0; presetIndex < presets.size(); ++presetIndex)
+	{
+		if (presets[presetIndex].name == presetName)
+		{
+			currentPresetIndex = presetIndex;
+			break;
+		}
+	}
+
+	onPresetChanged();
+}
+
+void SubPresetManager::DeletePreset(int presetIndex)
+{
+	if (presetIndex < 0 || presetIndex >= presets.size())
+		return;
+
+	std::filesystem::remove(presets[presetIndex].filename);
+
+	presets.erase(presets.begin() + presetIndex);
+
+	// select previous preset
+	currentPresetIndex = (std::max)(0, presetIndex - 1);
+
+	onPresetChanged();
+}
+
+void SubPresetManager::setPresetIndex(int presetIndex)
+{
+	if (presetIndex < 0 || presetIndex >= presets.size())
+		return;
+
+	currentPresetIndex = presetIndex;
+
+	// load sub-preset from file.
+	std::string xml;
+	controller.FileToString(presets[presetIndex].filename, xml);
+
+	if (xml.empty())
+		return;
+
+	DawPreset subpreset(parametersInfo, xml);
+
+	// apply sub-preset to full preset
+	DawPreset fullpreset = *controller.getPreset();
+	for (auto& p : subpreset.params)
+	{
+		fullpreset.params[p.first] = p.second;
+	}
+
+	controller.setPreset(&fullpreset);
+}

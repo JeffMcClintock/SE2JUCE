@@ -117,6 +117,7 @@ public:
 class MpController : public IGuiHost2, public interThreadQueUser, public TimerClient
 {
 	friend class UndoManager;
+	friend class SubPresetManager;
 
 public:
 	// presets from factory.xmlpreset resource.
