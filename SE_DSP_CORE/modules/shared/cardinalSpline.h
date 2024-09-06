@@ -34,11 +34,11 @@ inline void CalcCurve(GmpiDrawing::Point pts0, GmpiDrawing::Point pts1, GmpiDraw
 	p2 = pts1 + tangent * tension2;
 }
 
-inline std::vector<GmpiDrawing::Point> cardinalSpline(std::vector<GmpiDrawing::Point>& pts)
+inline std::vector<GmpiDrawing::Point> cardinalSpline(std::vector<GmpiDrawing::Point>& pts, float tension_adj = 0.5f)
 {
 	int i, nrRetPts;
 	GmpiDrawing::Point p1, p2;
-	constexpr float tension = 0.5f * (1.0f / 3.0f); // We are calculating control points. Tension is 0.5, smaller value has sharper corners.
+	const float tension = tension_adj * (1.0f / 3.0f); // We are calculating control points. Tension is 0.5, smaller value has sharper corners.
 
 	//if (closed)
 	//    nrRetPts = (pts.Count + 1) * 3 - 2;

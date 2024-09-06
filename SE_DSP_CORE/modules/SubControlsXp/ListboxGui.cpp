@@ -199,7 +199,7 @@ public:
 		const auto pixelsScrollPerRow = rowheight;
 
 		auto newscrollItemIndex = scrollItemIndex + (int)(cumulativeScroll / pixelsScrollPerRow);
-		newscrollItemIndex = std::clamp(newscrollItemIndex, 0, totalItems - visibleItems);
+		newscrollItemIndex = std::clamp(newscrollItemIndex, 0, std::max(0, totalItems - visibleItems));
 
 		if (newscrollItemIndex != scrollItemIndex)
 		{

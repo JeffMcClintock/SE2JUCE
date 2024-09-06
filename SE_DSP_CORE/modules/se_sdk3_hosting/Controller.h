@@ -176,6 +176,7 @@ protected:
 	{
 		return startupTimerCounter <= 0;
 	}
+	int32_t getCurrentPresetIndex();
 
 public:
 

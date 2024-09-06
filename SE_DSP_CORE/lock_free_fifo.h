@@ -16,13 +16,13 @@ public:
 
 class WriteableQueSink : public IWriteableQue
 {
-    virtual int freeSpace() override
+    int freeSpace() override
     {
         return (std::numeric_limits<int>::max)();
     }
-    virtual void pushString( int /*p_length*/, const unsigned char* /*p_data*/ ) override
+    void pushString( int /*p_length*/, const unsigned char* /*p_data*/ ) override
     {}
-    virtual void Send() override
+    void Send() override
     {}
 };
 
@@ -61,7 +61,7 @@ public:
 	#endif
 #if defined( _DEBUG )
 	virtual bool isUncomitted() = 0;
-	int m_debug_thread_id;
+	int m_debug_thread_id = {};
 #endif
 };
 

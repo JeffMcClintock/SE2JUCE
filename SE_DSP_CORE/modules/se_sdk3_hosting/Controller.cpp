@@ -1722,32 +1722,6 @@ void MpController::setPreset(DawPreset const* preset)
 					}
 				}
 			}
-#if 0
-			// TODO I guess
-			// MIDI learn.
-			if (updateProcessor && formatVersion > 0)
-			{
-				int32_t midiController = -1;
-				ParamElement->QueryIntAttribute("MIDI", &midiController);
-				{
-					my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCID");
-					s << static_cast<uint32_t>(sizeof(midiController));
-					s << midiController;
-					s.Send();
-				}
-
-				std::string sysexU;
-				ParamElement->QueryStringAttribute("MIDI_SYSEX", &sysexU);
-				{
-					const auto sysex = Utf8ToWstring(sysexU);
-
-					my_msg_que_output_stream s(getQueueToDsp(), parameter->parameterHandle_, "CCSX");
-					s << static_cast<uint32_t>(sizeof(int32_t) + sizeof(wchar_t) * sysex.size());
-					s << sysex;
-					s.Send();
-				}
-			}
-#endif
 		}
 	}
 
@@ -2016,6 +1990,19 @@ void MpController::ExportPresetXml(const char* filename, std::string presetNameO
 	myfile.close();
 }
 
+int32_t MpController::getCurrentPresetIndex()
+{
+	auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM);
+	auto it = ParameterHandleIndex.find(parameterHandle);
+	if (it != ParameterHandleIndex.end())
+	{
+		auto p = (*it).second;
+		return (int32_t)p->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0);
+	}
+
+	return -1;
+}
+
 void MpController::ExportBankXml(const char* filename)
 {
 	// Create output XML document.
@@ -2025,40 +2012,39 @@ void MpController::ExportBankXml(const char* filename)
 	auto presets_xml = xml.NewElement("Presets");
 	xml.LinkEndChild(presets_xml);
 
-	// Iterate native preset files, combine them into bank, and export.
-	auto srcFolder = ToPlatformString(BundleInfo::instance()->getPresetFolder());
-	auto searchString = srcFolder + _T("*.");
-	searchString += ToPlatformString(getNativePresetExtension());
-	for (FileFinder it = searchString.c_str(); !it.done(); ++it)
+	//Iterate  presets, combine them into bank, and export.
+
+	const auto currentPreset = getCurrentPresetIndex();
+
+	int presetIndex = 0;
+	for (auto& preset : presets)
 	{
-		if (!(*it).isFolder)
+		std::string chunk;
+
+		// all presets can be retrieved from their file, except for the current preset. Which might be modified.
+		if (presetIndex == currentPreset)
 		{
-			auto sourceFilename = combine_path_and_file(srcFolder, (*it).filename);
+			chunk = getPreset()->toString(BundleInfo::instance()->getPluginId());
+		}
+		else
+		{
+			chunk = loadNativePreset(ToWstring(preset.filename));
+		}
 
-			auto presetName = (*it).filename;
+		{
+			tinyxml2::XMLDocument presetDoc;
+
+			presetDoc.Parse(chunk.c_str());
+
+			if (!presetDoc.Error())
 			{
-				// chop off extension
-				auto p = presetName.find_last_of(L'.');
-				if (p != std::string::npos)
-					presetName = presetName.substr(0, p);
-			}
-
-			auto chunk = loadNativePreset( ToWstring(sourceFilename) );
-
-			{
-				tinyxml2::XMLDocument presetDoc;
-
-				presetDoc.Parse(chunk.c_str());
-
-				if (!presetDoc.Error())
-				{
-					auto parameters = presetDoc.FirstChildElement("Preset");
-					auto copyOfParameters = parameters->DeepClone(&xml)->ToElement();
-					presets_xml->LinkEndChild(copyOfParameters);
-					copyOfParameters->SetAttribute("name", ToUtf8String(presetName).c_str());
-				}
+				auto parameters = presetDoc.FirstChildElement("Preset");
+				auto copyOfParameters = parameters->DeepClone(&xml)->ToElement();
+				presets_xml->LinkEndChild(copyOfParameters);
 			}
 		}
+
+		++presetIndex;
 	}
 
 	// Save output XML document.
@@ -2067,6 +2053,8 @@ void MpController::ExportBankXml(const char* filename)
 
 void MpController::ImportBankXml(const char* xmlfilename)
 {
+	const auto currentPreset = getCurrentPresetIndex();
+
 	auto presetFolder = BundleInfo::instance()->getPresetFolder();
 
 	CreateFolderRecursive(presetFolder);
@@ -2172,6 +2160,7 @@ void MpController::ImportBankXml(const char* xmlfilename)
 	}
 
 	ScanPresets();
+	OnSetHostControl(HC_PROGRAM, gmpi::MP_FT_VALUE, sizeof(currentPreset), &currentPreset, 0);
 	UpdatePresetBrowser();
 }
 

@@ -825,6 +825,7 @@ namespace gmpi
 				{
 					if (noteIds[i].noteId == noteId)
 					{
+						// _RPTN(0, "MPE found note %d\n", i);
 						return &noteIds[i];
 					}
 				}
@@ -1239,7 +1240,7 @@ namespace gmpi
 					const auto MpeId = note.noteNumber | (header.channel << 7);
 					auto& keyInfo = allocateNote(MpeId, note.noteNumber);
 
-					//			_RPTN(0, "MPE Note-on %d => %d\n", note.noteNumber, keyInfo.MidiKeyNumber);
+					// _RPTN(0, "MPE Note-on %d => %d\n", note.noteNumber, keyInfo.MidiKeyNumber);
 
 					// Values for per-note controls	must be tracked and stored on all Member Channels,
 					// even when no note is playing, to provide an initial state for a new note
@@ -1315,6 +1316,9 @@ namespace gmpi
 				{
 					auto note = midi_1_0::decodeNote(msg);
 					const auto MpeId = note.noteNumber | (header.channel << 7);
+
+					// _RPTN(0, "MPE Note-off %d\n", note.noteNumber);
+
 					auto keyInfo = findNote(MpeId);
 
 					if (keyInfo)

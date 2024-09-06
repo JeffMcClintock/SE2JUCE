@@ -11,8 +11,6 @@
 
 #define ModuleFactory() CModuleFactory::Instance()
 
-std::wstring uniformDefaultString(std::wstring defaultValue, EPlugDataType dataType);
-
 // this class is a singleton,
 // it's shared between all instances of the dll (in VST mode)
 class CModuleFactory

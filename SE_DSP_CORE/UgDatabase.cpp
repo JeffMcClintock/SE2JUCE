@@ -975,47 +975,6 @@ ug_base* Module_Info::BuildSynthOb()
 	return module;
 }
 
-// numerical values of zero are returned as empty string, to keep XML compact and consistant (no false warnings about "0" not equal "" or "0.0" whatever)
-std::wstring uniformDefaultString(std::wstring defaultValue, EPlugDataType dataType)
-{
-	if (defaultValue.empty())
-		return {};
-
-	switch (dataType)
-	{
-	case DT_MIDI2:
-		return {};
-		break;
-
-	default:
-		return defaultValue;
-		break;
-
-	case DT_FLOAT:
-	case DT_DOUBLE:
-	case DT_FSAMPLE:
-	{
-		const auto v = StringToFloat(defaultValue); // won't cope with large 64bit doubles.
-		if (v != 0.0f)
-			return FloatToString(v);
-	}
-	break;
-
-	case DT_INT:
-	case DT_INT64:
-	case DT_BOOL:
-	case DT_ENUM:
-	{
-		const auto v = StringToInt(defaultValue);
-		if (v)
-			return IntToString(v);
-	}
-	break;
-	}
-
-	return {};
-}
-
 #if defined( SE_EDIT_SUPPORT )
 void Module_Info::Serialize( CArchive& ar )
 {

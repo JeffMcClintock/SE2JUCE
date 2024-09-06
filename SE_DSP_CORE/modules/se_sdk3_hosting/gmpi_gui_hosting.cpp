@@ -176,10 +176,10 @@ void UpdateRegionWinGdi::copyDirtyRects(HWND window, GmpiDrawing::SizeL swapChai
 			GetRegionData(hRegion, size, pRegion);
 
 			// Overall bounding rect
-			{
-				auto& r = pRegion->rdh.rcBound;
-				bounds = GmpiDrawing::RectL(r.left, r.top, r.right, r.bottom);
-			}
+			//{
+			//	auto& r = pRegion->rdh.rcBound;
+			//	bounds = GmpiDrawing::RectL(r.left, r.top, r.right, r.bottom);
+			//}
 
 			const RECT* pRect = (const RECT*)& pRegion->Buffer;
 //			auto rectcount = pRegion->rdh.nCount;
