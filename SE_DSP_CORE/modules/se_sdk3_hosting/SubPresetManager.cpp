@@ -127,7 +127,7 @@ void SubPresetManager::setPresetIndex(int presetIndex)
 
 	// load sub-preset from file.
 	std::string xml;
-	controller.FileToString(presets[presetIndex].filename, xml);
+    controller.FileToString(toPlatformString(presets[presetIndex].filename), xml);
 
 	if (xml.empty())
 		return;
