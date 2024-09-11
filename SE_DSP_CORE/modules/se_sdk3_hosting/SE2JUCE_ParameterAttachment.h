@@ -1,7 +1,11 @@
 #pragma once
+#include <JuceHeader.h>
+#include <vector>
+#include <memory>
+#include <span>
 #include "RawConversions.h"
 #include "IGuiHost2.h"
-//#include "AiLookAndFeel.h"
+#include "it_enum_list.h"
 
 /*
 #include "SE2JUCE_ParameterAttachment.h"
@@ -500,5 +504,110 @@ struct ButtonStateManager : SeParameterAttachment, public juce::MouseListener
         pressed = false;
 
         onClicked();
+    }
+};
+
+template<typename T>
+struct Pin
+{
+    T value = {};
+    std::function<void(const T&)> onChanged = {};
+
+    void setValue(T newValue)
+    {
+        if (value == newValue)
+            return;
+
+        value = newValue;
+
+        if (onChanged)
+            onChanged(value);
+    }
+};
+
+struct HasParameterAttachments
+{
+    class IGuiHost2& controller;
+    std::vector< std::unique_ptr<struct SeParameterAttachment> > parameterAttachments;
+
+    HasParameterAttachments(IGuiHost2& controller) : controller(controller) {}
+
+    template<typename T>
+    void attach(Pin<T>& pin, int32_t handle)
+    {
+        parameterAttachments.push_back(std::make_unique<SeParameterAttachment3<T> >(
+            &controller, handle,
+            [&pin](T value) -> void {
+                pin.setValue(value);
+            }));
+    }
+
+    void attach(juce::Slider& slider, int32_t handle)
+    {
+        // set slider range from parameter
+        const auto minreal = (float)controller.getParameterValue(handle, gmpi::MP_FT_RANGE_LO);
+        const auto maxreal = (float)controller.getParameterValue(handle, gmpi::MP_FT_RANGE_HI);
+        slider.setRange((std::min)(minreal, maxreal), (std::max)(minreal, maxreal));
+
+        parameterAttachments.push_back(
+            std::make_unique<SeParameterAttachmentSlider>(
+                &controller,
+                slider,
+                handle
+            )
+        );
+    }
+
+    // on/off button
+    void attach(juce::Button& button, int32_t handle, bool isInverted = false)
+    {
+        parameterAttachments.push_back(
+            std::make_unique<SeParameterAttachmentBoolButton>(
+                &controller,
+                button,
+                handle,
+                isInverted
+            )
+        );
+    }
+
+    // one radio button
+    void attach(juce::Button& button, int32_t handle, int enumValue)
+    {
+        button.setClickingTogglesState(true);
+
+        parameterAttachments.push_back(
+            std::make_unique<SeParameterAttachmentButton>(
+                &controller,
+                button,
+                handle,
+                enumValue
+            )
+        );
+    }
+
+    void attachRadioButtons(int32_t handle, int32_t radioGroupId, std::span<juce::Button*> buttons)
+    {
+        it_enum_list it((std::wstring)controller.getParameterValue(handle, gmpi::FieldType::MP_FT_ENUM_LIST));
+
+        int i = 0;
+        for (it.First(); !it.IsDone(); it.Next())
+        {
+            auto e = it.CurrentItem();
+            auto& button = *buttons[i++];
+            const juce::String name(e->text.c_str());
+
+            button.setButtonText(name);
+            button.setRadioGroupId(radioGroupId, juce::dontSendNotification);
+            attach(button, handle, e->value);
+        }
+    }
+    void initAttachments()
+    {
+        for (auto& param : parameterAttachments)
+        {
+            controller.initializeGui(param.get(), param->parameterHandle, gmpi::MP_FT_NORMALIZED);
+            controller.initializeGui(param.get(), param->parameterHandle, gmpi::MP_FT_VALUE);
+        }
     }
 };
