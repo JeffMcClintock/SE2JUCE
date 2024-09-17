@@ -9,6 +9,7 @@ struct IPresetsModel
     virtual int getPresetIndex() = 0; // index according to controller (not nesc order displayed in combo)
     virtual void setPresetIndex(int) = 0;
     virtual MpController::presetInfo getPresetInfo(int index) = 0;
+    virtual std::pair<bool, bool> CategorisePresetName(const std::string& name) = 0;
     virtual void SavePresetAs(const std::string& presetName) = 0;
     virtual void DeletePreset(int presetIndex) = 0;
     virtual bool isPresetModified() = 0;
@@ -59,4 +60,5 @@ public:
     void SavePresetAs(const std::string& presetName) override;
     void DeletePreset(int presetIndex) override;
     bool isPresetModified() override { return false; }
+    std::pair<bool, bool> CategorisePresetName(const std::string& name) override;
 };

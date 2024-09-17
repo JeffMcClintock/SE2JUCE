@@ -143,3 +143,25 @@ void SubPresetManager::setPresetIndex(int presetIndex)
 
 	controller.setPreset(&fullpreset);
 }
+
+std::pair<bool, bool> SubPresetManager::CategorisePresetName(const std::string& newName)
+{
+	bool isReadOnly = false;
+	bool isExistingName = false;
+
+	for (int i = 0; i < getPresetCount(); ++i)
+	{
+		auto preset = getPresetInfo(i);
+		if (preset.isSession)
+			continue;
+
+		if (preset.name == newName)
+		{
+			isReadOnly = preset.isFactory;
+			isExistingName = true;
+			break;
+		}
+	}
+
+	return { isReadOnly, isExistingName };
+}

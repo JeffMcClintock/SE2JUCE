@@ -190,7 +190,6 @@ public:
     
     ~MpController();
 
-
 	void ScanPresets();
 	void setPreset(DawPreset const* preset);
 	void syncPresetControls(DawPreset const* preset);
