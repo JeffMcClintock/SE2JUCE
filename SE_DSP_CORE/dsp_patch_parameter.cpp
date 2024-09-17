@@ -276,7 +276,12 @@ void dsp_patch_parameter_base::SendValue( timestamp_t unadjusted_timestamp, int 
 	if (isPolyphonic())
 	{
 		auto voiceControlContainer = getVoiceContainer();
-		assert(voiceControlContainer);
+		if (!voiceControlContainer)
+		{
+			// unusual. poly *output* parameters *could* be set from GUI (but should not), and we end up here. Even though the parameter has no output pins anyhow.
+			// behaviour noticed from "PT-Scope"
+			return;
+		}
 
 		if (isPolyphonicGate())
 		{

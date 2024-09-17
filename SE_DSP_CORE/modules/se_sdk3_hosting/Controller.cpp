@@ -35,6 +35,8 @@ MpController::~MpController()
 
 void MpController::ScanPresets()
 {
+	assert(this->isInitialized);
+
 	presets.clear(); // fix crash on JUCE
 	presets = scanNativePresets(); // Scan VST3 presets (both VST2 and VST3)
 
