@@ -240,19 +240,22 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
         {
             // set up a handler to toggle the param
             button.onClick = [this] {
-                // we're assuming switch is wired to an bool parameter
-                controller->setParameterValue({ button.getToggleState() != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
+                UpdateParameter(button.getToggleState() != isInverted);
                 };
         }
         else
         {
             // set up a handler to set the param only while mouse is down.
             button.onStateChange = [this]() {
-//                _RPTN(_CRT_WARN, "onStateChange %d\n", (int)(button.getState() == juce::Button::buttonDown) != isInverted);
-    			controller->setParameterValue({ (button.getState() == juce::Button::buttonDown) != isInverted }, parameterHandle, gmpi::MP_FT_VALUE);
+                UpdateParameter((button.getState() == juce::Button::buttonDown) != isInverted);
 		    };
         }
     }
+
+	void UpdateParameter(bool isToggled)
+	{
+        controller->setParameterValue(isToggled ? 1.0f : 0.0f, parameterHandle, gmpi::MP_FT_NORMALIZED);
+	}
 
     // gmpi::IMpParameterObserver
     int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
