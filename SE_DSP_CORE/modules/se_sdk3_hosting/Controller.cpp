@@ -33,6 +33,34 @@ MpController::~MpController()
     }
 }
 
+std::pair<bool, bool> MpController::CategorisePresetName(const std::string& newName)
+{
+	bool isReadOnly = false;
+	bool isExistingName = false;
+
+	assert(!full_reset_preset_name.empty()); // you gotta set this from teh default preset.
+	if (newName == full_reset_preset_name)
+	{
+		isReadOnly = isExistingName = true;
+	}
+
+	for (int i = 0; i < getPresetCount(); ++i)
+	{
+		auto preset = getPresetInfo(i);
+		if (preset.isSession)
+			continue;
+
+		if (preset.name == newName)
+		{
+			isReadOnly = preset.isFactory;
+			isExistingName = true;
+			break;
+		}
+	}
+
+	return { isReadOnly, isExistingName };
+}
+
 void MpController::ScanPresets()
 {
 	assert(this->isInitialized);
@@ -332,6 +360,11 @@ void MpController::Initialize()
         
         // Ensure host queries return correct value.
         seParameter->upDateImmediateValue();
+
+		if (seParameter->hostControl_ == HC_PROGRAM_NAME)
+		{
+			full_reset_preset_name = WStringToUtf8(RawToValue<std::wstring>(seParameter->rawValues_[0].data(), seParameter->rawValues_[0].size()));
+		}
 	}
 
 	// SEM Controllers.

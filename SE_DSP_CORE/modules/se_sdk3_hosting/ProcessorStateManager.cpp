@@ -828,6 +828,9 @@ void ProcessorStateMgrVst3::init(TiXmlElement* parameters_xml)
 
 		for (auto& v : p.second.defaultRaw)
 			presetMutableParam.rawValues_.push_back({ v.data(), v.size() });
+
+		if (p.second.hostControl == HC_PROGRAM_NAME)
+			presetMutable.name = WStringToUtf8(RawToValue<std::wstring>(p.second.defaultRaw[0].data(), p.second.defaultRaw[0].size()));
 	}
 
 	StartTimer(177);
