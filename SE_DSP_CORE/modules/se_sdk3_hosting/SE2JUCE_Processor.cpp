@@ -81,7 +81,8 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
         juce::AudioProcessorParameter* juceParameter = {};
         if (p->isEnum())
         {
-            const int defaultItemIndex = {};
+            const auto defaultVal = static_cast<int32_t>(p->getValueReal());
+            int defaultItemIndex = {};
 
             it_enum_list it( (std::wstring)(p->getValueRaw(gmpi::MP_FT_ENUM_LIST, 0)) );
             juce::StringArray choices;
@@ -89,6 +90,11 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
             {
                 auto e = it.CurrentItem();
                 choices.add(juce::String(JmUnicodeConversions::WStringToUtf8(e->text)));
+
+				if (defaultVal == e->value)
+				{
+					defaultItemIndex = e->index;
+				}
             }
 
             juceParameter =
