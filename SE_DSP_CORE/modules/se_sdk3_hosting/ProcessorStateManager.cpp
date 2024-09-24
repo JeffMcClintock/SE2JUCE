@@ -406,9 +406,18 @@ void DawPreset::calcHash()
 #endif
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// used when the Controller passes a preset that is not currently owned by this.
 void ProcessorStateMgr::setPresetFromUnownedPtr(DawPreset const* preset)
 {
 	setPreset(retainPreset(new DawPreset(*preset)));
+}
+
+// A missed preset happens when the Processor starts for the first time, and needs to action a preset that was set earlier (often it's the initial preset).
+// assume preset is already owned by this, so no need to retain it.
+void ProcessorStateMgr::setMissedPreset(DawPreset const* preset)
+{
+	// set the preset without modifying it's IPC flag. Since it may have been several seconds since the preset was set from the DAW, it's possible that the IPC flag has expired.
+	callback(preset);
 }
 
 ProcessorStateMgrVst3::ProcessorStateMgrVst3() :

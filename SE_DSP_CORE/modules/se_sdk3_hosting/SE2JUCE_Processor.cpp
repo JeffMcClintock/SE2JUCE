@@ -261,7 +261,7 @@ void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 	// JUCE standalone likes to set the state before prepareToPlay is called. (and therefore before the generator is available to accept the preset).
     if (processor.missedPreset)
     {
-        dawStateManager.setPresetFromUnownedPtr(processor.missedPreset); // actually a a safely owned ptr, but who cares.
+        dawStateManager.setMissedPreset(processor.missedPreset); // actually a a safely owned ptr, but who cares.
 
         assert(!processor.missedPreset);
     }
