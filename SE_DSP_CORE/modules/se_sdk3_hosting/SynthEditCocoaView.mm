@@ -94,14 +94,39 @@ public:
         [flipper concat];
 
         dirtyRects.optimizeRects();
-#if 0
-        const GmpiDrawing::Rect osClip{
-            floorf(dirtyRect->left),
-            floorf(dirtyRect->top),
-            ceilf(dirtyRect->right),
-            ceilf(dirtyRect->bottom)
-        };
-#endif
+
+        if(-1 == gmpi::cocoa::GraphicsContext2::logicProFix)
+        {
+            gmpi::cocoa::GraphicsContext2::logicProFix = 0;
+            
+            gmpi::cocoa::GraphicsContext2 context(frame, &drawingFactory);
+            
+            GmpiDrawing::Graphics g(static_cast<GmpiDrawing_API::IMpDeviceContextExt*>(&context));
+            auto tf = g.GetFactory().CreateTextFormat(16, "Arial", GmpiDrawing::FontWeight::Normal);
+            auto brush = g.CreateSolidColorBrush(GmpiDrawing::Color::Black);
+            g.FillRectangle(0,0,40,40, brush);
+            brush.SetColor(GmpiDrawing::Color::White);
+            g.DrawTextU("_", tf, {0, 0, 40, 40}, brush);
+            
+            uint8_t* pixels = 1 + [backBuffer bitmapData];
+            int stride = [backBuffer bytesPerRow];
+            int bestBrightness = 0;
+            int bestRow = 1;
+            
+            for(int y = 0 ; y < 40 ; ++y)
+            {
+                if(*pixels > bestBrightness)
+                {
+                    bestBrightness = *pixels;
+                    bestRow = y;
+                }
+                
+                pixels += stride;
+            }
+            
+            gmpi::cocoa::GraphicsContext2::logicProFix = (int) (bestRow != 17 && bestRow != 33); // SD / HD (will be 18 / 35 for buggy situation)
+        }
+        
         // context must be disposed (via RIAA) before restoring state, because its destructor also restores state
         {
 	        gmpi::cocoa::GraphicsContext2 context(frame, &drawingFactory);
@@ -115,6 +140,41 @@ public:
 
        		    context.PopAxisAlignedClip();
 		    }
+
+#if 0 // testing
+            {
+                gmpi::cocoa::GraphicsContext2::logicProFix = 0;
+                
+                GmpiDrawing::Graphics g(static_cast<GmpiDrawing_API::IMpDeviceContextExt*>(&context));
+                auto tf = g.GetFactory().CreateTextFormat(16, "Arial", GmpiDrawing::FontWeight::Normal);
+                auto brush = g.CreateSolidColorBrush(GmpiDrawing::Color::Black);
+                g.FillRectangle(0,0,40,40, brush);
+                brush.SetColor(GmpiDrawing::Color::White);
+                g.DrawTextU("_", tf, {0, 0, 40, 40}, brush);
+                
+                uint8_t* pixels = 1 + [backBuffer bitmapData];
+                int stride = [backBuffer bytesPerRow];
+                int bestBrightness = 0;
+                int bestRow = 1;
+                
+                for(int y = 0 ; y < 40 ; ++y)
+                {
+                    if(*pixels > bestBrightness)
+                    {
+                        bestBrightness = *pixels;
+                        bestRow = y;
+                    }
+                    
+                    pixels += stride;
+                }
+                
+                gmpi::cocoa::GraphicsContext2::logicProFix = (int) (bestRow != 17 && bestRow != 33); // SD / HD
+
+                brush.SetColor(gmpi::cocoa::GraphicsContext2::logicProFix == 0 ? GmpiDrawing::Color::Yellow : GmpiDrawing::Color::Lime);
+                int y = bestRow < 24 ? bestRow : bestRow / 2;
+                g.FillRectangle(16, y, 20, y + 1, brush);
+            }
+#endif
         }
 
 #else
