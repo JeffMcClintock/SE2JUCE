@@ -28,6 +28,9 @@ void SubPresetManager::ScanPresets()
 	std::filesystem::path rootPresetFolder = BundleInfo::instance()->getPresetFolder();
 	std::filesystem::path subPresetFolder = rootPresetFolder / "SubPresets";
 
+    if(!std::filesystem::exists(subPresetFolder))
+        return;
+    
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ subPresetFolder })
 	{
 		if (dir_entry.path().extension() != xmlPresetExt)
