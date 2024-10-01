@@ -348,7 +348,11 @@ void dsp_patch_parameter_base::SendValuePt2( timestamp_t unadjusted_timestamp, V
 		}
 	}
 
-	shellDsp_->onSetParameter(Handle(), gmpi::FieldType::MP_FT_VALUE, raw, voiceId);
+	if (!isInitialUpdate)
+	{
+		// update the preset state manager
+		shellDsp_->onSetParameter(Handle(), gmpi::FieldType::MP_FT_VALUE, raw, voiceId);
+	}
 }
 
 void dsp_patch_parameter_base::SendValuePoly(timestamp_t unadjusted_timestamp, int physicalVoiceNumber, RawView value, bool isInitialUpdate)

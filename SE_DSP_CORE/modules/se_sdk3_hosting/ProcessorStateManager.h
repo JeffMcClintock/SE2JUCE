@@ -84,7 +84,7 @@ public:
 	ProcessorStateMgr() {}
 	virtual void init(class TiXmlElement* parameters_xml);
 
-	void setPresetFromXml(const std::string& presetString);
+	virtual void setPresetFromXml(const std::string& presetString);
 	void setPresetFromUnownedPtr(DawPreset const* preset);
 	void setMissedPreset(DawPreset const* preset);
 
@@ -115,6 +115,7 @@ public:
 	ProcessorStateMgrVst3();
 
 	void init(class TiXmlElement* parameters_xml) override;
+	void setPresetFromXml(const std::string& presetString) override;
 
 	// Processor informing me of self-initiated parameter changes
 	// from the real-time thread
