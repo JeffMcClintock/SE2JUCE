@@ -1390,7 +1390,7 @@ bool MpController::onQueMessageReady(int recievingHandle, int recievingMessageId
 		default:
 		{
 			const char* msgstr = (const char*)&recievingMessageId;
-			_RPT1(_CRT_WARN, "MpController::onQueMessageReady() Unhandled message id %c%c%c%c\n", msgstr[3], msgstr[2], msgstr[1], msgstr[0] );
+			_RPT1(_CRT_WARN, "\nMpController::onQueMessageReady() Unhandled message id %c%c%c%c\n", msgstr[3], msgstr[2], msgstr[1], msgstr[0] );
 		}
 		break;
 #endif
