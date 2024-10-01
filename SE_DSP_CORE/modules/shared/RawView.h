@@ -87,7 +87,7 @@ public:
 	RawView(const std::string& v) : data_(v.data()), size_(v.size() * sizeof(v[0])) {}
 	RawView(const std::wstring& v) : data_(v.data()), size_(v.size() * sizeof(v[0])) {}
 	RawView(const char* v) : data_(v), size_(strlen(v)) {}
-	RawView(RawData& v) : data_(v.data()), size_(v.size()) {}
+	RawView(const RawData& v) : data_(v.data()), size_(v.size()) {}
 
 	// conversion back to types.
 	template <typename T>
