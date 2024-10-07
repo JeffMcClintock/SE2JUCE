@@ -124,10 +124,11 @@ static const HostControlStruct lookup[] =
 	{L"MpeMode"					,HC_MPE_MODE					, DT_ENUM, ControllerType::None},
 	{L"Presets/ProgramModified"	,HC_PROGRAM_MODIFIED			, DT_BOOL, ControllerType::None},
 	{L"Presets/CanUndo"			,HC_CAN_UNDO					, DT_BOOL, ControllerType::None},
-	{L"Presets/CanRedo"			,HC_CAN_REDO					, DT_BOOL, ControllerType::None },
-	{ L"Processor/ClearTails"	, HC_CLEAR_TAILS				, DT_INT, ControllerType::None }, // a 'trigger' style HC. Actual value don't matter, only that it changed.
-	L"Processor/DiagnosticFlags", HC_DIAGNOSTIC_FLAGS			, DT_INT,  ControllerType::None,
-	
+	{L"Presets/CanRedo"			,HC_CAN_REDO					, DT_BOOL, ControllerType::None},
+	{L"Processor/ClearTails"	, HC_CLEAR_TAILS				, DT_INT,  ControllerType::None}, // a 'trigger' style HC. Actual value don't matter, only that it changed.
+	{L"Processor/DiagnosticFlags", HC_DIAGNOSTIC_FLAGS			, DT_INT,  ControllerType::None},
+	{L"Processor/Offline"		, HC_PROCESSOR_OFFLINE			, DT_BOOL, ControllerType::None},
+
 	// MAINTAIN ORDER TO PRESERVE OLDER WAVES EXPORTS DSP.XML consistancy
 };
 

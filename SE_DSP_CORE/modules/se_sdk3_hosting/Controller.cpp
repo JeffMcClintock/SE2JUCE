@@ -1256,6 +1256,14 @@ MpParameter* MpController::createHostParameter(int32_t hostControl)
 	}
 	break;
 
+	case HC_PROCESSOR_OFFLINE:
+	{
+		auto param = new SeParameter_vst3_hostControl(this, hostControl);
+		p = param;
+		p->datatype_ = DT_BOOL;
+	}
+	break;
+
 
 	/* what would it do?
 	case HC_MIDI_CHANNEL:
@@ -1301,7 +1309,7 @@ int32_t MpController::getParameterHandle(int32_t moduleHandle, int32_t modulePar
 
 	if (hostControl >= 0)
 	{
-		// why not just shove it in with negative handle? !!! A: becuase of potential attachment to container.
+		// why not just shove it in with negative handle? !!! A: because of potential attachment to container.
 		for (auto& p : parameters_)
 		{
 			if (p->getHostControl() == hostControl && (moduleHandle == -1 || moduleHandle == p->ModuleHandle()))
@@ -1344,6 +1352,20 @@ void MpController::initializeGui(gmpi::IMpParameterObserver* gui, int32_t parame
 
 bool MpController::onQueMessageReady(int recievingHandle, int recievingMessageId, class my_input_stream& p_stream)
 {
+	// Processor watchdog.
+	if (dspWatchdogCounter <= 0)
+	{
+		for (auto& p : parameters_)
+		{
+			if (p->getHostControl() == HC_PROCESSOR_OFFLINE)
+			{
+				p->setParameterRaw(gmpi::FieldType::MP_FT_VALUE, RawView(false));
+				break;
+			}
+		}
+	}
+	dspWatchdogCounter = dspWatchdogTimerInit;
+
 	auto it = ParameterHandleIndex.find(recievingHandle);
 	if (it != ParameterHandleIndex.end())
 	{
@@ -1407,7 +1429,19 @@ bool MpController::OnTimer()
 	{
 		OnStartupTimerExpired();
 	}
-	
+
+	if (dspWatchdogCounter-- == 0)
+	{
+		for (auto& p : parameters_)
+		{
+			if (p->getHostControl() == HC_PROCESSOR_OFFLINE)
+			{
+				p->setParameterRaw(gmpi::FieldType::MP_FT_VALUE, RawView(true));
+				break;
+			}
+		}
+	}
+
 	if (presetsFolderChanged)
 	{
 		presetsFolderChanged = false;
