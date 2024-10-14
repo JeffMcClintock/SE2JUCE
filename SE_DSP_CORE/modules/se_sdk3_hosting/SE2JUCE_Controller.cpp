@@ -101,7 +101,6 @@ void SeJuceController::setPresetUnsafe(DawPreset const* preset)
 	interrupt_preset_.store(preset, std::memory_order_release);
 
 	// TODO: Update Immediate values here right in callers stack frame, otherwise DAW might query a stale value
-	// _RPTN(0, "setPresetUnsafe, IPC=%d\n", (int) preset->ignoreProgramChangeActive);
 
 	const int voice = 0;
 	for (const auto& [handle, val] : preset->params)
@@ -126,14 +125,6 @@ void SeJuceController::setPresetUnsafe(DawPreset const* preset)
 
 		const std::string rawString((const char*) raw.data(), raw.size());
 		parameter->updateDawUnsafe(rawString);
-
-#if 0
-		if (1329619189 == handle) // SeParameters::PARAM_AIP2
-		{
-			RawView temp(raw);
-			_RPTN(0, "PARAM_AIP2=%f\n", (float) temp);
-		}
-#endif
 	}
 }
 
@@ -313,13 +304,6 @@ void SeJuceController::ParamToDsp(MpParameter* param, int32_t voiceId)
 		const auto field = gmpi::MP_FT_VALUE;
 		const auto rawValue = param->getValueRaw(field, voiceId);
 		const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
-
-#if 0 // def _DEBUG
-		if (1329619189 == param->parameterHandle_)
-		{
-			_RPTN(0, "SeJuceController::ParamToDsp AIP2 = %f\n", (float) rawValue);
-		}
-#endif
 
 		my_msg_que_output_stream strm(ControllerToStateMgrQue(), param->parameterHandle_, "ppc");
 		strm << messageSize;

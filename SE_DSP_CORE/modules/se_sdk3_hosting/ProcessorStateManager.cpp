@@ -594,13 +594,6 @@ void ProcessorStateMgrVst3::serviceQueue(lock_free_fifo& fifo)
 					{
 						currentValues[0] = rawValue;
 					}
-#if 0 //def _DEBUG
-					if (1329619189 == paramHandle)
-					{
-						auto temp = RawView(rawValue);
-						_RPTN(0, "ProcessorStateMgrVst3::serviceQueue AIP2 = %f\n", (float)temp);
-					}
-#endif
 				}
 				else if (fieldId == gmpi::FieldType::MP_FT_AUTOMATION)
 				{
@@ -728,11 +721,6 @@ DawPreset const* ProcessorStateMgrVst3::getPreset()
 
 	auto preset = currentPreset.load(std::memory_order_relaxed);
 	assert(preset);
-
-#if 0 //def _DEBUG
-	auto temp = RawView(const_cast<DawPreset*>(preset)->params[1329619189].rawValues_[0]);
-	_RPTN(0, "getPreset AIP2 = %f\n", (float) temp);
-#endif
 
 	return preset;
 }
