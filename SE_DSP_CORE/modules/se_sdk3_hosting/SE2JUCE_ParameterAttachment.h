@@ -155,20 +155,21 @@ struct SeParameterAttachmentSlider : SeParameterAttachment
 };
 
 // Attach JUCE button to a GMPI enum or int parameter
+template <typename T = int32_t>
 struct SeParameterAttachmentButton : SeParameterAttachment
 {
     juce::Button& button;
-    int32_t enumVal = -1;
-    int32_t onVal = 1;
-    int32_t offVal = 0;
+    T enumVal = -1;
+    T onVal = 1;
+    T offVal = 0;
 
     SeParameterAttachmentButton(
         IGuiHost2* pcontroller
         , juce::Button& pbutton
         , int32_t pparameterHandle
-        , int32_t penumVal = 1
-        , int32_t poffVal = 0
-        , int32_t ponVal = 1
+        , T penumVal = 1
+        , T poffVal = 0
+        , T ponVal = 1
     )
         : SeParameterAttachment(pcontroller, pparameterHandle)
         , button(pbutton)
@@ -203,7 +204,7 @@ struct SeParameterAttachmentButton : SeParameterAttachment
     {
         if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
         {
-            const auto newVal = RawToValue<int32_t>(data, size);
+            const auto newVal = RawToValue<T>(data, size);
             if (enumVal > -1)
             {
                 // we're assuming switch is wired to an enum parameter as part of a radio-group
@@ -580,7 +581,7 @@ struct HasParameterAttachments
         button.setClickingTogglesState(true);
 
         parameterAttachments.push_back(
-            std::make_unique<SeParameterAttachmentButton>(
+            std::make_unique<SeParameterAttachmentButton<int32_t> >(
                 &controller,
                 button,
                 handle,
