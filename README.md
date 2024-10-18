@@ -45,11 +45,12 @@ Open CMake GUI
 
 Under "where is the source code" enter the location of SE2JUCE_Plugins folder
 
-Under "where to build the binaries" enter something like C:\build_SE2JUCE_Plugins (or anywhere you prefer to put the temporary files created during the build).
+Under "where to build the binaries" enter something like ...\Documents\SE2JUCE_Projects_Build (or anywhere you prefer to put the temporary files created during the build).
 
 Click 'Configure", and choose whatever IDE you prefer. Ignore the error message.
 
-Look for the variables 'JUCE_FOLDER_HERE' and 'SE2JUCE_FOLDER_HERE' . Browse for your actual JUCE folder, and the correct SE2JUCE folder
+Look for the variables 'JUCE_FOLDER_HERE' and 'SE2JUCE_FOLDER_HERE'. Browse for your actual JUCE folder, and the correct SE2JUCE folder
+tick 'JUCE_COPY_PLUGIN_AFTER_BUILD'
 
 click 'generate'
 

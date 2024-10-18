@@ -561,6 +561,10 @@ modules/BoolInverter/BoolInverterGui.cpp
 modules/Converters/ConvertersGui.cpp
 modules/PolyphonyControl/PolyphonyControlGui.h
 
+modules/ControlsXp/ImpulseResponse2.cpp      
+modules/ImpulseResponse/Impulse.cpp      
+modules/Filters/IIR_Filters2.cpp      
+
 )
 endif()
 
