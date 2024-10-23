@@ -8,6 +8,8 @@ JUCE Projects
 * Hide all resources and SEMs inside a single binary file.
 * Can display the GUI you created in SynthEdit, or a custom GUI made with JUCE.
 
+(SynthEdit GUIs are supported on macOS and Windows, but not Linux or IOS)
+
 Note that using SE2JUCE is a complex, advanced proceedure that involves programming in C++ and having an understanding of CMake and JUCE.
 Also SE2JUCE requires you to have access to the source-code of any SEMs you wish to use. This may not be possible in some cases,
  especially with 3rd-party modules. 3rd-party module creators have no obligation to share their source-code.
