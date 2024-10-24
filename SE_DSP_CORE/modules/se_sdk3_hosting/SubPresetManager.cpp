@@ -49,7 +49,7 @@ void SubPresetManager::ScanPresets()
 				preset.name,
 				preset.category,
 				-1,
-				dir_entry.path().filename().wstring(),
+				dir_entry.path().wstring(),
 				0,
 				false,
 				false

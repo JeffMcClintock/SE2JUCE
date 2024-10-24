@@ -186,7 +186,7 @@ void MpController::ScanPresets()
 
 void MpController::UpdatePresetBrowser()
 {
-	// Update preset browser
+	// Update preset browser indirectly by updating teh relevant host-controls
 	for (auto& p : parameters_)
 	{
 		if (p->getHostControl() == HC_PROGRAM_CATEGORIES_LIST || p->getHostControl() == HC_PROGRAM_NAMES_LIST)
@@ -2045,6 +2045,8 @@ void MpController::DeletePreset(int presetIndex)
 #endif
 
 	ScanPresets();
+
+	// update the relevant host-controls
 	UpdatePresetBrowser();
 }
 
