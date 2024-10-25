@@ -13,6 +13,8 @@ void SubPresetManager::init(std::span<const int32_t> params)
 	parametersInfo.clear();
 	for (auto p : parameters_)
 	{
+		assert(controller.parametersInfo.find(p) != controller.parametersInfo.end()); // is this a persistant parameter?
+
 		parametersInfo[p] = controller.parametersInfo[p];
 	}
 
@@ -139,12 +141,17 @@ void SubPresetManager::setPresetIndex(int presetIndex)
 
 	// apply sub-preset to full preset
 	DawPreset fullpreset = *controller.getPreset();
+
 	for (auto& p : subpreset.params)
 	{
-		fullpreset.params[p.first] = p.second;
+		if (fullpreset.params.find(p.first) == fullpreset.params.end())
+			continue;
+
+		_RPTN(0, "%f, %f\n", *(float*)fullpreset.params[p.first].rawValues_[0].data(), *(float*)p.second.rawValues_[0].data());
+		fullpreset.params[p.first].rawValues_ = p.second.rawValues_;
 	}
 
-	controller.setPreset(&fullpreset);
+	controller.setPresetFromSelf(&fullpreset);
 }
 
 std::pair<bool, bool> SubPresetManager::CategorisePresetName(const std::string& newName)

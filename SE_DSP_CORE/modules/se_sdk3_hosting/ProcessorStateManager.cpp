@@ -310,6 +310,9 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 		if (info.hostControl == HC_PROGRAM_NAME || HC_PROGRAM_CATEGORY == info.hostControl)
 			continue;
 
+		assert(!info.defaultRaw.empty()); // these need to be populated.
+
+		// was param missing from preset XML?
 		if (params.find(paramHandle) == params.end())
 		{
 			auto& values = params[paramHandle];
