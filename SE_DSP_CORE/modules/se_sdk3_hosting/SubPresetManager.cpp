@@ -139,6 +139,24 @@ void SubPresetManager::setPresetIndex(int presetIndex)
 
 	DawPreset subpreset(parametersInfo, xml);
 
+	for (auto& p : subpreset.params)
+		controller.setParameterValue(true, p.first, gmpi::MP_FT_GRAB);
+
+	for (auto& p : subpreset.params)
+	{
+		const float val = *(float*)p.second.rawValues_[0].data();
+		controller.setParameterValue(val, p.first);
+
+		_RPTN(0, "%f\n", val);
+	}
+
+	// ensure this is recorded as a single undo transaction. (undo don't work since these are IPC)
+	controller.undoTransanctionStart();
+	for (auto& p : subpreset.params)
+		controller.setParameterValue(false, p.first, gmpi::MP_FT_GRAB);
+	controller.undoTransanctionEnd();
+
+#if 0 // didn't work due to ignore-PC on relevant params
 	// apply sub-preset to full preset
 	DawPreset fullpreset = *controller.getPreset();
 
@@ -152,6 +170,7 @@ void SubPresetManager::setPresetIndex(int presetIndex)
 	}
 
 	controller.setPresetFromSelf(&fullpreset);
+#endif
 }
 
 std::pair<bool, bool> SubPresetManager::CategorisePresetName(const std::string& newName)
