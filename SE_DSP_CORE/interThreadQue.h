@@ -235,14 +235,15 @@ public:
 	virtual void popString( int p_length, const void* p_data ) override;
 	virtual bool isEmpty() override;
 	virtual int readyBytes() override;
+	int totalSpace() override
+	{
+		return fifo_.totalSpace();
+	}
 	int freeSpace() override
 	{
 		return fifo_.freeSpace();
 	}
-	int maxMessageSize()
-	{
-		return fifo_.totalSize();
-	}
+
 	void pollMessage(interThreadQueUser* app);
 #if defined( _DEBUG )
 	virtual bool isUncomitted() override;

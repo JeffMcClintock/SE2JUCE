@@ -9,6 +9,7 @@
 class IWriteableQue
 {
 public:
+	virtual int totalSpace() = 0;
 	virtual int freeSpace() = 0;
 	virtual void pushString( int p_length, const unsigned char* p_data ) = 0;
 	virtual void Send() = 0;
@@ -20,7 +21,11 @@ class WriteableQueSink : public IWriteableQue
     {
         return (std::numeric_limits<int>::max)();
     }
-    void pushString( int /*p_length*/, const unsigned char* /*p_data*/ ) override
+	int totalSpace() override
+	{
+		return (std::numeric_limits<int>::max)();
+	}
+	void pushString( int /*p_length*/, const unsigned char* /*p_data*/ ) override
     {}
     void Send() override
     {}
@@ -232,7 +237,7 @@ public:
 		return freeSpace - 1;
 	}
 
-	int totalSize() const
+	int totalSpace() override
 	{
 		return m_que_size - 1;
 	}

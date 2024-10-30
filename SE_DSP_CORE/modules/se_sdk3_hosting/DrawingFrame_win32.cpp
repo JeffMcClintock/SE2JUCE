@@ -723,38 +723,7 @@ void DrawingFrameBase::OnPaint()
 			graphics.BeginDraw();
 			graphics.SetTransform(viewTransform);
 
-#if 0
-			if (false) // Draw entire update area as one big rect. didn't help
 			{
-				auto r = updateRegion_native.getBoundingRect();
-
-				auto r2 = WindowToDips.TransformRect(GmpiDrawing::Rect(static_cast<float>(r.left), static_cast<float>(r.top), static_cast<float>(r.right), static_cast<float>(r.bottom)));
-
-				// Snap to whole DIPs.
-				GmpiDrawing::Rect temp;
-				/*
-				temp.left = static_cast<float>(FastRealToIntTruncateTowardZero(r2.left));
-				temp.top = static_cast<float>(FastRealToIntTruncateTowardZero(r2.top));
-				temp.right = static_cast<float>(FastRealToIntTruncateTowardZero(r2.right) + 1);
-				temp.bottom = static_cast<float>(FastRealToIntTruncateTowardZero(r2.bottom) + 1);
-				*/
-				// attempt to avoid drawing one extra pixel
-				temp.left = floorf(r2.left);
-				temp.top = floorf(r2.top);
-				temp.right = ceilf(r2.right);
-				temp.bottom = ceilf(r2.bottom);
-
-				//_RPTW4(_CRT_WARN, L"GmpiDrawing::RectL dirtyRect{%4d,%4d,%4d,%4d};\n", (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
-				//_RPTW4(_CRT_WARN, L"GmpiDrawing::Rect dirtyRect{%4d,%4d,%4d,%4d};\n", (int)temp.left, (int)temp.top, (int)temp.right, (int)temp.bottom);
-				graphics.PushAxisAlignedClip(temp);
-
-				gmpi_gui_client->OnRender(static_cast<GmpiDrawing_API::IMpDeviceContext*>(context.get()));
-				graphics.PopAxisAlignedClip();
-			}
-			else
-#endif
-			{
-				// GLITCHES, WITH TEXT OVERDRAWN WITH GARBARGE INSTRUCTURE VIEW
 				// clip and draw each react individually (causes some objects to redraw several times)
 				for (auto& r : dirtyRects)
 				{

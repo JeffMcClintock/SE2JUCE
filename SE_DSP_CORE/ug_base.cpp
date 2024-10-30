@@ -140,30 +140,38 @@ UPlug* ug_base::GetPlug(int p_index)
 }
 #endif
 
-#if 0
 UPlug* ug_base::GetPlugById(int id)
 {
-/* hopefully fixed so SDK2 does store unique-id
-	// on old-style modules, ID = DSPindex, not ACTUAL ID stored in database.
-	// therefore it's pretty useless/misleading. Use Pin index instead.
-	assert( dynamic_cast<ug_plugin3*>(this) != 0 );
-*/
-
-	// useless with autoduplicating.
-	assert( id != -1 );
-
-	for( vector<UPlug*>::iterator it = plugs.begin() ; it != plugs.end() ; ++it )
+	// 99% of the time ID is the same as index.
+	if(id >= 0 && id < plugs.size() && plugs[id]->UniqueId() == id)
 	{
-		UPlug* p = *it;
-		assert( p->Unique Id() != -1 );
+		return plugs[id];
+	}
 
-		if(p->Unique Id() == id )
+	for(auto& p : plugs)
+	{
+		assert( p->UniqueId() != -1 );
+
+		if(p->UniqueId() == id )
 			return p;
 	}
 
-	return 0;
+	// handle awkward SDK3 autoduplicating pins,where ID is relative to first autoduplicating pin.
+	// Note that pins store only index and *original* ID (of the first autoduplicating pin)
+	if (auto& pindesc = getModuleType()->plugs; !pindesc.empty())
+	{
+		if (auto& last = pindesc.rbegin()->second; last->autoDuplicate(0))
+		{
+			const int pinIndex = pindesc.size() + id - last->getPlugDescID(0) - 1;
+			if (pinIndex >= 0 && pinIndex < plugs.size())
+			{
+				return plugs[pinIndex];
+			}
+		}
+	}
+
+	return {};
 }
-#endif
 
 // big problem with dynamic plugs, this code assumes each plug appears
 // in same order as ListInterface() produces

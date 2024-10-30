@@ -1112,20 +1112,10 @@ int32_t MpController::sendSdkMessageToAudio(int32_t handle, int32_t id, int32_t 
 	return gmpi::MP_OK;
 }
 
-#if 0
-// these can't update processor with normal handle-based method becuase their handles are assigned at runtime, only in the controller.
-void MpController::HostControlToDsp(MpParameter* param, int32_t voice)
+void MpController::ParamToDsp(MpParameter* param, int32_t voice)
 {
-	assert(param->getHostControl() >= 0);
+	assert(dynamic_cast<SeParameter_vst3_hostControl*>(param) == nullptr); // These have (not) "unique" handles that may map to totally random DSP parameters.
 
-	my_msg_que_output_stream s(getQueueToDsp(), UniqueSnowflake::APPLICATION, "hstc");
-
-	SerialiseParameterValueToDsp(s, param);
-}
-#endif
-
-void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream, MpParameter* param, int32_t voice)
-{
 	//---send a binary message
 	bool isVariableSize = param->datatype_ == DT_TEXT || param->datatype_ == DT_BLOB;
 
@@ -1143,6 +1133,31 @@ void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream
 		recievingMessageLength += (int)sizeof(int32_t);
 	}
 
+	constexpr int headerSize = sizeof(int32_t) * 2;
+	const int totalMessageLength = recievingMessageLength + headerSize;
+
+	if (totalMessageLength >= getQueueToDsp()->totalSpace())
+	{
+		_RPT0(0, "ERROR: MESSAGE TOO BIG FOR QUEUE\n");
+		return;
+	}
+
+	{
+		int timeout = 20;
+		while (timeout-- > 0 && totalMessageLength > getQueueToDsp()->freeSpace())
+		{
+			this_thread::sleep_for(chrono::milliseconds(20));
+		}
+
+		if (timeout <= 0)
+		{
+			_RPT0(0, "ERROR: TIMOUT WAITING FOR QUEUE\n");
+			return;
+		}
+	}
+
+	my_msg_que_output_stream stream(getQueueToDsp(), param->parameterHandle_, "ppc\0"); // "ppc"
+
 	stream << recievingMessageLength;
 	stream << due_to_program_change;
 
@@ -1159,14 +1174,6 @@ void MpController::SerialiseParameterValueToDsp(my_msg_que_output_stream& stream
 	stream.Write(raw.data(), (unsigned int)raw.size());
 
 	stream.Send();
-}
-
-void MpController::ParamToDsp(MpParameter* param, int32_t voiceId)
-{
-	assert(dynamic_cast<SeParameter_vst3_hostControl*>(param) == nullptr); // These have (not) "unique" handles that may map to totally random DSP parameters.
-
-	my_msg_que_output_stream s(getQueueToDsp(), param->parameterHandle_, "ppc\0"); // "ppc"
-	SerialiseParameterValueToDsp(s, param, voiceId);
 }
 
 void MpController::UpdateProgramCategoriesHc(MpParameter* param)
@@ -1408,7 +1415,7 @@ bool MpController::onQueMessageReady(int recievingHandle, int recievingMessageId
 		}
 		break;
 
-#if defined(_DEBUG) && defined(_WIN32)
+#if defined(_DEBUG) && defined(_WIN32) && 0 // BPM etc spam this
 		default:
 		{
 			const char* msgstr = (const char*)&recievingMessageId;

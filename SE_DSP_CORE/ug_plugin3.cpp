@@ -60,10 +60,14 @@ ug_base* ug_plugin3Base::Clone( CUGLookupList& UGLookupList )
 }
 
 // set an output pin
-int32_t ug_plugin3Base::setPin( int32_t blockRelativeTimestamp, int32_t id, int32_t size, const void* data )
+int32_t ug_plugin3Base::setPin(int32_t blockRelativeTimestamp, int32_t id, int32_t size, const void* data)
 {
-// now using index	if (GetPlugById(id)->Direction != DR_OUT)
-	if (plugs[id]->Direction != DR_OUT)
+	auto pin = GetPlugById(id);
+
+	if(!pin)
+		return gmpi::MP_FAIL;
+
+	if (pin->Direction != DR_OUT)
 	{
 		std::wostringstream oss;
 		oss << L"Error: " << moduleType->GetName() << L" sending data out INPUT pin.";
@@ -83,15 +87,16 @@ int32_t ug_plugin3Base::setPin( int32_t blockRelativeTimestamp, int32_t id, int3
 	timestamp += localBufferOffset_;
 	assert(timestamp == blockRelativeTimestamp + SampleClock()); // function below uses this alternate caluation. Which is it?
 
-//	GetPlugById(id)->Transmit(timestamp, size, data );
-	plugs[id]->Transmit(timestamp, size, data);
+	pin->Transmit(timestamp, size, data);
 	return gmpi::MP_OK;
 }
 
 int32_t ug_plugin3Base::setPinStreaming( int32_t blockRelativeTimestamp, int32_t id, int32_t is_streaming)
 {
-	//auto pin = GetPlugById(id);
-	auto pin = plugs[id];
+	auto pin = GetPlugById(id);
+
+	if (!pin)
+		return gmpi::MP_FAIL;
 
 	if(pin->Direction != DR_OUT)
 	{

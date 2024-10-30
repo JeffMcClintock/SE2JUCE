@@ -1,6 +1,5 @@
 #pragma once
 /*
-#include "FileFinder.h"
 
 	// useage.
 	#include "../shared/FileFinder.h"
