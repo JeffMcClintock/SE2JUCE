@@ -27,6 +27,20 @@ void SubPresetManager::ScanPresets()
 
 	presets.clear();
 
+	std::string presetCategory{ "AI Presets" };
+
+	// blank preset to represet current unsaved preset.
+	presets.push_back(
+		{
+			{},		// name
+			{},		// category
+			-1,		// factory preset
+			{},		// file path
+			0,		// hash
+			false,	// is factory
+			true	// is session
+		});
+
 	std::filesystem::path rootPresetFolder = BundleInfo::instance()->getPresetFolder();
 	std::filesystem::path subPresetFolder = rootPresetFolder / "SubPresets";
 
@@ -45,17 +59,59 @@ void SubPresetManager::ScanPresets()
 			continue;
 
 		DawPreset preset(parametersInfo, xml);
+		
+		// calc the hash omitting the name
+		const auto name = preset.name;
+		preset.name.clear();
+		preset.calcHash();
 
 		presets.push_back(
 			{
-				preset.name,
+				name,
 				preset.category,
 				-1,
 				dir_entry.path().wstring(),
-				0,
+				preset.hash,
 				false,
 				false
 			});
+	}
+
+	syncPresetControls();
+}
+
+DawPreset SubPresetManager::getPreset()
+{
+	DawPreset currentPreset = *controller.getPreset();
+
+	// filter the parameters.
+	{
+		std::map<int32_t, paramValue> params;
+		for (auto p : parameters_)
+		{
+			params[p] = currentPreset.params[p];
+		}
+
+		std::swap(params, currentPreset.params);
+
+		currentPreset.name.clear(); // ignore the name from the main plugin preset.
+		currentPreset.calcHash();
+	}
+
+	return currentPreset;
+}
+
+void SubPresetManager::syncPresetControls()
+{
+	DawPreset currentPreset = getPreset();
+
+	for (int i = 0; i < presets.size(); ++i)
+	{
+		if (presets[i].hash == currentPreset.hash)
+		{
+			currentPresetIndex = i;
+			break;
+		}
 	}
 }
 
@@ -70,21 +126,12 @@ void SubPresetManager::SavePresetAs(const std::string& presetName)
 
 	const auto fullPath = subPresetFolder / (presetName + ".xmlpreset");
 
-	DawPreset preset = *controller.getPreset(presetName);
-
-	// filter the parameters we want to save.
-	std::map<int32_t, paramValue> params;
-	for (auto p : parameters_)
-	{
-		params[p] = preset.params[p];
-	}
-
-	std::swap(params, preset.params);
+	DawPreset currentPreset = getPreset();
 
 	std::ofstream myfile;
 	myfile.open(fullPath);
 
-	myfile << preset.toString(BundleInfo::instance()->getPluginId());
+	myfile << currentPreset.toString(BundleInfo::instance()->getPluginId(), presetName);
 
 	myfile.close();
 

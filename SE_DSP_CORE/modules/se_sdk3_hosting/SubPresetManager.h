@@ -24,22 +24,12 @@ class SubPresetManager : public IPresetsModel
     std::vector<MpController::presetInfo> presets;
     int currentPresetIndex = 0;
     void ScanPresets();
+    DawPreset getPreset();
+    void syncPresetControls();
 
 public:
 	SubPresetManager(MpController& pcontroller) : controller(pcontroller)
     {
-#if 0 //def _DEBUG
-        presets.push_back(
-            {
-            "Sparkly",
-            "Jazz",
-            -1,
-            L"filename",
-            0,
-            true,
-            false
-            });
-#endif
     }
 
     void init(std::span<const int32_t> params);
