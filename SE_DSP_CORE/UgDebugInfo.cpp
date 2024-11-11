@@ -22,8 +22,8 @@ UgDebugInfo::UgDebugInfo(class EventProcessor* module) :
 	m_module( dynamic_cast<ug_base*>( module ) )
 		,cpuMeasuedCycles(0.0f)
 {
-	m_module->cpuMeasuedCycles = 0.0f;
-	m_module->cpuPeakCycles = 0.0f;
+	//m_module->cpuMeasuedCycles = 0.0f;
+	//m_module->cpuPeakCycles = 0.0f;
 
 	if( m_module->CloneOf() == m_module ) // voice zero only
 	{
@@ -184,6 +184,8 @@ void UgDebugInfo::VerfyBlocksEnd( int buffer_offset, int blocksize )
 
 void UgDebugInfo::CpuToGui()
 {
+	_RPTN(0, "     CpuToGui %f\n", cpuMeasuedCycles);
+
 	const float cpu = cpuMeasuedCycles * ug_base::cpu_conversion_const;
 	const float peakCpu = cpuPeak * ug_base::cpu_conversion_const2;
 

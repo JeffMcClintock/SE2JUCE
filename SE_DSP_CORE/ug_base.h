@@ -164,8 +164,8 @@ public:
 	inline void DebugPrintContainer(bool /*withHandle*/ = false) {}
 #endif
 	void VerifyOutputsConsistant();
-	void SumCpu();
-	virtual void OnCpuMeasure() {} // containers and oversamplers only
+	void SumCpu(float cpu_block_rate);
+	virtual void OnCpuMeasure(float /*cpu_block_rate*/) {} // containers and oversamplers only
 	void AttachDebugger();
 	std::wstring DebugModuleName( bool andHandle = false );
 	std::wstring GetFullPath();

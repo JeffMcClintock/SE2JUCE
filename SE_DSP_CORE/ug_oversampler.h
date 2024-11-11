@@ -81,7 +81,7 @@ public:
 	void onFadeOutComplete() override;
 	void SetPPVoiceNumber(int n) override;
 
-	void OnCpuMeasure() override;
+	void OnCpuMeasure(float cpu_block_rate) override;
 
 	int filterSetting()
 	{

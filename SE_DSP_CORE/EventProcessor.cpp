@@ -48,10 +48,10 @@ EventProcessor::EventProcessor() :
 	,flags(static_cast<UgFlags>( 0 ))
 	,sleeping(false)
 
-	// editor only
-	,cpuRunningAverage(0.0f)
-	,cpuRunningMedian(0.0f)
-	,cpuMeasuedCycles(0.0f)
+	//// editor only
+	//,cpuRunningAverage(0.0f)
+	//,cpuRunningMedian(0.0f)
+	//,cpuMeasuedCycles(0.0f)
 {
 }
 
@@ -271,32 +271,38 @@ void EventProcessor::RunDelayed(timestamp_t p_timestamp, ug_func p_function)
 	AddEvent( new_SynthEditEvent( p_timestamp, UET_RUN_FUNCTION2 , 0, i[0], i[1],0 ));
 }
 
-#if defined( LOG_ALL_MODULES_CPU )
-
+// might be called intermittantly on event-processing-modules, so don't assume that there is an even time-step between calls.
 void EventProcessor::UpdateCpu(int64_t nanosecondsElapsed)
 {
-	// New way.
-	float fcpu = (float)nanosecondsElapsed;
+	const float fcpu = (float) nanosecondsElapsed;
+	cpuPeakCycles = (std::max)(cpuPeakCycles, fcpu);
+	cpuCycleTotal += nanosecondsElapsed;
 
+#if 0
 	cpuRunningAverage += (fcpu - cpuRunningAverage) * 0.1f; // rough running average.
 	cpuRunningMedian += copysignf(cpuRunningAverage * 0.005f, fcpu - cpuRunningMedian);
 
 	cpuMeasuedCycles += cpuRunningMedian;
-	cpuPeakCycles = (std::max)(cpuPeakCycles, fcpu);
+#endif
 
-	if (fcpu > 100 && private_sample_clock > 300 )
+	if (1860332243 == m_handle)
+	{
+		_RPTN(0, "fcpu %f\n", fcpu);
+	}
+#if defined( LOG_ALL_MODULES_CPU )
+	if (fcpu > 100 && private_sample_clock > 300)
 	{
 		logFileCsv << private_sample_clock << "," << fcpu << "," << Handle() << ",";
-//		if (fcpu > 400)
+		//		if (fcpu > 400)
 		{
 			std::string debugName = WStringToUtf8(dynamic_cast<ug_base*>(this)->DebugModuleName());
 			logFileCsv << debugName;
 		}
 		logFileCsv << "\n";
 	}
+#endif // LOG_ALL_MODULES_CPU
 }
 
-#endif // LOG_ALL_MODULES_CPU
 
 #if defined( _DEBUG )
 

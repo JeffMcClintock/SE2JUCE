@@ -58,6 +58,6 @@ void ug_midi_device::HandleEvent(SynthEditEvent* e)
 	};
 }
 
-void ug_midi_device::OnMidiData( int size, unsigned char* midi_bytes )
+void ug_midi_device::OnMidiData( int size, unsigned char* /*midi_bytes*/ )
 {
 }

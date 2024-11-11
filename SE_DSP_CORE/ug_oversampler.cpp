@@ -826,7 +826,7 @@ void ug_oversampler::RegisterPatchAutomator( class ug_patch_automator* client )
 	AudioMaster()->RegisterPatchAutomator(client);
 }
 
-void ug_oversampler::OnCpuMeasure()
+void ug_oversampler::OnCpuMeasure(float cpu_block_rate)
 {
 // pointless, already done	SumCpu();
 	CpuFunc();

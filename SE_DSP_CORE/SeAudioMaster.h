@@ -320,6 +320,7 @@ public:
 	// editor only
 	std::list<class UgDebugInfo*> m_debuggers;
 	std::vector<class ug_base*> m_cpu_parents;
+	int cpu_block_rate = 1;
 };
 
 class SeAudioMaster : public EventProcessor, public interThreadQueUser, public AudioMasterBase
@@ -556,7 +557,6 @@ public:
 	bool synth_thread_running;
 	bool synth_thread_started;
 	static int profileBlockSize;
-	int cpu_block_rate = 1;
 	std::atomic<audioMasterState> state = audioMasterState::Stopped;
 
 protected:

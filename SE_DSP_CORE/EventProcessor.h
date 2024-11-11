@@ -214,21 +214,9 @@ public:
 	virtual ~EventProcessor();
 	virtual void Wake();
 
-	void UpdateCpu(int64_t nanosecondsElapsed)
+	void UpdateCpu(int64_t nanosecondsElapsed);
 #if defined( LOG_ALL_MODULES_CPU )
-		;
 	static std::ofstream logFileCsv;
-#else
-	{
-		// New way.
-		float fcpu = (float)nanosecondsElapsed;
-
-		cpuRunningAverage += (fcpu - cpuRunningAverage) * 0.1f; // rough running average.
-		cpuRunningMedian += copysignf(cpuRunningAverage * 0.005f, fcpu - cpuRunningMedian);
-
-		cpuMeasuedCycles += cpuRunningMedian;
-		cpuPeakCycles = (std::max)(cpuPeakCycles, fcpu);
-	}
 #endif
 
 	void DiscardOldPinEvents( int pin_index, int datatype);
@@ -310,10 +298,8 @@ public:
 	int moduleContainerIndex = -1;
 
 	// editor only
-	float cpuRunningAverage;
-	float cpuRunningMedian;
-	float cpuMeasuedCycles;
 	float cpuPeakCycles = 0.0f;
+	float cpuCycleTotal = 0.0f;
 	std::unique_ptr<class UgDebugInfo> m_debugger;
 };
 

@@ -48,9 +48,9 @@ public:
 	void DoVoiceRefresh();
 	bool belongsTo(ug_container * container);
 
-	void OnCpuMeasure() override
+	void OnCpuMeasure(float cpu_block_rate) override
 	{
-		SumCpu();
+		SumCpu(cpu_block_rate);
 	}
 	void SetContainerPolyphonic();
 	void RouteDummyPinToPatchAutomator(UPlug* pin);
