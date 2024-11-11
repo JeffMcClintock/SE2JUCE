@@ -14,9 +14,12 @@
 #include "SynthRuntime.h"
 #include "mp_midi.h"
 
-//==============================================================================
-/**
-*/
+struct paramState
+{
+    float pendingValue;
+	float currentValue;
+};
+
 class SE2JUCE_Processor : public juce::AudioProcessor, public juce::AudioProcessorParameter::Listener, public IShellServices
 {
 protected:
@@ -29,6 +32,11 @@ protected:
 
     SeJuceController controller;
     ProcessorStateMgrVst3 dawStateManager;
+	std::atomic<bool> juceParameters_dirty; // a parameter has changed, needs to be relayed to the processor
+    std::vector<paramState> parameterUpdates;
+    std::vector<int32_t> dawIndexToParameterHandle;
+
+    void setNormalizedUnsafe(int parameterIndex, float daw_normalized);
 
 public:
     //==============================================================================

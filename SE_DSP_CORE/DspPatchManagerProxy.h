@@ -18,6 +18,7 @@ public:
 	void vst_Automation2(timestamp_t p_clock, int p_controller_id, const void* data, int size) override;
 #if defined(SE_TARGET_PLUGIN)
 	void setParameterNormalized( timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) override; // VST3.
+	void setParameterNormalizedDaw(timestamp_t p_clock, int32_t paramHandle, float newValue, int32_t flags) override;
 #endif
 	void setPreset(struct DawPreset const* preset) override;
 	void getPresetState( std::string& chunk, bool saveRestartState) override;

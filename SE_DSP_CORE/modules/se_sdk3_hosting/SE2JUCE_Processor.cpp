@@ -136,9 +136,17 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
 
         addParameter(juceParameter);
         p->setJuceParameter(juceParameter);
+		dawIndexToParameterHandle.push_back(p->parameterHandle_);
 
         juceParameter->addListener(this);
         sequentialIndex++;
+    }
+
+    parameterUpdates.reserve(sequentialIndex);
+    for (auto& p : controller.nativeParameters())
+    {
+		const auto val = p->getDawNormalized();
+        parameterUpdates.push_back({ val,val });
     }
 
     // sync controller preset
@@ -153,6 +161,19 @@ SE2JUCE_Processor::SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttr
 void SE2JUCE_Processor::parameterValueChanged(int parameterIndex, float newValue)
 {
     controller.setParameterNormalizedUnsafe(parameterIndex, newValue);
+	setNormalizedUnsafe(parameterIndex, newValue);
+}
+
+// DAW has changed a parameter, send it ASAP to processor.
+void SE2JUCE_Processor::setNormalizedUnsafe(int dawIndex, float daw_normalized)
+{
+	if (dawIndex < 0 || dawIndex >= parameterUpdates.size())
+	{
+		return;
+	}
+
+    parameterUpdates[dawIndex].pendingValue = daw_normalized;
+	juceParameters_dirty.store(true, std::memory_order_release);
 }
 
 void SE2JUCE_Processor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
@@ -352,6 +373,25 @@ void SE2JUCE_Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     for (const auto msg : midiMessages)
     {
         midiConverter.processMidi({ msg.data, msg.numBytes }, msg.samplePosition);
+    }
+
+    // parameter updates from DAW?
+    if (const auto pdirty = juceParameters_dirty.exchange(false, std::memory_order_relaxed); pdirty)
+	{
+		assert(parameterUpdates.size() == dawIndexToParameterHandle.size());
+
+        int index = 0;
+		for (auto& p : parameterUpdates)
+		{
+			if (p.pendingValue != p.currentValue)
+			{
+				p.currentValue = p.pendingValue;
+				_RPTN(0, "processBlock parameter update: %d %f\n", index, p.pendingValue);
+
+                processor.setParameterNormalizedDaw(0, dawIndexToParameterHandle[index], p.currentValue, 0);
+			}
+            ++index;
+		}
     }
 
     processor.process(

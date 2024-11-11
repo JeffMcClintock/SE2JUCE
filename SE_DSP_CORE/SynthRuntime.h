@@ -87,10 +87,17 @@ public:
 	void ClearDelaysUnsafe();
 	bool NeedsTempo( ){ return usingTempo_; }
 	// For VST process side automation.
+	// uses a parameter 'tag' to identify the parameter. Might not map directly to parameter vstIndex in case of JUCE
+	// because JUCE parameters are forced into strictly sequential indexing.
 	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value, int32_t flags )
 	{
 		assert(generator);
 		generator->setParameterNormalizedDsp( timestamp, paramIndex, value, flags );
+	}
+	void setParameterNormalizedDaw(int timestamp, int32_t paramHandle, float value, int32_t flags)
+	{
+		assert(generator);
+		generator->setParameterNormalizedDaw(timestamp, paramHandle, value, flags);
 	}
 
 	void UpdateTempo( my_VstTimeInfo * ti )

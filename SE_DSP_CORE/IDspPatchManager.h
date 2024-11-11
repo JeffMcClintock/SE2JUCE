@@ -41,7 +41,8 @@ public:
 	virtual void vst_Automation(ug_container* voiceControlContainer, timestamp_t p_clock, int p_controller_id, float p_normalised_value, bool sendToMidiCv = true, bool sendToNonMidiCv = true) = 0;
 	virtual void vst_Automation2(timestamp_t p_clock, int p_controller_id, const void* data, int size) = 0;
 #if defined(SE_TARGET_PLUGIN)
-	virtual	void setParameterNormalized(timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags ) = 0;
+	virtual	void setParameterNormalized(timestamp_t p_clock, int vstParameterIndex, float newValue, int32_t flags) = 0;
+	virtual	void setParameterNormalizedDaw(timestamp_t p_clock, int32_t paramHandle, float newValue, int32_t flags) = 0;
 #endif
 	virtual void setPreset(struct DawPreset const* preset) = 0;
 	virtual void setPresetState( const std::string& chunk, bool overrideIgnoreProgramChange = false) = 0;

@@ -564,6 +564,14 @@ void SeAudioMaster::setParameterNormalizedDsp( int delta, int paramIndex, float 
 
 	Patchmanager_->setParameterNormalized( timestamp, paramIndex, value, flags );
 }
+
+void SeAudioMaster::setParameterNormalizedDaw(int delta, int32_t paramHandle, float value, int32_t flags)
+{
+	timestamp_t timestamp = Patchmanager_->Container()->CalculateOversampledTimestamp(main_container, SampleClock() + delta);
+
+	Patchmanager_->setParameterNormalizedDaw(timestamp, paramHandle, value, flags);
+}
+
 #endif
 
 void SeAudioMaster::setInputSilent(int input, bool isSilent)

@@ -130,10 +130,8 @@ public:
 // SE	bool OnTimer() override
 	void timerCallback() override // JUCE timer
 	{
-		if (juceParameters_dirty.load(std::memory_order_relaxed))
+		if (const auto pdirty = juceParameters_dirty.exchange(false, std::memory_order_relaxed); pdirty)
 		{
-			juceParameters_dirty.store(false, std::memory_order_release);
-
 			for (auto p : tagToParameter)
 			{
 				p->updateFromImmediate();

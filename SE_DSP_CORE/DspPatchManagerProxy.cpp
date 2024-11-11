@@ -83,6 +83,10 @@ void DspPatchManagerProxy::setParameterNormalized( timestamp_t p_clock, int vstP
 {
 	assert(false);
 }
+void DspPatchManagerProxy::setParameterNormalizedDaw(timestamp_t p_clock, int32_t paramHandle, float newValue, int32_t flags)
+{
+	assert(false);
+}
 #endif
 
 void DspPatchManagerProxy::setPreset(struct DawPreset const* /*preset*/)

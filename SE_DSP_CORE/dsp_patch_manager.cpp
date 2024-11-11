@@ -1347,7 +1347,7 @@ dsp_patch_parameter_base* DspPatchManager::GetParameter( int handle )
 		}
 	}
 
-	return 0;
+	return nullptr;
 }
 
 dsp_patch_parameter_base* DspPatchManager::GetParameter( int moduleHandle, int paramIndex )
@@ -1519,7 +1519,16 @@ void DspPatchManager::setParameterNormalized( timestamp_t timestamp, int vstPara
 	if( vstParameterIndex >= 0 && vstParameterIndex < (int) parameterIndexes_.size() && parameterIndexes_[vstParameterIndex] != 0 )
 	{
 		const int VoiceId = 0;
-        parameterIndexes_[vstParameterIndex]->vst_automate(timestamp, VoiceId, newValue, flags); //false);
+        parameterIndexes_[vstParameterIndex]->vst_automate(timestamp, VoiceId, newValue, flags);
+	}
+}
+
+void DspPatchManager::setParameterNormalizedDaw(timestamp_t timestamp, int32_t paramHandle, float newValue, int32_t flags)
+{
+	if (auto param = GetParameter(paramHandle) ; param)
+	{
+		const int VoiceId = 0;
+		param->vst_automate(timestamp, VoiceId, newValue, flags);
 	}
 }
 #endif

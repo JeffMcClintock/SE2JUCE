@@ -350,6 +350,7 @@ public:
 	}
 	void MidiIn( int delta, const unsigned char* MidiMsg, int length );
 	void setParameterNormalizedDsp( int timestamp, int paramIndex, float value, int32_t flags );
+	void setParameterNormalizedDaw(int timestamp, int32_t paramHandle, float value, int32_t flags);
 
 	void getPresetState(std::string& chunk, bool saveRestartState)
     {

@@ -232,8 +232,7 @@ void MpParameterJuce::setNormalizedUnsafe(float daw_normalized)
 // it needs to be relayed to the Controller (and GUI) and to the Processor
 void MpParameterJuce::updateFromImmediate()
 {
-	const auto pdirty = dirty.exchange(false, std::memory_order_relaxed);
-	if (!pdirty)
+	if (const auto pdirty = dirty.exchange(false, std::memory_order_relaxed); !pdirty)
 	{
 		return;
 	}
@@ -243,11 +242,11 @@ void MpParameterJuce::updateFromImmediate()
 	// this will update all GUIs
 	if (setParameterRaw(gmpi::MP_FT_NORMALIZED, sizeof(se_normalized), &se_normalized))
 	{
-		//updateProcessor(gmpi::MP_FT_VALUE, 0);
-
+/* now done in parallel on processor
 		// this will update the processor only, not the DAW.
 		assert(juceController == controller_);
 		controller_->ParamToDsp(this);
+*/
 	}
 }
 
