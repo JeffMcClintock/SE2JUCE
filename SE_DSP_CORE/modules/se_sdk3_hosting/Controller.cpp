@@ -754,11 +754,29 @@ bool UndoManager::canRedo()
 	return undoPosition >= 0 && undoPosition < size() - 1;
 }
 
+bool UndoManager::isPresetModified()
+{
+	if(!canUndo())
+		return false;
+
+#if 0
+	auto as = history[0].second->toString(0);
+	auto bs = history[undoPosition].second->toString(0);
+
+	as = as.substr(0, 200);
+	bs = bs.substr(0, 200);
+	_RPTN(0, "--Orig --\n%s\nhash %d\n", as.c_str(), (int)history[0].second->hash);
+	_RPTN(0, "--head --\n%s\nhash %d\n", bs.c_str(), (int)history[undoPosition].second->hash);
+#endif
+
+	return history[undoPosition].second->hash != history[0].second->hash;
+}
+
 void UndoManager::UpdateGui(MpController* controller)
 {
 	*(controller->getHostParameter(HC_CAN_UNDO)) = canUndo();
 	*(controller->getHostParameter(HC_CAN_REDO)) = canRedo();
-	*(controller->getHostParameter(HC_PROGRAM_MODIFIED)) = canUndo();
+	*(controller->getHostParameter(HC_PROGRAM_MODIFIED)) = isPresetModified();
 }
 
 DawPreset const* UndoManager::push(std::string description, std::unique_ptr<const DawPreset> preset)
@@ -787,10 +805,11 @@ void UndoManager::snapshot(MpController* controller, std::string description)
 
 	const auto couldUndo = canUndo();
 	const auto couldRedo = canRedo();
+	const auto wasModified = isPresetModified();
 
 	push(description, controller->getPreset());
 
-	if(!couldUndo || couldRedo) // enable undo button
+	if(!couldUndo || couldRedo || wasModified != isPresetModified()) // enable undo button
 		UpdateGui(controller);
 
 #ifdef _DEBUG

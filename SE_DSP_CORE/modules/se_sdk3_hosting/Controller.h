@@ -111,6 +111,7 @@ public:
 	void debug();
 	bool canUndo();
 	bool canRedo();
+	bool isPresetModified();
 };
 
 class MpController : public IGuiHost2, public interThreadQueUser, public TimerClient
