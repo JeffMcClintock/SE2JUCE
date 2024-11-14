@@ -652,13 +652,7 @@ void MpController::setParameterValue(RawView value, int32_t parameterHandle, gmp
 				updateGuis(seParameter, gmpi::MP_FT_AUTOMATION);
 			}
 		}
-		/*
-		if( choice == 3 ) // Set via dialog
-		{
-		dlg_assign_controller dlg(getPatchManager(), this, CWnd::GetDesktopWindow());
-		dlg.DoModal();
-		}
-		*/
+
 		// Send MIDI learn message to DSP.
 		//---send a binary message
 		if (cc != 0)
@@ -676,7 +670,7 @@ void MpController::setParameterValue(RawView value, int32_t parameterHandle, gmp
 		{
 			seParameter->updateProcessor(paramField, voice);
 
-			if (seParameter->stateful_ && paramField == gmpi::MP_FT_VALUE)
+			if (seParameter->stateful_ && (paramField == gmpi::MP_FT_VALUE|| paramField == gmpi::MP_FT_NORMALIZED))
 			{
 				if (!seParameter->isGrabbed()) // e.g. momentary button
 				{
