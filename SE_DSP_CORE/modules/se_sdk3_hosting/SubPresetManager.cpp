@@ -122,6 +122,7 @@ void SubPresetManager::SavePresetAs(const std::string& presetName)
 
 	assert(!rootPresetFolder.empty()); // you need to call BundleInfo::initPresetFolder(manufacturer, product) when initializing this plugin.
 
+	std::filesystem::create_directory(rootPresetFolder);
 	std::filesystem::create_directory(subPresetFolder);
 
 	const auto fullPath = subPresetFolder / (presetName + ".xmlpreset");
