@@ -80,6 +80,7 @@ public:
 
 	virtual void updateProcessor(gmpi::FieldType fieldId, int32_t voice) = 0;
 	virtual void updateDawUnsafe(const std::string& rawValue) = 0;
+	virtual void updateDaw() = 0; // when changing preset internally, update all DAW facing parameters. VST3 only I think.
 
 	// VST2 requires an unsafe cache of most recent parameter value from DAW.
 	// Override this method to allow the framework to update the cached value from the plugin side.
@@ -114,6 +115,7 @@ public:
 	virtual RawView getValueRaw(gmpi::FieldType paramField, int32_t voice) override;
 	bool setParameterRaw(gmpi::FieldType paramField, int32_t size, const void * data, int32_t voice = 0) override;
 	void updateFromDsp(int recievingMessageId, class my_input_stream& strm) override;
+	void updateDaw() override {}
 	int getNativeTag() override;
 	virtual bool isPolyPhonic() override {
 		return isPolyphonic_;
