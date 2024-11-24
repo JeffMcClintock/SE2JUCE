@@ -24,22 +24,29 @@ class SubPresetManager : public IPresetsModel
     std::vector<MpController::presetInfo> presets;
     int currentPresetIndex = 0;
     void ScanPresets();
-    DawPreset getPreset();
     void syncPresetControls();
+    DawPreset getPreset();
 
 public:
+    // callback
+	std::function<void()> onPresetChanged = [](){};
+    bool encryptPresets = false;
+
 	SubPresetManager(MpController& pcontroller) : controller(pcontroller)
     {
     }
 
     void init(std::span<const int32_t> params);
 
-	std::function<void()> onPresetChanged = [](){};
+    void exportPreset(int32_t presetTypeId, std::string fullPath);
+    void importPreset(int32_t presetTypeId, std::string fullPath);
 
     // IPresetsModel
     int getPresetCount() override { return static_cast<int>(presets.size()); }
     int getPresetIndex() override { return currentPresetIndex; }
     void setPresetIndex(int) override;
+    void setPreset(std::string xml);
+
     MpController::presetInfo getPresetInfo(int index) override
     {
         if (index < 0 || index >= presets.size())

@@ -101,6 +101,38 @@ DawPreset SubPresetManager::getPreset()
 	return currentPreset;
 }
 
+void SubPresetManager::importPreset(int32_t presetTypeId, std::string fullPath)
+{
+	std::string xml;
+	controller.FileToString(toPlatformString(fullPath), xml);
+
+	if (!xml.empty() && '<' != xml[0])
+	{
+		Scramble(xml); // decrypt
+	}
+
+	setPreset(xml);
+}
+
+void SubPresetManager::exportPreset(int32_t presetTypeId, std::string fullPath)
+{
+	std::filesystem::path path(fullPath);
+	path.replace_extension("optimus");
+
+	DawPreset currentPreset = getPreset();
+	auto presetXml = currentPreset.toString(presetTypeId, path.stem().string());
+
+	if (encryptPresets)
+	{
+		Scramble(presetXml); // encrypt
+	}
+
+	std::ofstream myfile;
+	myfile.open(path.c_str());
+
+	myfile << presetXml;
+}
+
 void SubPresetManager::syncPresetControls()
 {
 	DawPreset currentPreset = getPreset();
@@ -180,8 +212,13 @@ void SubPresetManager::setPresetIndex(int presetIndex)
 
 	// load sub-preset from file.
 	std::string xml;
-    controller.FileToString(toPlatformString(presets[presetIndex].filename), xml);
+	controller.FileToString(toPlatformString(presets[presetIndex].filename), xml);
 
+	setPreset(xml);
+}
+
+void SubPresetManager::setPreset(std::string xml)
+{
 	if (xml.empty())
 		return;
 
