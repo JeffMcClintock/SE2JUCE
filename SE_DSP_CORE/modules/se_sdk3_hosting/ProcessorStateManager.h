@@ -46,7 +46,7 @@ struct DawPreset
 	DawPreset(const DawPreset& other);
 	DawPreset() {}
 
-	std::string toString(int32_t pluginId, std::string presetNameOverride = {}) const;
+	std::string toString(int32_t pluginId, std::string presetNameOverride = {}, int withVersion = -1) const;
 	void calcHash();
 	bool empty() const
 	{

@@ -335,7 +335,7 @@ void DawPreset::initFromXML(const std::map<int32_t, paramInfo>& parametersInfo, 
 	calcHash();
 }
 
-std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride) const
+std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride, int withVersion) const
 {
 	TiXmlDocument doc;
 	TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "", "");
@@ -343,6 +343,11 @@ std::string DawPreset::toString(int32_t pluginId, std::string presetNameOverride
 
 	auto element = new TiXmlElement("Preset");
 	doc.LinkEndChild(element);
+
+	if (withVersion > 0)
+	{
+		element->SetAttribute("version", withVersion);
+	}
 
 	{
 		char txt[20];
@@ -416,6 +421,7 @@ void ProcessorStateMgr::setPresetFromUnownedPtr(DawPreset const* preset)
 	setPreset(retainPreset(new DawPreset(*preset)));
 }
 
+#if 0
 // A missed preset happens when the Processor starts for the first time, and needs to action a preset that was set earlier (often it's the initial preset).
 // assume preset is already owned by this, so no need to retain it.
 void ProcessorStateMgr::setMissedPreset(DawPreset const* preset)
@@ -423,6 +429,7 @@ void ProcessorStateMgr::setMissedPreset(DawPreset const* preset)
 	// set the preset without modifying it's IPC flag. Since it may have been several seconds since the preset was set from the DAW, it's possible that the IPC flag has expired.
 	callback(preset);
 }
+#endif
 
 ProcessorStateMgrVst3::ProcessorStateMgrVst3() :
 	messageQueFromProcessor(SeAudioMaster::AUDIO_MESSAGE_QUE_SIZE),
