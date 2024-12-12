@@ -290,11 +290,14 @@ void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 #endif
 
 	// Some DAWs can set the state before prepareToPlay is called. (and therefore before the generator is available to accept the preset).
-    // Bring processor up-to-date with state of controller.
+    // Bring processor up-to-date with state.
     {
-        controller.timerCallback();
-        auto preset = controller.getPreset();
-        dawStateManager.setPresetFromUnownedPtr(preset.get());
+        //controller.timerCallback();
+        //auto preset = controller.getPreset();
+        //dawStateManager.setPresetFromUnownedPtr(preset.get());
+
+        auto preset = dawStateManager.getPreset();
+        processor.setPresetUnsafe(preset);
     }
 }
 
