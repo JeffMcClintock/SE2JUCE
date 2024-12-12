@@ -1913,8 +1913,8 @@ void MpController::syncPresetControls(DawPreset const* preset)
 			auto unmodifiedPreset = std::make_unique<DawPreset>(parametersInfo, newXml);
 			undoManager.initial(this, std::move(unmodifiedPreset));
 
-			undoManager.snapshot(this, "Load Session Preset");
-			setModified(true);
+//			undoManager.snapshot(this, "Load Session Preset");
+//			setModified(true);
 		}
 		else
 		{
