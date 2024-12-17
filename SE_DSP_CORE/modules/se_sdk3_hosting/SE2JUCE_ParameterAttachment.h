@@ -20,18 +20,18 @@ struct SeParameterAttachment : gmpi::IMpParameterObserver
         parameterHandle(pparameterHandle)
         , controller(pcontroller)
     {
-        controller->RegisterGui2(this);
+//        controller->RegisterGui2(this);
     }
 
     virtual ~SeParameterAttachment()
     {
-        controller->UnRegisterGui2(this);
+//        controller->UnRegisterGui2(this);
     }
 
-    void Init(gmpi::FieldType FieldId = gmpi::MP_FT_VALUE)
-    {
-        controller->initializeGui(this, parameterHandle, FieldId);
-    }
+//    void Init(gmpi::FieldType FieldId = gmpi::MP_FT_VALUE)
+//    {
+//        controller->initializeGui(this, parameterHandle, FieldId);
+//    }
 
     GMPI_QUERYINTERFACE1(gmpi::MP_IID_PARAMETER_OBSERVER, gmpi::IMpParameterObserver);
     GMPI_REFCOUNT;
@@ -55,7 +55,7 @@ struct SeParameterAttachment2 : SeParameterAttachment
     // gmpi::IMpParameterObserver
     int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
-        if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId)
+        if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId)
         {
             onChanged(data, size);
         }
@@ -96,7 +96,7 @@ struct SeParameterAttachment3 : SeParameterAttachment
     // gmpi::IMpParameterObserver
     int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
-        if (parameterHandle == pparameterHandle)
+//        if (parameterHandle == pparameterHandle)
         {
             RawView raw(data, size);
 
@@ -145,7 +145,7 @@ struct SeParameterAttachmentSlider : SeParameterAttachment
     // gmpi::IMpParameterObserver
     int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
-        if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(float))
+        if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(float))
         {
             slider.setValue(RawToValue<float>(data, size));
         }
@@ -200,9 +200,9 @@ struct SeParameterAttachmentButton : SeParameterAttachment
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
-        if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
+        if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
         {
             const auto newVal = RawToValue<T>(data, size);
             if (enumVal > -1)
@@ -261,7 +261,7 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
     // gmpi::IMpParameterObserver
     int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
-        if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
+        if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
         {
             const auto newVal = RawToValue<bool>(data, size);
 
@@ -327,7 +327,6 @@ struct SeParameterAttachmentMeter : SeParameterAttachment
 struct SeParameterAttachmentButtonDisabler : SeParameterAttachment
 {
     std::function<void(bool)> callback;
-    //juce::Button& button;
     int32_t paramEnableHandle = -1;
     bool isMastering = false;
     bool shouldEnable = false;
@@ -378,7 +377,7 @@ struct SeParameterAttachmentButtonDisabler2 : SeParameterAttachment
         if (gmpi::MP_FT_VALUE != fieldId)
             return gmpi::MP_OK;
 
-        if (pparameterHandle == parameterHandle && size == sizeof(bool))
+        if (/*pparameterHandle == parameterHandle &&*/ size == sizeof(bool))
         {
             const auto enable = RawToValue<bool>(data, size);
             button.setEnabled(enable);
@@ -464,7 +463,7 @@ struct ButtonStateManager : SeParameterAttachment, public juce::MouseListener
     // gmpi::IMpParameterObserver
     int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
-        if (parameterHandle == pparameterHandle && gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
+        if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
         {
             if (enumVal > -1)
             {
@@ -529,17 +528,28 @@ struct Pin
     }
 };
 
-struct HasParameterAttachments
+struct HasParameterAttachments : gmpi::IMpParameterObserver
 {
-    class IGuiHost2& controller;
-    std::vector< std::unique_ptr<struct SeParameterAttachment> > parameterAttachments;
+private:
+	std::unordered_map<int32_t, std::vector< std::unique_ptr<SeParameterAttachment> > > parameterAttachments;
 
-    HasParameterAttachments(IGuiHost2& controller) : controller(controller) {}
+public:
+    class IGuiHost2& controller;
+
+    HasParameterAttachments(IGuiHost2& controller) : controller(controller)
+    {
+        controller.RegisterGui2(this);
+    }
+    
+    ~HasParameterAttachments()
+    {
+        controller.UnRegisterGui2(this);
+    }
 
     template<typename T>
     void attach(Pin<T>& pin, int32_t handle)
     {
-        parameterAttachments.push_back(std::make_unique<SeParameterAttachment3<T> >(
+        parameterAttachments[handle].push_back(std::make_unique<SeParameterAttachment3<T> >(
             &controller, handle,
             [&pin](T value) -> void {
                 pin.setValue(value);
@@ -553,7 +563,7 @@ struct HasParameterAttachments
         const auto maxreal = (float)controller.getParameterValue(handle, gmpi::MP_FT_RANGE_HI);
         slider.setRange((std::min)(minreal, maxreal), (std::max)(minreal, maxreal));
 
-        parameterAttachments.push_back(
+        parameterAttachments[handle].push_back(
             std::make_unique<SeParameterAttachmentSlider>(
                 &controller,
                 slider,
@@ -565,7 +575,7 @@ struct HasParameterAttachments
     // on/off button
     void attach(juce::Button& button, int32_t handle, bool isInverted = false)
     {
-        parameterAttachments.push_back(
+        parameterAttachments[handle].push_back(
             std::make_unique<SeParameterAttachmentBoolButton>(
                 &controller,
                 button,
@@ -580,7 +590,7 @@ struct HasParameterAttachments
     {
         button.setClickingTogglesState(true);
 
-        parameterAttachments.push_back(
+        parameterAttachments[handle].push_back(
             std::make_unique<SeParameterAttachmentButton<int32_t> >(
                 &controller,
                 button,
@@ -606,12 +616,36 @@ struct HasParameterAttachments
             attach(button, handle, e->value);
         }
     }
+
+	void addAttachment(std::unique_ptr<SeParameterAttachment> attachment)
+	{
+		parameterAttachments[attachment->parameterHandle].push_back(std::move(attachment));
+	}
+
     void initAttachments()
     {
         for (auto& param : parameterAttachments)
         {
-            controller.initializeGui(param.get(), param->parameterHandle, gmpi::MP_FT_NORMALIZED);
-            controller.initializeGui(param.get(), param->parameterHandle, gmpi::MP_FT_VALUE);
+			auto handle = param.first;
+            controller.initializeGui(this, handle, gmpi::MP_FT_NORMALIZED);
+            controller.initializeGui(this, handle, gmpi::MP_FT_VALUE);
         }
     }
+
+    // IMpParameterObserver
+    int32_t MP_STDCALL setParameter(int32_t parameterHandle, int32_t fieldId, int32_t voice, const void* data, int32_t size) override
+    {
+        if (auto it = parameterAttachments.find(parameterHandle); it != parameterAttachments.end())
+        {
+            for (auto& attachment : it->second)
+            {
+                attachment->setParameter(parameterHandle, fieldId, voice, data, size);
+            }
+        }
+
+		return gmpi::MP_OK;
+    }
+
+    GMPI_QUERYINTERFACE1(gmpi::MP_IID_PARAMETER_OBSERVER, gmpi::IMpParameterObserver);
+    GMPI_REFCOUNT;
 };

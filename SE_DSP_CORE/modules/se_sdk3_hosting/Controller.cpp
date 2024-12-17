@@ -1300,8 +1300,14 @@ MpParameter* MpController::createHostParameter(int32_t hostControl)
 
 	// generate unique parameter handle, assume all other parameters already registered.
 	p->parameterHandle_ = 0;
-	if (!ParameterHandleIndex.empty())
-		p->parameterHandle_ = ParameterHandleIndex.rbegin()->first + 1;
+
+	auto& it = max_element(ParameterHandleIndex.begin(), ParameterHandleIndex.end(),
+		[](const auto& i, const auto& j) {
+			return i.first < j.first;
+		});
+
+	if(it != ParameterHandleIndex.end())
+		p->parameterHandle_ = it->first + 1;
 
 	ParameterHandleIndex.insert(std::make_pair(p->parameterHandle_, p));
 	parameters_.push_back(std::unique_ptr<MpParameter>(p));
