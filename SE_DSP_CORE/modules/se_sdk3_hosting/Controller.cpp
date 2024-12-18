@@ -1653,16 +1653,12 @@ std::unique_ptr<const DawPreset> MpController::getPreset(std::string presetNameO
 			const auto raw = p->getValueRaw(gmpi::MP_FT_VALUE, voice);
 			values.rawValues_.push_back({ (char* const)raw.data(), raw.size() });
 
-#if 0
-	// MIDI learn.
-			if (parameter->MidiAutomation != -1)
+			// MIDI learn.
+			if (p->MidiAutomation != -1)
 			{
-				paramElement->SetAttribute("MIDI", parameter->MidiAutomation);
-
-				if (!parameter->MidiAutomationSysex.empty())
-					paramElement->SetAttribute("MIDI_SYSEX", WStringToUtf8(parameter->MidiAutomationSysex));
+				values.MidiAutomation = p->MidiAutomation;			// "MIDI"
+				values.MidiAutomationSysex = p->MidiAutomationSysex;// "MIDI_SYSEX"
 			}
-#endif
 		}
 	}
 

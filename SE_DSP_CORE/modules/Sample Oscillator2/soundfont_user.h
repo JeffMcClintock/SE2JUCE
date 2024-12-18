@@ -179,8 +179,8 @@ public:
 	activePartialListType partials;
 protected:
 
-	float* interpolation_table2;
-	int m_status;
+	float* interpolation_table2 = {};
+	int m_status = 0;
 	int sampleHandle = -1;
 
 	activeZoneListType playingZonesTemp; // here only to avoid reallocating it on the real-time thread

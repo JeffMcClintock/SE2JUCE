@@ -879,26 +879,30 @@ void DrawingFrameBase::CreateDevice()
 	ComPtr<ID3D11Device> D3D11Device;
 	
 	HRESULT r = DXGI_ERROR_UNSUPPORTED;
-#if 1 // Disable for D2D software-renderer.
-	do {
-	r = D3D11CreateDevice(nullptr,
-		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
-		flags,
-		d3dLevels, sizeof(d3dLevels) / sizeof(d3dLevels[0]),
-		D3D11_SDK_VERSION,
-		D3D11Device.GetAddressOf(),
-		&currentDxFeatureLevel,
-		nullptr);
 
-		CLEAR_BITS(flags, D3D11_CREATE_DEVICE_DEBUG);
+	// Disable D2D, use software-renderer.
+	if (!m_disable_gpu)
+	{
+		do {
+			r = D3D11CreateDevice(nullptr,
+				D3D_DRIVER_TYPE_HARDWARE,
+				nullptr,
+				flags,
+				d3dLevels, sizeof(d3dLevels) / sizeof(d3dLevels[0]),
+				D3D11_SDK_VERSION,
+				D3D11Device.GetAddressOf(),
+				&currentDxFeatureLevel,
+				nullptr);
 
-	} while (r == 0x887a002d); // The application requested an operation that depends on an SDK component that is missing or mismatched. (no DEBUG LAYER).
+			CLEAR_BITS(flags, D3D11_CREATE_DEVICE_DEBUG);
 
-#endif
+		} while (r == 0x887a002d); // The application requested an operation that depends on an SDK component that is missing or mismatched. (no DEBUG LAYER).
+	}
+
 	if (DXGI_ERROR_UNSUPPORTED == r)
 	{
-		r = D3D11CreateDevice(nullptr,
+		do {
+			r = D3D11CreateDevice(nullptr,
 			D3D_DRIVER_TYPE_WARP,
 			nullptr,
 			flags,
@@ -907,6 +911,10 @@ void DrawingFrameBase::CreateDevice()
 			D3D11Device.GetAddressOf(),
 			&currentDxFeatureLevel,
 			nullptr);
+
+			CLEAR_BITS(flags, D3D11_CREATE_DEVICE_DEBUG);
+
+		} while (r == 0x887a002d); // The application requested an operation that depends on an SDK component that is missing or mismatched. (no DEBUG LAYER).
 	}
 
 	// query for the device object’s IDXGIDevice interface
@@ -921,12 +929,14 @@ void DrawingFrameBase::CreateDevice()
 	ComPtr<IDXGIOutput> currentOutput;
 	adapter->EnumOutputs(0, &currentOutput);
 
-	ComPtr<IDXGIOutput6> output6;
-	currentOutput.As(&output6);
+	if (currentOutput)
+	{
+		ComPtr<IDXGIOutput6> output6;
+		currentOutput.As(&output6);
 
-	DXGI_OUTPUT_DESC1 desc1; // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 (standard  sRGB or SDR displays with Advanced Color capabilities) (0). bits 8
-	output6->GetDesc1(&desc1);
-
+		DXGI_OUTPUT_DESC1 desc1; // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 (standard  sRGB or SDR displays with Advanced Color capabilities) (0). bits 8
+		output6->GetDesc1(&desc1);
+	}
 #endif
 
 	// adapter’s parent object is the DXGI factory
@@ -974,6 +984,7 @@ void DrawingFrameBase::CreateDevice()
 			assuming the underlying Device does as well.
 	*/
 
+	// https://learn.microsoft.com/en-us/windows/win32/direct3darticles/high-dynamic-range
 	const DXGI_FORMAT bestFormat = DXGI_FORMAT_R16G16B16A16_FLOAT; // Proper gamma-correct blending.
 	const DXGI_FORMAT fallbackFormat = DXGI_FORMAT_B8G8R8A8_UNORM; // shitty linear blending.
 
@@ -988,7 +999,7 @@ void DrawingFrameBase::CreateDevice()
 			DX_support_sRGB &= ((driverSrgbSupport & srgbflags) == srgbflags);
 		}
 
-		/* Surfeace Studio returns only L1
+		/* Surface Studio returns only L1
 		D3D11_FEATURE_DATA_D3D11_OPTIONS1 Options1{};
 		hr = D3D11Device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS1, &Options1, sizeof(Options1));
 		if (SUCCEEDED(hr))
@@ -1053,18 +1064,25 @@ void DrawingFrameBase::CreateDevice()
 
 	DrawingFactory.setSrgbSupport(DX_support_sRGB);
 
-	/* Channel9 HDR support
-	get IDXGISwapChain4 interface
-	sc->SetColorSpace1(DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709)
-	*/
-#ifdef _DEBUG
+#if 0
+	// By default, a swap chain created with a floating point pixel format is treated as if it uses the
+	// DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709 color space.
+	// That's the same pixel format and color space used by the DWM.
 
+	// from D2d Advanced Color Images sample: https://learn.microsoft.com/en-us/samples/microsoft/windows-universal-samples/d2dadvancedcolorimages/
 	ComPtr<IDXGISwapChain3> advancedSwapChain;
 	m_swapChain->QueryInterface(advancedSwapChain.ReleaseAndGetAddressOf());
-	UINT colorSpaceSupport = 0;
-	if (advancedSwapChain)
+	if (DX_support_sRGB && advancedSwapChain)
 	{
-		advancedSwapChain->CheckColorSpaceSupport(DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, &colorSpaceSupport);
+		constexpr auto colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709; // linear sRGB
+		UINT colorSpaceSupport = 0;
+		advancedSwapChain->CheckColorSpaceSupport(colorSpace, &colorSpaceSupport);
+
+		if ((colorSpaceSupport & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) == DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT)
+		{
+			// Set the swap chain's color space.
+			auto resd = advancedSwapChain->SetColorSpace1(colorSpace);
+		}
 	}
 #endif
 

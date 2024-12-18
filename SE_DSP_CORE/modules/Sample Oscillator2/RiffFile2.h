@@ -38,18 +38,18 @@ public:
 			,addr(ad)
 			,count_addr(ca)
 			,item_size(size)
-			, padMemoryAllocationBytes(padding)
+			,padMemoryAllocationBytes(padding)
+			,fccType(MAKEFOURCC(fct[0], fct[1], fct[2], fct[3]))
+			,ckid(MAKEFOURCC(cid[0], cid[1], cid[2], cid[3]))
 			{
-				fccType = MAKEFOURCC(fct[0], fct[1], fct[2], fct[3]);
-				ckid	= MAKEFOURCC(cid[0], cid[1], cid[2], cid[3]);
 			};
 
 		std::string	name;
-		uint32_t	fccType;
-		uint32_t	ckid;
-		char **	addr;
-		uint32_t* count_addr;	// *int in which to store item count
-		int		item_size;
+		uint32_t	fccType = 0;
+		uint32_t	ckid = 0;
+		char** addr = {};
+		uint32_t* count_addr = {};	// *int in which to store item count
+		int		item_size = 0;
 		int padMemoryAllocationBytes = 0; // add extra blank data before and after for safety.
 	};
 
@@ -61,8 +61,8 @@ public:
 private:
 	bool Open2(uint32_t& riff_type);
 	gmpi::IProtectedFile2* fileHandle;
-	int32_t filePos;
+	int32_t filePos = 0;
 	std::vector<riff_match> rec_chunks;
 	int level; //current indent level
-	MMCKINFO_SE cnk[30];
+	MMCKINFO_SE cnk[30] = {};
 };

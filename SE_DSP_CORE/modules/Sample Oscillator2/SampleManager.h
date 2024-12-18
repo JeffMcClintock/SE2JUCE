@@ -6,11 +6,11 @@
 
 struct sample_info
 {
-	int handle;
+	int handle = 0;
 	std::wstring filename;
-	int bank;
-	int patch;
-	SoundfontPatch* patchData;
+	int bank = 0;
+	int patch = 0;
+	SoundfontPatch* patchData = {};
 };
 
 typedef std::map<int , sample_info*> soundfontContainer_t;

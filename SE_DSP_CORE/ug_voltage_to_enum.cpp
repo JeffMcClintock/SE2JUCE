@@ -259,7 +259,8 @@ ug_base* ug_int_to_enum::Clone(CUGLookupList& UGLookupList)
 	ug_int_to_enum* clone = dynamic_cast<ug_int_to_enum*>(ug_base::Clone(UGLookupList));
 
 	clone->m_enum_list = m_enum_list;
-
+    clone->setupWasCalled = setupWasCalled;
+    
 	return clone;
 }
 

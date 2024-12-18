@@ -21,6 +21,7 @@ consume memory, same when changing patch (each patch currently treated as new so
 SoundfontOscillator2::SoundfontOscillator2( IMpUnknown* host ) : MpBase( host )
 ,trigger_state( false )
 ,gate_state( false )
+,current_osc_func((SubProcess_ptr)&SoundfontOscillator2::sub_process_silence)
 {
 	// Register pins.
 	initializePin( 0, pinSampleId );

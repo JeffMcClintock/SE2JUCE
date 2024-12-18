@@ -244,6 +244,8 @@ int MidiPlayer2::loadMidiFile()
 	tracks = 0;
 	ppqn = 0;
 	counter = 0;
+	delete[] buffer;
+	buffer = {};
 
 	NotesOff( blockPosition() );
 
@@ -262,7 +264,6 @@ int MidiPlayer2::loadMidiFile()
 	auto file = host.openUri(fullFilename);
 	const int64_t file_size = file.size();
 	
-	delete [] buffer;
 	buffer = new unsigned char[file_size + 2];
 	file.read( (char*) buffer, file_size );
 
@@ -276,7 +277,7 @@ int MidiPlayer2::loadMidiFile()
 		message( ERROR_MESSAGE_2);
 		return 1;
 	}
-
+	
 	// This is a Standard MIDI File, so get header details
 	MIDIHeaderChunk* head = (MIDIHeaderChunk*)g_pointer;
 	format = head->GetFormat();

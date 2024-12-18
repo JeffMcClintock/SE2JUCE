@@ -182,28 +182,26 @@ public:
 private:
 	int reference_count;
 
-	unsigned int count_imod;
-	unsigned int count_ibag;
-	unsigned int count_inst;
-	unsigned int count_pgen;
-	unsigned int count_pbag;
-	unsigned int count_pmod;
-	unsigned int count_phdr;
-	unsigned int count_shdr;
-	unsigned int count_smpl;
-	unsigned int count_igen;
-	sfModList		* chunk_pmod;
-	sfInstBag		* chunk_ibag;
-	sfInst			* chunk_inst;
-	sfGenList		* chunk_pgen;
-	sfModList		* chunk_imod;
-	sfPresetBag		* chunk_pbag;
-	WORD			* chunk_smpl;
-	sfSample		* chunk_shdr;
-	sfPresetHeader	* chunk_phdr;
-	sfInstGenList	* chunk_igen;
-
-//	std::wstring filename_;
+	unsigned int count_imod = 0;
+	unsigned int count_ibag = 0;
+	unsigned int count_inst = 0;
+	unsigned int count_pgen = 0;
+	unsigned int count_pbag = 0;
+	unsigned int count_pmod = 0;
+	unsigned int count_phdr = 0;
+	unsigned int count_shdr = 0;
+	unsigned int count_smpl = 0;
+	unsigned int count_igen = 0;
+	sfModList		* chunk_pmod = {};
+	sfInstBag		* chunk_ibag = {};
+	sfInst			* chunk_inst = {};
+	sfGenList		* chunk_pgen = {};
+	sfModList		* chunk_imod = {};
+	sfPresetBag		* chunk_pbag = {};
+	WORD			* chunk_smpl = {};
+	sfSample		* chunk_shdr = {};
+	sfPresetHeader	* chunk_phdr = {};
+	sfInstGenList	* chunk_igen = {};
 };
 
 struct sf_chan_info

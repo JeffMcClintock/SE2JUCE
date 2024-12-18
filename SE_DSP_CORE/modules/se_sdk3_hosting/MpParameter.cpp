@@ -76,14 +76,12 @@ bool MpParameter_base::setParameterRaw(gmpi::FieldType paramField, int32_t size,
 		}
 		case DT_INT:
 		{
-// -ves fail			newRawValue = ToRaw4((int32_t)(0.5 + realWorld));
-			newRawValue = ToRaw4((int32_t) FastRealToIntFloor(0.5 + realWorld));
+			newRawValue = ToRaw4((int32_t)std::round(realWorld));
 			break;
 		}
 		case DT_INT64:
 		{
-			// -ves fail			newRawValue = ToRaw4((int64_t)(0.5 + realWorld));
-			newRawValue = ToRaw4((int64_t)FastRealToIntFloor(0.5 + realWorld));
+			newRawValue = ToRaw4((int64_t)std::round(realWorld));
 			break;
 		}
 		case DT_BOOL:

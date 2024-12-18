@@ -422,4 +422,15 @@ private:
 };
 
 typedef MetaData_ranged<float> MetaData_float;
-typedef MetaData_ranged<int> MetaData_int;
+
+struct MetaData_int : public MetaData_ranged<int32_t>
+{
+	bool ValueFromNormalised(float p_normalised, int32_t& returnValue, bool applyDawAjustment)
+	{
+		const auto normalised = adjustNormalisedForDaw(p_normalised, applyDawAjustment);
+
+		returnValue = getRangeLo() + static_cast<int32_t>(std::round(normalised * static_cast<float>(getRangeHi() - getRangeLo())));
+
+		return true;
+	}
+};
