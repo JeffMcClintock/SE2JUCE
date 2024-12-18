@@ -1301,7 +1301,7 @@ MpParameter* MpController::createHostParameter(int32_t hostControl)
 	// generate unique parameter handle, assume all other parameters already registered.
 	p->parameterHandle_ = 0;
 
-	auto& it = max_element(ParameterHandleIndex.begin(), ParameterHandleIndex.end(),
+	auto it = max_element(ParameterHandleIndex.begin(), ParameterHandleIndex.end(),
 		[](const auto& i, const auto& j) {
 			return i.first < j.first;
 		});
