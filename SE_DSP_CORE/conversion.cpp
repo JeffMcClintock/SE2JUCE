@@ -3,6 +3,7 @@
 #include <string>
 // Fix for <sstream> on Mac (sstream uses undefined int_64t)
 #include "./modules/se_sdk3/mp_api.h"
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <math.h>
@@ -1062,6 +1063,24 @@ CArchive& AFXAPI operator<<(CArchive& ar, std::string& pOb)
 std::string WStringToUtf8(const std::wstring& p_cstring )
 {
 	return JmUnicodeConversions::WStringToUtf8(p_cstring);
+}
+
+void FileToString(const platform_string& path, std::string& buffer)
+{
+	// fast file read.
+	std::ifstream t(path, std::ifstream::in | std::ifstream::binary);
+	t.seekg(0, std::ios::end);
+	const size_t size = t.tellg();
+	if (t.fail())
+	{
+		buffer.clear();
+	}
+	else
+	{
+		buffer.resize(size);
+		t.seekg(0);
+		t.read((char*)buffer.data(), buffer.size());
+	}
 }
 
 // Works only if user has permissions.

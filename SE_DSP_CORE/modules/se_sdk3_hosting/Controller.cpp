@@ -489,51 +489,6 @@ std::vector< MpController::presetInfo > MpController::scanNativePresets()
 	return scanPresetFolder(PresetFolder, extension);
 }
 
-void MpController::FileToString(const platform_string& path, std::string& buffer)
-{
-#if 0
-	FILE* fp = fopen(path.c_str(), "rb");
-
-	if(fp != NULL)
-	{
-		/* Go to the end of the file. */
-		if(fseek(fp, 0L, SEEK_END) == 0) {
-			/* Get the size of the file. */
-			auto bufsize = ftell(fp);
-			if(bufsize == -1) { /* Error */ }
-
-			/* Allocate our buffer to that size. */
-			buffer.resize(bufsize);
-
-			/* Go back to the start of the file. */
-			if(fseek(fp, 0L, SEEK_SET) == 0) { /* Error */ }
-
-			/* Read the entire file into memory. */
-			size_t newLen = fread((void*)buffer.data(), sizeof(char), bufsize, fp);
-			if(newLen == 0) {
-				fputs("Error reading file", stderr);
-			}
-		}
-		fclose(fp);
-	}
-#else
-	// fast file read.
-	std::ifstream t(path, std::ifstream::in | std::ifstream::binary);
-	t.seekg(0, std::ios::end);
-	const size_t size = t.tellg();
-	if (t.fail())
-	{
-		buffer.clear();
-	}
-	else
-	{
-		buffer.resize(size);
-		t.seekg(0);
-		t.read((char*)buffer.data(), buffer.size());
-	}
-#endif
-}
-
 MpController::presetInfo MpController::parsePreset(const std::wstring& filename, const std::string& xml)
 {
 	// file name overrides the name from XML

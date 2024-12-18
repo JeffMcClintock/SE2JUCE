@@ -119,6 +119,8 @@ inline std::string combine_path_and_file(const std::string& p_path, const std::s
 	return combine_path_and_file_imp<std::string>(p_path, p_file);
 }
 
+void FileToString(const platform_string& path, std::string& buffer);
+
 int SampleToMs( timestamp_t s, int sample_rate);
 timestamp_t msToSamples( int ms , int sample_rate);
 

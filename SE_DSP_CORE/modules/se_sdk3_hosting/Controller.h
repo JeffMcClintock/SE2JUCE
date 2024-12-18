@@ -238,7 +238,6 @@ public:
 		return presets[index];
 	}
 	bool isPresetModified();
-	void FileToString(const platform_string& path, std::string& buffer);
 
 	MpController::presetInfo parsePreset(const std::wstring& filename, const std::string& xml);
 	std::vector< MpController::presetInfo > scanNativePresets();
