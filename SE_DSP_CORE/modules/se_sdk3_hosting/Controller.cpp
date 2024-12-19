@@ -23,6 +23,10 @@
 #include "PresetReader.h"
 #include "./ProcessorStateManager.h"
 
+#ifdef _DEBUG
+// #define DEBUG_UNDO
+#endif
+
 using namespace std;
 
 MpController::~MpController()
@@ -658,7 +662,7 @@ void MpController::setParameterValue(RawView value, int32_t parameterHandle, gmp
 
 void UndoManager::debug()
 {
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "\n======UNDO=======\n");
 	for (int i = 0 ; i < size() ; ++i)
 	{
@@ -674,7 +678,7 @@ void UndoManager::setPreset(MpController* controller, DawPreset const* preset)
 {
 	controller->setPresetFromSelf(preset);
 
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "UndoManager::setPreset\n");
 	debug();
 #endif
@@ -687,7 +691,7 @@ void UndoManager::initial(MpController* controller, std::unique_ptr<const DawPre
 
 	UpdateGui(controller);
 
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "UndoManager::initial (2)\n");
 	debug();
 #endif
@@ -739,7 +743,7 @@ DawPreset const* UndoManager::push(std::string description, std::unique_ptr<cons
 	undoPosition = size();
 	history.push_back({ description, std::move(preset) });
 
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "UndoManager::push\n");
 	debug();
 #endif
@@ -761,7 +765,7 @@ void UndoManager::snapshot(MpController* controller, std::string description)
 	if(!couldUndo || couldRedo || wasModified != isPresetModified()) // enable undo button
 		UpdateGui(controller);
 
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "UndoManager::snapshot\n");
 	debug();
 #endif
@@ -785,7 +789,7 @@ void UndoManager::undo(MpController* controller)
 
 	UpdateGui(controller);
 
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "UndoManager::undo\n");
 	debug();
 #endif
@@ -809,7 +813,7 @@ void UndoManager::redo(MpController* controller)
 
 	UpdateGui(controller);
 
-#ifdef _DEBUG
+#ifdef DEBUG_UNDO
 	_RPT0(0, "UndoManager::redo\n");
 	debug();
 #endif
