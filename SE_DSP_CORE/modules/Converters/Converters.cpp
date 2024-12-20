@@ -281,3 +281,30 @@ public:
 };
 
 REGISTER_PLUGIN2(StringConcat, L"SE StringConcat");
+
+class BlobSize final : public MpBase2
+{
+	BlobInPin pinValueIn;
+	IntOutPin pinValueOut;
+
+public:
+	BlobSize()
+	{
+		initializePin(pinValueIn);
+		initializePin(pinValueOut);
+	}
+
+	void onSetPins() override
+	{
+		// Check which pins are updated.
+		if (pinValueIn.isUpdated())
+		{
+			pinValueOut = static_cast<int32_t>(pinValueIn.getValue().getSize());
+		}
+	}
+};
+
+namespace
+{
+	auto r = gmpi::Register<BlobSize>::withId(L"SE BlobSize");
+}

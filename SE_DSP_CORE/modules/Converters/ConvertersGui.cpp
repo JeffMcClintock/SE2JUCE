@@ -87,3 +87,26 @@ namespace
 {
 	auto r = Register<PasswordHideGui>::withId(L"SE Password Hide");
 }
+
+class BlobSizeGui final : public SeGuiInvisibleBase
+{
+	void onSetValueIn()
+	{
+		pinValueOut = static_cast<int32_t>(pinValueIn.getValue().getSize());
+	}
+
+	BlobGuiPin pinValueIn;
+	IntGuiPin pinValueOut;
+
+public:
+	BlobSizeGui()
+	{
+		initializePin(pinValueIn, static_cast<MpGuiBaseMemberPtr2>(&BlobSizeGui::onSetValueIn));
+		initializePin(pinValueOut);
+	}
+};
+
+namespace
+{
+	auto r2 = gmpi::Register<BlobSizeGui>::withId(L"SE BlobSize GUI");
+}
