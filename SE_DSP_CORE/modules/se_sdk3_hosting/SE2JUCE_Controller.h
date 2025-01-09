@@ -94,7 +94,7 @@ public:
 
 		// SE Timer suffers under JUCE, becomes very unresponsive.
 //		StartTimer(35); // SE. approx 30Hz
-		startTimerHz(24); // JUCE. 
+		startTimerHz(30); // JUCE. 
 	}
 
 	void OnStartupTimerExpired() override;
