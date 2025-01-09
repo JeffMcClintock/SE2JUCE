@@ -201,45 +201,45 @@ std::string ParseToRaw( int datatype, const std::string& s )
 	case DT_FSAMPLE:
 	case DT_FLOAT:
 		result.resize( sizeof( float ) );
-		*(float*) ( &result[0] ) = (float) strtod( s.c_str(), 0 );
+		*(float*) (result.data()) = (float) strtod( s.c_str(), 0 );
 		break;
 
 	case DT_DOUBLE:
 		result.resize( sizeof( double ) );
-		*(double*) ( &result[0] ) = strtod( s.c_str(), 0 );
+		*(double*) (result.data()) = strtod( s.c_str(), 0 );
 		break;
 
 	case DT_ENUM:
 		result.resize( sizeof( short ) );
-		*(short*) ( &result[0] ) = (short) strtol( s.c_str(), 0, 10 );
+		*(short*) (result.data()) = (short) strtol( s.c_str(), 0, 10 );
 		break;
 
 	case DT_INT:
 		result.resize( sizeof( int32_t ) );
-		*(int32_t*) ( &result[0] ) = strtol( s.c_str(), 0, 10 );
+		*(int32_t*) (result.data()) = strtol( s.c_str(), 0, 10 );
 		break;
 
 	case DT_INT64:
 		result.resize(sizeof(int64_t));
-		*(int64_t*)(&result[0]) = strtoll(s.c_str(), 0, 10);
+		*(int64_t*)(result.data()) = strtoll(s.c_str(), 0, 10);
 		break;
 
 	case DT_TEXT:
 		{
-			std::wstring wide = Utf8ToWstring( s );
+			const std::wstring wide = Utf8ToWstring( s );
 			result.resize( sizeof(wchar_t) * wide.size() );
-			memcpy( &result[0], wide.data(), result.size() );
+			memcpy(result.data(), wide.data(), result.size());
 		}
 		break;
 
 	case DT_STRING_UTF8:
 		result.resize( s.size() );
-		memcpy( &result[0], s.data(), result.size() );
+		memcpy(result.data(), s.data(), result.size() );
 		break;
 
 	case DT_BOOL:
 		result.resize( sizeof( bool ) );
-		*(bool*) ( &result[0] ) = 0 != strtol( s.c_str(), 0, 10 );
+		*(bool*) (result.data()) = 0 != strtol( s.c_str(), 0, 10 );
 		break;
 
 	case DT_BLOB:
