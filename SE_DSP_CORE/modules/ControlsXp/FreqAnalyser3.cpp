@@ -17,6 +17,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "mp_sdk_audio.h"
 #include "../shared/real_fft.h"
 
+SE_DECLARE_INIT_STATIC_FILE(FreqAnalyser3)
+
 using namespace gmpi;
 
 class FreqAnalyser3 final : public MpBase2

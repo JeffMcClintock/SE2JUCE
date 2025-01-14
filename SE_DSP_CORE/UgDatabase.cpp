@@ -2386,6 +2386,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
     INIT_STATIC_FILE(ButterworthBP2);
 	INIT_STATIC_FILE(Converters);
 	INIT_STATIC_FILE(FreqAnalyser2);
+	INIT_STATIC_FILE(FreqAnalyser3);
 	INIT_STATIC_FILE(IdeLogger);
 	INIT_STATIC_FILE(ImpulseResponse);
 	INIT_STATIC_FILE(ImpulseResponse2);
