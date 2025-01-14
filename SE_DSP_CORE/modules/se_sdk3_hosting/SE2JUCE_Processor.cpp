@@ -399,7 +399,7 @@ void SE2JUCE_Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
 			if (p.pendingValue != p.currentValue)
 			{
 				p.currentValue = p.pendingValue;
-				_RPTN(0, "processBlock parameter update: %d %f\n", index, p.pendingValue);
+//				_RPTN(0, "processBlock parameter update: %d %f\n", index, p.pendingValue);
 
                 processor.setParameterNormalizedDaw(0, dawIndexToParameterHandle[index], p.currentValue, 0);
 			}

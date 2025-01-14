@@ -2,6 +2,8 @@
 #include "./DspFilters/Butterworth.h"
 #include "../shared/FilterBase.h"
 
+// These filters, esp Butterworth BP2 exibit low level noise/DC due to obsolete denormal removal via ac() function in MathSupplement.h
+// 
 // TODO checkout newer version of filters: https://github.com/berndporr/iir1
 
 

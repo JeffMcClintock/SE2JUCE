@@ -52,6 +52,13 @@ public:
 		value = v;
 	}
 
+	// conversion back to types.
+	template <typename T>
+	explicit operator T() const { assert(size() == sizeof(T));  return *reinterpret_cast<const T*>(data()); }
+
+	explicit operator std::string() const { std::string r(reinterpret_cast<const char*>(data()), size()); return r; }
+	explicit operator std::wstring() const { std::wstring r(reinterpret_cast<const wchar_t*>(data()), size() / sizeof(wchar_t)); return r; }
+
 	RawData& assign(const char* data, size_t size)
 	{
 		value.assign(data, size);

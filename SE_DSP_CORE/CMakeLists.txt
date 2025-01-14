@@ -421,6 +421,8 @@ modules/shared/expression_evaluate.cpp
 
 modules/EnvelopeAdsr/envelope.cpp
 modules/EnvelopeAdsr/Adsr.cpp
+modules/ControlsXp/FreqAnalyser.cpp
+modules/ControlsXp/FreqAnalyser3.cpp
 modules/ControlsXp/ListEntry.cpp
 modules/ControlsXp/Scope3.cpp
 modules/Converters/FloatScaler2Gui.cpp
@@ -467,7 +469,6 @@ modules/BPMClock3/BpmTempo.cpp
 modules/Filters/ButterworthLp.cpp
 modules/Converters/Converters.cpp
 modules/Converters/BlobToBlob2.cpp
-modules/ControlsXp/FreqAnalyser.cpp
 modules/ImpulseResponse/ImpulseResponse.cpp
 modules/Increment3/Increment3Gui.cpp
 modules/Inverter/Inverter.cpp

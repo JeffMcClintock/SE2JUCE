@@ -15,6 +15,7 @@ using namespace gmpi;
 using namespace GmpiDrawing;
 
 GMPI_REGISTER_GUI(MP_SUB_TYPE_GUI2, FreqAnalyserGui, L"SE Freq Analyser2");
+GMPI_REGISTER_GUI(MP_SUB_TYPE_GUI2, FreqAnalyserGui, L"SE Freq Analyser3");
 SE_DECLARE_INIT_STATIC_FILE(FreqAnalyser2_Gui);
 
 FreqAnalyserGui::FreqAnalyserGui()

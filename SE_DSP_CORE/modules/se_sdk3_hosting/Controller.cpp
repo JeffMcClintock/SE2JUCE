@@ -1447,6 +1447,11 @@ void MpController::OnStartupTimerExpired()
 	}
 }
 
+bool MpController::ignoreProgramChangeActive() const
+{
+	return startupTimerCounter <= 0 && BundleInfo::instance()->getPluginInfo().emulateIgnorePC;
+}
+
 int32_t MpController::resolveFilename(const wchar_t* shortFilename, int32_t maxChars, wchar_t* returnFullFilename)
 {
 	// copied from CSynthEditAppBase.
