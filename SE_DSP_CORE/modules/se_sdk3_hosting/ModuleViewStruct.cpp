@@ -31,6 +31,29 @@ using namespace std;
 using namespace GmpiDrawing_API;
 using namespace GmpiDrawing;
 
+inline PathGeometry DataToGraph(Graphics& g, const std::vector<Point>& inData)
+{
+	auto geometry = g.GetFactory().CreatePathGeometry();
+	auto sink = geometry.Open();
+	bool first = true;
+	for (const auto& p : inData)
+	{
+		if (first)
+		{
+			sink.BeginFigure(p);
+			first = false;
+		}
+		else
+		{
+			sink.AddLine(p);
+		}
+	}
+
+	sink.EndFigure(FigureEnd::Open);
+	sink.Close();
+
+	return geometry;
+}
 
 namespace SynthEdit2
 {

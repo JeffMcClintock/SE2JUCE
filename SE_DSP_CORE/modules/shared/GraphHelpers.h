@@ -1,4 +1,5 @@
 
+#pragma once
 /* Copyright (c) 2007-2021 SynthEdit Ltd
 * All rights reserved.
 *
@@ -29,12 +30,10 @@
 #include "../shared/GraphHelpers.h"
 */
 
-#include "Drawing.h"
 #include <vector>
+#include "Drawing.h"
 
-using namespace GmpiDrawing;
-
-inline void SimplifyGraph(const std::vector<Point>& in, std::vector<Point>& out)
+inline void SimplifyGraph(const std::vector<GmpiDrawing::Point>& in, std::vector<GmpiDrawing::Point>& out)
 {
 	if (in.size() < 2)
 	{
@@ -80,26 +79,3 @@ inline void SimplifyGraph(const std::vector<Point>& in, std::vector<Point>& out)
         out.push_back(in.back());
 }
 
-inline PathGeometry DataToGraph(Graphics& g, const std::vector<Point>& inData)
-{
-	auto geometry = g.GetFactory().CreatePathGeometry();
-	auto sink = geometry.Open();
-	bool first = true;
-	for (const auto& p : inData)
-	{
-		if (first)
-		{
-			sink.BeginFigure(p);
-			first = false;
-		}
-		else
-		{
-			sink.AddLine(p);
-		}
-	}
-
-	sink.EndFigure(FigureEnd::Open);
-	sink.Close();
-
-	return geometry;
-}

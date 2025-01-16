@@ -423,6 +423,8 @@ modules/EnvelopeAdsr/envelope.cpp
 modules/EnvelopeAdsr/Adsr.cpp
 modules/ControlsXp/FreqAnalyser.cpp
 modules/ControlsXp/FreqAnalyser3.cpp
+modules/ControlsXp/SpectrumAnalyserBase.h
+modules/ControlsXp/SpectrumAnalyserBase.cpp
 modules/ControlsXp/ListEntry.cpp
 modules/ControlsXp/Scope3.cpp
 modules/Converters/FloatScaler2Gui.cpp
