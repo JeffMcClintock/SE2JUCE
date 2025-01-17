@@ -25,7 +25,7 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 			if (distance >= bin_per_pixel)
 			{
-				_RPTN(0, "bin_per_pixel %d: %d\n", (int)bin_per_pixel, i);
+				// _RPTN(0, "bin_per_pixel %d: %d\n", (int)bin_per_pixel, i);
 				if (bin_per_pixel == 1)
 				{
 					smoothedZoneHigh = i;
@@ -110,7 +110,6 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 	// calc the leftmost cubic-smoothed section
 	float x = 0.0f; // lmargin;
-	constexpr int audioGraphDensity = 1;
 	int i = 0;
 	for (; i < smoothedZoneHigh; i++)
 	{
@@ -137,36 +136,8 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 		graphValues.push_back({ x, y });
 
-		x += audioGraphDensity;
+		x += pixelToBinDx;
 	}
-
-#if 0
-	for (; i < pixelToBin.size() - 3; i++)
-	{
-		const auto& [index
-			, fraction
-#ifdef _DEBUG
-			, hz
-#endif
-		] = pixelToBin[i];
-
-		assert(index >= 0);
-		assert(index + 2 < dbs.size());
-
-		assert(dbUsed[index] && dbUsed[index + 1]);
-
-		const auto& y0 = dbs[index + 0];
-		const auto& y1 = dbs[index + 1];
-
-		const auto db = y0 + (y1 - y0) * fraction;
-		//		const auto y = -db * dbScaler;
-		const auto y = (db - displayDbTop) * dbScaler;
-
-		graphValues.push_back({ x, y });
-
-		x += audioGraphDensity;
-	}
-#else
 
 	// calc the 2-point interpolated section
 	for (; i < linearZoneHigh; i++)
@@ -191,17 +162,16 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 		graphValues.push_back({ x, y });
 
-		x += audioGraphDensity;
+		x += pixelToBinDx;
 	}
 
 	// calc the 'max' section where we just take the maximum value of several bins.
 	{
-		int bin = pixelToBin[i - 1].index;
-
+		auto fromBin = (pixelToBin[i - 1].index + pixelToBin[i].index) / 2;
 		for (; i < pixelToBin.size() - 3; i += chunkyness)
 		{
-			const auto toBin = pixelToBin[i].index;
-			const float maximumAmp = *std::max_element(capturedata + bin, capturedata + toBin);
+			const auto toBin = (pixelToBin[i].index + pixelToBin[i + 1].index) / 2;
+			const float maximumAmp = *std::max_element(capturedata + fromBin, capturedata + toBin);
 
 			float db;
 			if (maximumAmp <= safeMinAmp)
@@ -215,19 +185,18 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 				assert(!isnan(db));
 			}
 
-			assert(dbUsed[bin]);
-			dbs[bin] = (std::max)(db, dbs[bin]);
+			const auto& dbBin = pixelToBin[i].index;
+			assert(dbUsed[dbBin]);
+			dbs[dbBin] = (std::max)(db, dbs[dbBin]);
 
-			const auto y = (dbs[bin] - displayDbTop) * dbScaler;
+			const auto y = (dbs[dbBin] - displayDbTop) * dbScaler;
 
 			graphValues.push_back({ x, y });
 
-			x += audioGraphDensity * chunkyness;
-			bin = toBin;
+			x += pixelToBinDx * chunkyness;
+			fromBin = toBin;
 		}
 	}
-
-#endif
 
 	// PEAK HOLD
 	if (peakHoldValues.size() != graphValues.size())

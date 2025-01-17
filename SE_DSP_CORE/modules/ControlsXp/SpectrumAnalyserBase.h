@@ -21,6 +21,7 @@ struct SpectrumAnalyserBase
 	};
 
 	std::vector< binData > pixelToBin;
+	float pixelToBinDx = 2.0f; // x increment for each entry in pixelToBin.
 	std::vector<float> rawSpectrum;
 	float sampleRateFft = 0;
 	std::vector<GmpiDrawing::Point> graphValues;
