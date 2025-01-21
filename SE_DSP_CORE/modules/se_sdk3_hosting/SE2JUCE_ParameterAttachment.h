@@ -11,6 +11,13 @@
 #include "SE2JUCE_ParameterAttachment.h"
 */
 
+#ifdef _DEBUG
+namespace SeParameters
+{
+    const char* getParameterName(int32_t param);
+}
+#endif
+
 struct SeParameterAttachment : gmpi::IMpParameterObserver
 {
     int32_t parameterHandle = -1;
@@ -639,6 +646,9 @@ public:
         {
             for (auto& attachment : it->second)
             {
+#if 0 def _DEBUG
+                _RPTN(0, "setParameter: %d %s\n", parameterHandle, SeParameters::getParameterName(parameterHandle));
+#endif
                 attachment->setParameter(parameterHandle, fieldId, voice, data, size);
             }
         }
