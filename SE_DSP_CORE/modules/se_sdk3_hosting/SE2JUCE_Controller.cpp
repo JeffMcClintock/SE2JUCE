@@ -304,7 +304,17 @@ void SeJuceController::ParamToDsp(MpParameter* param, int32_t voiceId)
 		const auto rawValue = param->getValueRaw(field, voiceId);
 		const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
 
-		my_msg_que_output_stream strm(ControllerToStateMgrQue(), param->parameterHandle_, "ppc");
+		auto& queue = *ControllerToStateMgrQue();
+
+		if (messageSize > queue.freeSpace())
+		{
+			// queue full. drop message.
+			// _RPTN(0, "ControllerToStateMgrQue: QUEUE FULL!!! (%d bytes message)\n", size);
+			assert(false);
+			return;
+		}
+
+		my_msg_que_output_stream strm(&queue, param->parameterHandle_, "ppc");
 		strm << messageSize;
 		strm << voiceId;
 		strm << field;

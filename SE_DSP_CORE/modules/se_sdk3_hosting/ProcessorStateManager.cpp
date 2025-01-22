@@ -461,6 +461,14 @@ void ProcessorStateMgrVst3::QueueParameterUpdate(lock_free_fifo* fifo, int32_t p
 
 	const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
 
+	if (messageSize > fifo->freeSpace())
+	{
+		// queue full. drop message.
+		_RPTN(0, "PSM: QueueParameterUpdate: QUEUE FULL!!! (%d bytes message)\n", messageSize);
+		assert(false);
+		return;
+	}
+
 	my_msg_que_output_stream strm(fifo, paramHandle, "ppc");
 	strm << messageSize;
 	strm << voiceId;

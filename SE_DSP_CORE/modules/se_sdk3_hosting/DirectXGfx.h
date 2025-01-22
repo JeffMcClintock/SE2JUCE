@@ -12,10 +12,114 @@
 
 // #define LOG_DIRECTX_CALLS
 
+#define ENABLE_HDR_SUPPORT 0
+
 namespace gmpi
 {
 	namespace directx
 	{
+		// Helper for managing lifetime of Direct2D interface pointers
+		template<class wrappedObjT>
+		class ComWrapper
+		{
+			mutable wrappedObjT* obj = {};
+
+		public:
+			ComWrapper() {}
+
+			explicit ComWrapper(wrappedObjT* newobj)
+			{
+				Assign(newobj);
+			}
+			ComWrapper(const ComWrapper<wrappedObjT>& value)
+			{
+				Assign(value.obj);
+			}
+			// Attach object without incrementing ref count. For objects created with new.
+			void Attach(wrappedObjT* newobj)
+			{
+				wrappedObjT* old = obj;
+				obj = newobj;
+
+				if (old)
+				{
+					old->Release();
+				}
+			}
+
+			~ComWrapper()
+			{
+				if (obj)
+				{
+					obj->Release();
+				}
+			}
+			inline operator wrappedObjT* ()
+			{
+				return obj;
+			}
+			const wrappedObjT* operator=(wrappedObjT* value)
+			{
+				Assign(value);
+				return value;
+			}
+			ComWrapper<wrappedObjT>& operator=(ComWrapper<wrappedObjT>& value)
+			{
+				Assign(value.get());
+				return *this;
+			}
+			bool operator==(const wrappedObjT* other) const
+			{
+				return obj == other;
+			}
+			bool operator==(const ComWrapper<wrappedObjT>& other) const
+			{
+				return obj == other.obj;
+			}
+			wrappedObjT* operator->() const
+			{
+				return obj;
+			}
+
+			wrappedObjT*& get()
+			{
+				return obj;
+			}
+
+			wrappedObjT** getAddressOf()
+			{
+				assert(obj == 0); // Free it before you re-use it!
+				return &obj;
+			}
+			wrappedObjT** put()
+			{
+				if (obj)
+				{
+					obj->Release();
+					obj = {};
+				}
+
+				return &obj;
+			}
+
+			bool isNull() const
+			{
+				return obj == nullptr;
+			}
+
+		private:
+			// Attach object and increment ref count.
+			inline void Assign(wrappedObjT* newobj)
+			{
+				Attach(newobj);
+				if (newobj)
+				{
+					newobj->AddRef();
+				}
+			}
+		};
+
+
 		inline void SafeRelease(IUnknown* object)
 		{
 			if (object)
@@ -85,8 +189,19 @@ namespace gmpi
 
 		class SolidColorBrush final : /* Simulated: public GmpiDrawing_API::IMpSolidColorBrush,*/ public Brush
 		{
+#if	ENABLE_HDR_SUPPORT
+			float whiteMult = 1.0f;
+#endif
 		public:
-			SolidColorBrush(ID2D1SolidColorBrush* b, GmpiDrawing_API::IMpFactory *factory) : Brush(b, factory) {}
+			SolidColorBrush(ID2D1SolidColorBrush* b, GmpiDrawing_API::IMpFactory *factory
+#if	ENABLE_HDR_SUPPORT
+				, float pwhiteMult
+#endif
+			) : Brush(b, factory)
+#if	ENABLE_HDR_SUPPORT
+				, whiteMult(pwhiteMult)
+#endif
+			{}
 
 			inline ID2D1SolidColorBrush* nativeSolidColorBrush()
 			{
@@ -97,17 +212,43 @@ namespace gmpi
 			virtual void MP_STDCALL SetColor(const GmpiDrawing_API::MP1_COLOR* color) // simulated: override
 			{
 //				D2D1::ConvertColorSpace(D2D1::ColorF*) color);
-				nativeSolidColorBrush()->SetColor((D2D1::ColorF*) color);
+#if	ENABLE_HDR_SUPPORT
+				const D2D1_COLOR_F c
+				{
+					color->r * whiteMult,
+					color->g * whiteMult,
+					color->b * whiteMult,
+					color->a
+				};
+#else
+				const D2D1_COLOR_F c
+				{
+					color->r,
+					color->g,
+					color->b,
+					color->a
+				};
+#endif
+
+				nativeSolidColorBrush()->SetColor(c);
 			}
 			virtual GmpiDrawing_API::MP1_COLOR MP_STDCALL GetColor() // simulated:  override
 			{
 				auto b = nativeSolidColorBrush()->GetColor();
-				//		return GmpiDrawing::Color(b.r, b.g, b.b, b.a);
+
+#if	ENABLE_HDR_SUPPORT
+				GmpiDrawing_API::MP1_COLOR c;
+				c.a = b.a;
+				c.r = b.r / whiteMult;
+				c.g = b.g / whiteMult;
+				c.b = b.b / whiteMult;
+#else
 				GmpiDrawing_API::MP1_COLOR c;
 				c.a = b.a;
 				c.r = b.r;
 				c.g = b.g;
 				c.b = b.b;
+#endif
 				return c;
 			}
 
@@ -665,6 +806,9 @@ namespace gmpi
 			ID2D1Bitmap* nativeBitmap_;
 			ID2D1DeviceContext* nativeContext_;
 			IWICBitmap* diBitmap_ = {};
+#if	ENABLE_HDR_SUPPORT
+			gmpi::directx::ComWrapper<ID2D1Bitmap1> nativeBitmap_HDR_;
+#endif
 			class Factory* factory;
 #ifdef _DEBUG
 			std::string debugFilename;
@@ -979,6 +1123,14 @@ namespace gmpi
 		public:
 			static std::wstring_convert<std::codecvt_utf8<wchar_t>> stringConverter; // cached, as constructor is super-slow.
 
+#if	ENABLE_HDR_SUPPORT
+			float whiteMult = 1.0f;
+			bool isHdr() const
+			{
+				return whiteMult != 1.0f;
+			}
+#endif
+
 			// for diagnostics only.
 			auto getDirectWriteFactory()
 			{
@@ -1030,8 +1182,6 @@ namespace gmpi
 					gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> wrapper;
 					wrapper.Attach(new StrokeStyle(b, this));
 
-//					auto wrapper = gmpi_sdk::make_shared_ptr<StrokeStyle>(b, this);
-
 					return wrapper->queryInterface(GmpiDrawing_API::SE_IID_STROKESTYLE_MPGUI, reinterpret_cast<void**>(returnValue));
 				}
 
@@ -1066,10 +1216,15 @@ namespace gmpi
 			Factory* factory;
 			std::vector<GmpiDrawing_API::MP1_RECT> clipRectStack;
 			std::wstring_convert<std::codecvt_utf8<wchar_t>>* stringConverter; // cached, as constructor is super-slow.
-
+#if	ENABLE_HDR_SUPPORT
+			float whiteMult = 1.0f; // cached for speed.
+#endif
 			void Init()
 			{
 				stringConverter = &(factory->stringConverter);
+#if	ENABLE_HDR_SUPPORT
+				whiteMult = factory->whiteMult;
+#endif
 			}
 
 		public:
@@ -1092,6 +1247,13 @@ namespace gmpi
 			{
 				context_->Release();
 			}
+
+#if	ENABLE_HDR_SUPPORT
+			bool isHdr() const
+			{
+				return factory->isHdr();
+			}
+#endif
 
 			ID2D1DeviceContext* native()
 			{
@@ -1121,7 +1283,24 @@ namespace gmpi
 				_RPT0(_CRT_WARN, "context_->Clear(c);\n");
 				_RPT0(_CRT_WARN, "}\n");
 #endif
-				context_->Clear((D2D1_COLOR_F*)clearColor);
+#if	ENABLE_HDR_SUPPORT
+				const D2D1_COLOR_F c
+				{
+					clearColor->r * whiteMult,
+					clearColor->g * whiteMult,
+					clearColor->b * whiteMult,
+					clearColor->a
+				};
+#else
+				const D2D1_COLOR_F c
+				{
+					clearColor->r,
+					clearColor->g,
+					clearColor->b,
+					clearColor->a
+				};
+#endif
+				context_->Clear(&c);
 			}
 
 			void MP_STDCALL DrawLine(GmpiDrawing_API::MP1_POINT point0, GmpiDrawing_API::MP1_POINT point1, const GmpiDrawing_API::IMpBrush* brush, float strokeWidth, const GmpiDrawing_API::IMpStrokeStyle* strokeStyle) override

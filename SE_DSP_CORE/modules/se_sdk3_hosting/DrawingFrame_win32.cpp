@@ -867,6 +867,9 @@ void DrawingFrameBase::CreateDevice()
 	// Comment out first to test lower versions.
 	D3D_FEATURE_LEVEL d3dLevels[] = 
 	{
+#if	ENABLE_HDR_SUPPORT
+		D3D_FEATURE_LEVEL_11_1,
+#endif
 		D3D_FEATURE_LEVEL_11_0,
 		D3D_FEATURE_LEVEL_10_1,
 		D3D_FEATURE_LEVEL_10_0,
@@ -880,9 +883,7 @@ void DrawingFrameBase::CreateDevice()
 	
 	HRESULT r = DXGI_ERROR_UNSUPPORTED;
 
-	// Disable D2D, use software-renderer.
-	if (!m_disable_gpu)
-	{
+	// Create Hardware device.
 		do {
 			r = D3D11CreateDevice(nullptr,
 				D3D_DRIVER_TYPE_HARDWARE,
@@ -897,8 +898,147 @@ void DrawingFrameBase::CreateDevice()
 			CLEAR_BITS(flags, D3D11_CREATE_DEVICE_DEBUG);
 
 		} while (r == 0x887a002d); // The application requested an operation that depends on an SDK component that is missing or mismatched. (no DEBUG LAYER).
+	bool DX_support_sRGB;
+	{
+		/* !! only good for detecting Windows 7 !!
+		Applications not manifested for Windows 8.1 or Windows 10 will return the Windows 8 OS version value (6.2).
+		Once an application is manifested for a given operating system version,
+		GetVersionEx will always return the version that the application is manifested for
+		*/
+		OSVERSIONINFO osvi;
+		memset(&osvi, 0, sizeof(osvi));
+
+		osvi.dwOSVersionInfoSize = sizeof(osvi);
+		GetVersionEx(&osvi);
+
+		DX_support_sRGB =
+			((osvi.dwMajorVersion > 6) ||
+				((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion > 1))); // Win7 = V6.1
 	}
 
+	// Support for HDR displays.
+#if	ENABLE_HDR_SUPPORT
+	float whiteMult{ 1.0f };
+#endif
+	{
+		// query for the device object’s IDXGIDevice interface
+		ComPtr<IDXGIDevice> dxdevice;
+		D3D11Device.As(&dxdevice);
+
+		// Retrieve the display adapter
+		ComPtr<IDXGIAdapter> adapter;
+		dxdevice->GetAdapter(adapter.GetAddressOf());
+
+		UINT i = 0;
+		ComPtr<IDXGIOutput> currentOutput;
+		ComPtr<IDXGIOutput> bestOutput;
+		int bestIntersectArea = -1;
+
+		// get bounds of window having handle: getWindowHandle()
+		RECT m_windowBounds;
+		GetWindowRect(getWindowHandle(), &m_windowBounds);
+
+		while (adapter->EnumOutputs(i, currentOutput.ReleaseAndGetAddressOf()) != DXGI_ERROR_NOT_FOUND)
+		{
+			// Get the retangle bounds of the app window
+			GmpiDrawing::RectL appWindowRect = { m_windowBounds.left, m_windowBounds.top, m_windowBounds.right, m_windowBounds.bottom };
+
+			// Get the rectangle bounds of current output
+			DXGI_OUTPUT_DESC desc;
+			auto hr = currentOutput->GetDesc(&desc);
+			RECT r = desc.DesktopCoordinates;
+			GmpiDrawing::RectL outputRect = { r.left, r.top, r.right, r.bottom };
+
+			// Compute the intersection
+			const auto intersectRect = Intersect(appWindowRect, outputRect);
+			int intersectArea = intersectRect.getWidth() * intersectRect.getHeight();
+			if (intersectArea > bestIntersectArea)
+			{
+				bestOutput = currentOutput;
+				bestIntersectArea = intersectArea;
+			}
+
+			i++;
+		}
+
+		// Having determined the output (display) upon which the app is primarily being 
+		// rendered, retrieve the HDR capabilities of that display by checking the color space.
+		ComPtr<IDXGIOutput6> output6;
+		auto hr = bestOutput.As(&output6);
+
+		if (output6)
+		{
+			DXGI_OUTPUT_DESC1 desc1;
+			hr = output6->GetDesc1(&desc1);
+
+			if (desc1.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709)
+			{
+				_RPT0(_CRT_WARN, "SDR Display\n");
+			}
+			else
+			{
+				_RPT0(_CRT_WARN, "HDR Display\n");
+			}
+
+			uint32_t numPathArrayElements{};
+			uint32_t numModeArrayElements{};
+
+			GetDisplayConfigBufferSizes(
+				QDC_ONLY_ACTIVE_PATHS,
+				&numPathArrayElements,
+				&numModeArrayElements
+			);
+
+			std::vector<DISPLAYCONFIG_PATH_INFO> pathInfo;
+			std::vector<DISPLAYCONFIG_MODE_INFO> modeInfo;
+
+			pathInfo.resize(numPathArrayElements);
+			modeInfo.resize(numModeArrayElements);
+
+			QueryDisplayConfig(
+				QDC_ONLY_ACTIVE_PATHS,
+				&numPathArrayElements,
+				pathInfo.data(),
+				&numModeArrayElements,
+				modeInfo.data(),
+				nullptr
+			);
+
+			DISPLAYCONFIG_SDR_WHITE_LEVEL white_level = {};
+			white_level.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+			white_level.header.size = sizeof(white_level);
+			for (int pathIdx = 0; pathIdx < numPathArrayElements; ++pathIdx)
+			{
+				white_level.header.adapterId = pathInfo[pathIdx].targetInfo.adapterId;
+				white_level.header.id = pathInfo[pathIdx].targetInfo.id;
+
+				if (DisplayConfigGetDeviceInfo(&white_level.header) == ERROR_SUCCESS)
+				{
+#if	ENABLE_HDR_SUPPORT // proper HDR rendering
+					{
+						// divide by 1000 to get nits, divide by reference nits (80) to get a factor
+						whiteMult = white_level.SDRWhiteLevel / 1000.f;
+						DrawingFactory.whiteMult = whiteMult;
+					}
+#else // fall back to 8-bit rendering and ignore HDR
+					{
+						const auto whiteMultiplier = white_level.SDRWhiteLevel / 1000.f;
+						DX_support_sRGB = DX_support_sRGB && whiteMultiplier == 1.0f; // workarround HDR issues by reverting to 8-bit colour
+					}
+#endif
+				}
+			}
+		}
+	}
+
+	if (m_disable_gpu)
+	{
+		// release hardware device
+		D3D11Device = nullptr;
+		r = DXGI_ERROR_UNSUPPORTED;
+	}
+
+	// fallback to software rendering.
 	if (DXGI_ERROR_UNSUPPORTED == r)
 	{
 		do {
@@ -925,44 +1065,13 @@ void DrawingFrameBase::CreateDevice()
 	ComPtr<IDXGIAdapter> adapter;
 	dxdevice->GetAdapter(adapter.GetAddressOf());
 
-#ifdef _DEBUG
-	ComPtr<IDXGIOutput> currentOutput;
-	adapter->EnumOutputs(0, &currentOutput);
-
-	if (currentOutput)
-	{
-		ComPtr<IDXGIOutput6> output6;
-		currentOutput.As(&output6);
-
-		DXGI_OUTPUT_DESC1 desc1; // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 (standard  sRGB or SDR displays with Advanced Color capabilities) (0). bits 8
-		output6->GetDesc1(&desc1);
-	}
-#endif
-
 	// adapter’s parent object is the DXGI factory
-	// 
 	ComPtr<IDXGIFactory2> factory; // Minimum supported client: Windows 8 and Platform Update for Windows 7 
 	adapter->GetParent(__uuidof(factory), reinterpret_cast<void **>(factory.GetAddressOf()));
 
-	bool DX_support_sRGB;
-	{
-		/* !! only good for detecting indows 7 !!
-		Applications not manifested for Windows 8.1 or Windows 10 will return the Windows 8 OS version value (6.2).
-		Once an application is manifested for a given operating system version,
-		GetVersionEx will always return the version that the application is manifested for
-		*/
-		OSVERSIONINFO osvi;
-		memset(&osvi, 0, sizeof(osvi));
-
-		osvi.dwOSVersionInfoSize = sizeof(osvi);
-		GetVersionEx(&osvi);
-
-		DX_support_sRGB =
-			((osvi.dwMajorVersion > 6) ||
-			((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion > 1))); // Win7 = V6.1
-	}
-
 	// query adaptor memory. Assume small integrated graphics cards do not have the capacity for float pixels.
+	// Software renderer has no device memory, yet does support float pixels anyhow.
+	if (!m_disable_gpu)
 	{
 		DXGI_ADAPTER_DESC adapterDesc{};
 		adapter->GetDesc(&adapterDesc);
