@@ -1066,8 +1066,8 @@ int32_t MpController::sendSdkMessageToAudio(int32_t handle, int32_t id, int32_t 
 	auto queue = getQueueToDsp();
 
 	// discard any too-big message.
-	const auto totalMessageSize = 4 * static_cast<int>(sizeof(int)) + size;
-	if(totalMessageSize > queue->freeSpace())
+	const auto totalMessageSize = 3 * static_cast<int>(sizeof(int)) + size;
+	if (!my_msg_que_output_stream::hasSpaceForMessage(queue, totalMessageSize))
 		return gmpi::MP_FAIL;
 
 	my_msg_que_output_stream s(queue, (int32_t)handle, "sdk\0");

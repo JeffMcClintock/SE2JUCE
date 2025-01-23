@@ -302,11 +302,11 @@ void SeJuceController::ParamToDsp(MpParameter* param, int32_t voiceId)
 	{
 		const auto field = gmpi::MP_FT_VALUE;
 		const auto rawValue = param->getValueRaw(field, voiceId);
-		const int32_t messageSize = 2 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
+		const int32_t messageSize = 4 * sizeof(int32_t) + static_cast<int32_t>(rawValue.size());
 
 		auto& queue = *ControllerToStateMgrQue();
 
-		if (messageSize > queue.freeSpace())
+		if (!my_msg_que_output_stream::hasSpaceForMessage(queue, messageSize))
 		{
 			// queue full. drop message.
 			// _RPTN(0, "ControllerToStateMgrQue: QUEUE FULL!!! (%d bytes message)\n", size);

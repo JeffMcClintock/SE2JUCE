@@ -232,7 +232,8 @@ std::wstring SynthRuntime::getDefaultPath(const std::wstring& p_file_extension )
 
 void SynthRuntime::GetRegistrationInfo(std::wstring& p_user_email, std::wstring& p_serial)
 {
-	assert(false);
+	p_user_email = Utf8ToWstring(BundleInfo::instance()->getPluginInfo().vendorName);
+	p_serial = L"Unknown";
 }
 
 void SynthRuntime::DoAsyncRestart()

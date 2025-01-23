@@ -188,8 +188,8 @@ int32_t ug_plugin3Base::sendMessageToGui( int32_t id, int32_t size, const void* 
 	auto queue = AudioMaster()->getShell()->MessageQueToGui();
 	
 	// discard any too-big message.
-	const auto totalMessageSize = 4 * static_cast<int>(sizeof(int)) + size;
-	if(totalMessageSize > queue->freeSpace())
+	const auto totalMessageSize = 3 * static_cast<int>(sizeof(int)) + size;
+	if (!my_msg_que_output_stream::hasSpaceForMessage(queue, totalMessageSize))
 		return gmpi::MP_FAIL;
 
 	my_msg_que_output_stream strm( queue, Handle(), "sdk");

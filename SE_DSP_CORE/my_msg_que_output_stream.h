@@ -33,7 +33,8 @@ public:
 
 	static bool hasSpaceForMessage(IWriteableQue* p_que, int sizeofPayload)
 	{
-		return sizeofPayload + sizeof(int32_t) * 2 < p_que->freeSpace();
+		constexpr int headerSize = sizeof(int32_t) * 2;
+		return sizeofPayload + headerSize < p_que->freeSpace();
 	}
 
 private:
