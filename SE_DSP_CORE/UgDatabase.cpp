@@ -2442,7 +2442,7 @@ void CModuleFactory::initialise_synthedit_modules(bool passFalse)
 	INIT_STATIC_FILE(PlainImage_Gui)
 	INIT_STATIC_FILE(Scope3XP_Gui);
 	INIT_STATIC_FILE(FreqAnalyser2_Gui);
-	INIT_STATIC_FILE(FreqAnalyser3_Gui);
+//	INIT_STATIC_FILE(FreqAnalyser3_Gui);
 	INIT_STATIC_FILE(PatchMemoryBoolOut_Gui);
 	INIT_STATIC_FILE(VoltMeter_Gui);
 	INIT_STATIC_FILE(FloatToTextGUI_Gui);
