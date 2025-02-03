@@ -1,9 +1,12 @@
 #pragma once
-#include <vector>
 #include <map>
+#include <vector>
+#include <fstream>
 #include "dsp_msg_target.h"
 #include "IDspPatchManager.h"
 #include "modules/se_sdk3/mp_midi.h"
+
+#define DEBUG_LOG_PM_TO_FILE 0
 
 typedef std::vector<dsp_patch_parameter_base*> dsp_parameters_type;
 typedef std::multimap<int,dsp_patch_parameter_base*> dsp_automation_map_type;
@@ -12,7 +15,8 @@ class DspPatchManager : public IDspPatchManager
 {
 public:
 #ifdef DEBUG_LOG_PM_TO_FILE
-	FILE* outputStream;
+	std::ofstream loggingFile;
+	inline static std::ofstream* currentLoggingFile = {};
 #endif
 
 	DspPatchManager( ug_container* p_container );

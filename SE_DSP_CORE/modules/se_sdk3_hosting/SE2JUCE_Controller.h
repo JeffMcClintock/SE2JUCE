@@ -71,6 +71,7 @@ public:
 
 class SeJuceController : public MpController, public IHasDirty, private juce::Timer, public IProcessorMessageQues
 {
+protected:
 	std::atomic<bool> juceParameters_dirty;
 	std::vector<MpParameterJuce* > tagToParameter;			// DAW parameter Index to parameter
 	class SE2JUCE_Processor* processor = {};
@@ -82,8 +83,9 @@ public:
 	SeJuceController(
 		ProcessorStateMgrVst3& dawState
 	);
+	virtual ~SeJuceController() {}
 
-	void Initialize(SE2JUCE_Processor* pprocessor) 
+	virtual void Initialize(SE2JUCE_Processor* pprocessor) 
 	{
 		processor = pprocessor;
 

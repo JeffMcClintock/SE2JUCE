@@ -1207,10 +1207,8 @@ void SeAudioMaster::HandleInterrupt()
 //#endif
 
 #if defined(SE_TARGET_PLUGIN)
-
 	if (auto preset = interrupt_preset_.exchange(nullptr, std::memory_order_relaxed); preset)
 	{
-		gmpi_sdk::AutoCriticalSection cs(audioMasterLock_);
 		Patchmanager_->setPreset(preset);
 	}
 #endif

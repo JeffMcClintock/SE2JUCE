@@ -92,6 +92,10 @@ public:
 	{
 		ignoreProgramChange = true;
 	}
+	const std::map<int32_t, paramInfo>& getParametersInfo() const
+	{
+		return parametersInfo;
+	}
 };
 
 // additional support for retrieving the preset from the processor in a thread-safe manner.

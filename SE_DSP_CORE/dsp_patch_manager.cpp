@@ -68,9 +68,13 @@ DspPatchManager::DspPatchManager(ug_container* p_container) :
 	}
 
 #ifdef DEBUG_LOG_PM_TO_FILE
-	wchar_t fname[50];
-	swprintf(fname, L"c:\\temp\\DspPatchManagerLog_%d.txt", this);
-	outputStream = _wfopen(fname, L"wt");
+	{
+		wchar_t fname[100];
+		swprintf(fname, L"c:\\temp\\DspPatchManagerLog_%d.txt", (int)this);
+		loggingFile.open(fname);
+		loggingFile << "DspPatchManager\n";
+		currentLoggingFile = &loggingFile;
+	}
 #endif
 }
 
@@ -80,10 +84,8 @@ DspPatchManager::~DspPatchManager()
 	{
 		delete parameter;
 	}
-
 #ifdef DEBUG_LOG_PM_TO_FILE
-	if (outputStream)
-		fclose(outputStream);
+	currentLoggingFile = {};
 #endif
 }
 
@@ -626,7 +628,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 
 							//						_RPT2(_CRT_WARN, "HD Note On vel %d:%f\n", velocity_12b, velocityN);
 #ifdef DEBUG_LOG_PM_TO_FILE
-							fwprintf(outputStream, L"\nHD Note On  %d (ts %d)\n", keyNumber, (int)timestamp);
+//							fwprintf(outputStream, L"\nHD Note On  %d (ts %d)\n", keyNumber, (int)timestamp);
 #endif
 
 							DoNoteOn(timestamp, voiceState->voiceControlContainer_, keyNumber, velocityN);
@@ -643,7 +645,7 @@ void DspPatchManager::OnMidi(VoiceControlState* voiceState, timestamp_t timestam
 							float velocityN = (float)velocity_12b * recip;
 
 #ifdef DEBUG_LOG_PM_TO_FILE
-							fwprintf(outputStream, L"\nHD Note Off  %d (ts %d)\n", keyNumber, (int)timestamp);
+//							fwprintf(outputStream, L"\nHD Note Off  %d (ts %d)\n", keyNumber, (int)timestamp);
 #endif
 
 							DoNoteOff(timestamp, voiceState->voiceControlContainer_, keyNumber, velocityN);
@@ -1527,6 +1529,12 @@ void DspPatchManager::setParameterNormalizedDaw(timestamp_t timestamp, int32_t p
 {
 	if (auto param = GetParameter(paramHandle) ; param)
 	{
+#ifdef DEBUG_LOG_PM_TO_FILE
+		{
+			_RPTN(0, "DspPatchManager::setParameterNormalizedDaw. h=%d\n", paramHandle);
+			loggingFile << "DspPatchManager::setParameterNormalizedDaw. h=" << paramHandle << " val=" << newValue << "\n";
+		}
+#endif
 		const int VoiceId = 0;
 		param->vst_automate(timestamp, VoiceId, newValue, flags);
 	}
@@ -1660,6 +1668,13 @@ void DspPatchManager::getPresetState( std::string& chunk, bool saveRestartState)
 
 void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncRestart)
 {
+#ifdef DEBUG_LOG_PM_TO_FILE
+	{
+		loggingFile << "DspPatchManager::setPresetState t=" << m_container->AudioMaster()->SampleClock() << "\n";
+		loggingFile << chunk << "\n\n";
+	}
+#endif
+
 	TiXmlDocument doc;
 	doc.Parse( chunk.c_str() );
 
@@ -1777,7 +1792,17 @@ void DspPatchManager::setPresetState(const std::string& chunk, bool isAsyncResta
 
 void DspPatchManager::setPreset(DawPreset const* preset)
 {
-//	_RPTN(0, "DspPatchManager::setPreset. IPC %d\n" , (int)preset->ignoreProgramChangeActive);
+#ifdef DEBUG_LOG_PM_TO_FILE
+	{
+		_RPTN(0, "\nDspPatchManager::setPreset. IPC %d\n" , (int)preset->ignoreProgramChangeActive);
+		loggingFile << "\nDspPatchManager::setPreset. IPC=" << (int)preset->ignoreProgramChangeActive << " t=" << m_container->AudioMaster()->SampleClock() << "\n";
+
+		const auto xml = preset->toString(0);
+
+		loggingFile << xml << "\n";
+	}
+#endif
+
 	constexpr int patch = 0;
 
 	for(const auto& [handle, val] : preset->params)

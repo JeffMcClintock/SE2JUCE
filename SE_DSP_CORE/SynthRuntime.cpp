@@ -296,11 +296,8 @@ void SynthRuntime::setPresetUnsafe(DawPreset const* preset)
 
 	if (!generator)
 	{
-		missedPreset = preset;
 		return;
 	}
-
-	missedPreset = {};
 
 	// TODO check behaviour during DSP restart
 	generator->interrupt_preset_.store(preset, std::memory_order_release);

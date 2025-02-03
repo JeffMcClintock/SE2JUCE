@@ -162,7 +162,6 @@ public:
     void OnSaveStateDspStalled() override;
     
 	bool reinitializeFlag;
-	DawPreset const* missedPreset = {};
 
 private:
 	bool usingTempo_;

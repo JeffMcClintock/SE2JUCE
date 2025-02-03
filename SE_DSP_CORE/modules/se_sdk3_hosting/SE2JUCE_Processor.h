@@ -30,17 +30,17 @@ protected:
     my_VstTimeInfo timeInfoSe;                          // SE format
     gmpi::midi_2_0::MidiConverter2 midiConverter;
 
-    SeJuceController controller;
+    std::unique_ptr<SeJuceController> controller;
     ProcessorStateMgrVst3 dawStateManager;
 	std::atomic<bool> juceParameters_dirty; // a parameter has changed, needs to be relayed to the processor
     std::vector<paramState> parameterUpdates;
     std::vector<int32_t> dawIndexToParameterHandle;
-
+    std::atomic<int> presetCount = {};
     void setNormalizedUnsafe(int parameterIndex, float daw_normalized);
 
 public:
     //==============================================================================
-    SE2JUCE_Processor(std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter = {});
+    SE2JUCE_Processor(std::unique_ptr<SeJuceController> pcontroller, std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter = {});
     ~SE2JUCE_Processor() override;
 
     // IShellServices interface

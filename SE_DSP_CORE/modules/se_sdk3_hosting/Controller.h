@@ -192,7 +192,7 @@ public:
     ~MpController();
 
 	void ScanPresets();
-	void setPreset(DawPreset const* preset);
+	virtual void setPreset(DawPreset const* preset);
 	void syncPresetControls(DawPreset const* preset);
 
 	void SavePreset(int32_t presetIndex);
