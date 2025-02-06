@@ -6,7 +6,7 @@
 #include "IDspPatchManager.h"
 #include "modules/se_sdk3/mp_midi.h"
 
-#define DEBUG_LOG_PM_TO_FILE 0
+// #define DEBUG_LOG_PM_TO_FILE 1
 
 typedef std::vector<dsp_patch_parameter_base*> dsp_parameters_type;
 typedef std::multimap<int,dsp_patch_parameter_base*> dsp_automation_map_type;
