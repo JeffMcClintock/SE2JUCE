@@ -884,20 +884,21 @@ void DrawingFrameBase::CreateDevice()
 	HRESULT r = DXGI_ERROR_UNSUPPORTED;
 
 	// Create Hardware device.
-		do {
-			r = D3D11CreateDevice(nullptr,
-				D3D_DRIVER_TYPE_HARDWARE,
-				nullptr,
-				flags,
-				d3dLevels, sizeof(d3dLevels) / sizeof(d3dLevels[0]),
-				D3D11_SDK_VERSION,
-				D3D11Device.GetAddressOf(),
-				&currentDxFeatureLevel,
-				nullptr);
+	do {
+		r = D3D11CreateDevice(nullptr,
+			D3D_DRIVER_TYPE_HARDWARE,
+			nullptr,
+			flags,
+			d3dLevels, sizeof(d3dLevels) / sizeof(d3dLevels[0]),
+			D3D11_SDK_VERSION,
+			D3D11Device.GetAddressOf(),
+			&currentDxFeatureLevel,
+			nullptr);
 
-			CLEAR_BITS(flags, D3D11_CREATE_DEVICE_DEBUG);
+		CLEAR_BITS(flags, D3D11_CREATE_DEVICE_DEBUG);
 
-		} while (r == 0x887a002d); // The application requested an operation that depends on an SDK component that is missing or mismatched. (no DEBUG LAYER).
+	} while (r == 0x887a002d); // The application requested an operation that depends on an SDK component that is missing or mismatched. (no DEBUG LAYER).
+
 	bool DX_support_sRGB;
 	{
 		/* !! only good for detecting Windows 7 !!

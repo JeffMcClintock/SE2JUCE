@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <algorithm>
+#include <mutex>
 #include "ug_filter_sv.h"
 
 #include "ULookup.h"
@@ -98,6 +99,10 @@ int ug_filter_sv::Open()
 	_controlfp_s( &fpState, 0, 0 ); // flush-denormals-to-zero mode?
 	assert( (fpState & _MCW_DN) == _DN_FLUSH && "err: caller needs to set flush denormals mode during Open()." );
 #endif
+
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
 
 	// This must happen b4 first stat change arrives
 	RUN_AT( SampleClock(), &ug_filter_sv::OnFirstSample );

@@ -505,6 +505,10 @@ void UnitConverterVolts::onSetPins()
 int32_t UnitConverterVolts::open()
 {
 #ifdef UNITCONVERTER_VOLTS_USE_LOOKUP
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// table method, not good.
 	int32_t needInitialize;
 	const int tableSize = LOOKUP_SIZE + 4; // extras for interpolator.

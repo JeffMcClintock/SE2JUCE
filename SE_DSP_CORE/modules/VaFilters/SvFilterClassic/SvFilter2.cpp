@@ -1,4 +1,5 @@
 #include "./SvFilter2.h"
+#include <mutex>
 
 REGISTER_PLUGIN2( SvFilter2, L"SE SV Filter2" );
 
@@ -24,6 +25,10 @@ void SvFilter2::initializePins()
 int32_t SvFilter2::open()
 {
 	initializePins();
+
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
 
 	// 20kHz is about 10.5 Volts. 1Hz is about -3.7 volts. 0.01Hz = -10V
 	// -4 -> 11 Volts should cover most posibilities. 15V Range. 12 entries per volt = 180 entries.

@@ -25,7 +25,7 @@ public:
 	inline unsigned int calc_increment(float p_pitch);
 	void switch_wavetable(unsigned int increment, unsigned int blockPos );
 	static void InitPitchTable( ug_base* p_ug, ULookup_Integer * &table);
-	static void InitPitchTableFloat( ug_base* p_ug, ULookup* &table);
+//	static void InitPitchTableFloat( ug_base* p_ug, ULookup* &table);
 	static void InitVoltToHzTable( ug_base* p_ug, ULookup* &table);
 	static void FillWaveTable( ug_base* ug, float sampleRate, wavetable_array& wa, osc_waveform2 waveshape, bool p_gibbs_fix = true );
 	void ChooseProcessFunction( int blockPos );

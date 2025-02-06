@@ -1,5 +1,6 @@
 #include "./KorgFilter.h"
 #include <limits.h>
+#include <mutex>
 
 REGISTER_PLUGIN2 ( KorgFilter, L"SE Korg Filter" );
 
@@ -23,6 +24,10 @@ KorgFilter::KorgFilter()
 
 int32_t KorgFilter::open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	m_LPF1.m_uFilterType = LPF1;
 	m_LPF2.m_uFilterType = LPF1;
 	m_HPF1.m_uFilterType = HPF1;

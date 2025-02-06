@@ -646,7 +646,7 @@ public:
         {
             for (auto& attachment : it->second)
             {
-#if 0 // def _DEBUG
+#if 0 def _DEBUG
                 _RPTN(0, "setParameter: %d %s\n", parameterHandle, SeParameters::getParameterName(parameterHandle));
 #endif
                 attachment->setParameter(parameterHandle, fieldId, voice, data, size);

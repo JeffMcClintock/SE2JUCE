@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <mutex>
 #include "ug_oversampler_out.h"
 #include "ug_oversampler_in.h"
 #include "ug_oversampler.h"
@@ -85,6 +86,10 @@ ug_base* ug_oversampler_out::Clone(CUGLookupList& UGLookupList)
 
 int ug_oversampler_out::Open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	const int filterSetting = oversampler_->filterSetting();
 
 	firMode = filterSetting > 10; // implies FIR mode.

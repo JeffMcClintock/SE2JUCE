@@ -1,4 +1,5 @@
 #include "./OscillatorNaive.h"
+#include <mutex>
 
 REGISTER_PLUGIN2 ( OscillatorNaive, L"SE Oscillator (naive)" );
 SE_DECLARE_INIT_STATIC_FILE(OscillatorNaive);
@@ -24,6 +25,10 @@ OscillatorNaive::OscillatorNaive( ) :
 
 int32_t OscillatorNaive::open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// 20kHz is about 10.5 Volts. 1Hz is about -3.7 volts. 0.01Hz = -10V
 	// -4 -> 11 Volts should cover most posibilities. 15V Range. 12 entries per volt = 180 entries.
 	const int extraEntriesAtStart = 1; // for interpolator.

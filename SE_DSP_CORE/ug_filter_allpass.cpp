@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <algorithm>
+#include <mutex>
 #include "ug_filter_allpass.h"
 
 #include "ULookup.h"
@@ -91,14 +92,15 @@ void ug_filter_allpass::freq_change( float p_pitch, float p_resonance )
 
 int ug_filter_allpass::Open()
 {
+	// fix the race condition when another module starts to initialise the lookup table and we skip initialisation here and risk reading uninitialised data.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
 	CreateSharedLookup2( L"ug_filter_allpass A", lookup_tableA, -1, TABLE_SIZE + 2, true, SLS_ALL_MODULES );
 	CreateSharedLookup2( L"ug_filter_allpass B", lookup_tableB, -1, TABLE_SIZE + 2, true, SLS_ALL_MODULES );
 
 	// Fill lookup tables if not done already
 	if( !lookup_tableA->GetInitialised() )
 	{
-		//lookup_tableA->SetSize(TABLE_SIZE + 2);
-		//lookup_tableB->SetSize(TABLE_SIZE + 2);
 
 		for( int j = 0 ; j < lookup_tableA->GetSize() ; j++ )
 		{

@@ -101,17 +101,17 @@ int32_t FreqAnalyserGui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingCont
 #endif
 		currentBackgroundSampleRate = samplerate;
 
-		auto dtextFormat = g.GetFactory().CreateTextFormat(10); // GetTextFormat(getHost(), getGuiHost(), "tty", &typeface_);
+		auto dtextFormat = dc.GetFactory().CreateTextFormat(10); // GetTextFormat(getHost(), getGuiHost(), "tty", &typeface_);
 
 		dtextFormat.SetTextAlignment(TextAlignment::Leading); // Left
 		dtextFormat.SetParagraphAlignment(ParagraphAlignment::Center);
 		dtextFormat.SetWordWrapping(WordWrapping::NoWrap); // prevent word wrapping into two lines that don't fit box.
 
-		auto gradientBrush = g.CreateLinearGradientBrush(Color::FromRgb(0x39323A), Color::FromRgb(0x080309), Point(0, 0), Point(0, height) );
+		auto gradientBrush = dc.CreateLinearGradientBrush(Color::FromRgb(0x39323A), Color::FromRgb(0x080309), Point(0, 0), Point(0, height) );
 		dc.FillRectangle(r, gradientBrush);
 
-		auto fontBrush = g.CreateSolidColorBrush(Color::Gold);
-		auto brush2 = g.CreateSolidColorBrush(Color::Gray);
+		auto fontBrush = dc.CreateSolidColorBrush(Color::Gold);
+		auto brush2 = dc.CreateSolidColorBrush(Color::Gray);
 		float penWidth = 1.0f;
 		auto fontHeight = dtextFormat.GetTextExtentU("M").height;
 

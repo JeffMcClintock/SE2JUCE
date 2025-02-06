@@ -9,6 +9,7 @@
 #include <limits>
 #include <iomanip>
 #include <sstream>
+#include <mutex>
 #include "ug_oscillator2.h"
 
 #include "ULookup.h"
@@ -101,6 +102,10 @@ ug_oscillator2::ug_oscillator2() :
 
 int ug_oscillator2::Open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// Fill lookup tables if not done already
 	InitPitchTable( this, freq_lookup_table );
 	InitVoltToHzTable( this, lookup_table_volt_to_hz );
@@ -191,7 +196,7 @@ unsigned int ug_oscillator2::calc_increment(float p_pitch)// Re-calc increment f
 		*/
 		//		increment = freq_lookup_table->GetValue Inter polated( frac );
 		// max error with linear interpolation 0.000023 ( 0.0023 %)
-		if( p_pitch > -1.f ) // ignore infinite or wild values, outside -20 -> +13 Volts (100kHz).
+		if( p_pitch > -1.f) // extreme values
 		{
 #if 0
 			// CPU 0.216% - SLOW!!!
@@ -202,7 +207,7 @@ unsigned int ug_oscillator2::calc_increment(float p_pitch)// Re-calc increment f
 #else
 			// CPU 0.068
 			// Lookup Hz, then calc increment.
-			float octavesFloat = p_pitch * 10.0f - octave_low;
+			float octavesFloat = (std::min)(2.0f, p_pitch) * 10.0f - octave_low; // +20V maximum pitch.
 			constexpr float c = table_size / (octave_hi-octave_low); // scale from volts to table index.
 			float tableIdx = octavesFloat * c;
 
@@ -323,6 +328,7 @@ void ug_oscillator2::InitPitchTable( ug_base* p_ug, ULookup_Integer* &table)
 	}
 }
 
+#if 0
 void ug_oscillator2::InitPitchTableFloat( ug_base* p_ug, ULookup* &table)
 {
 	float sampleRate = p_ug->getSampleRate();
@@ -348,6 +354,7 @@ void ug_oscillator2::InitPitchTableFloat( ug_base* p_ug, ULookup* &table)
 		table->SetInitialised();
 	}
 }
+#endif
 
 void ug_oscillator2::InitVoltToHzTable( ug_base* p_ug, ULookup* &table)
 {

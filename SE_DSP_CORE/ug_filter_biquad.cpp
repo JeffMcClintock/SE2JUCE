@@ -5,6 +5,7 @@
 #include "ULookup.h"
 #include <math.h>
 #include <float.h>
+#include <mutex>
 #include "conversion.h"
 #include "SeAudioMaster.h"
 #include "module_register.h"
@@ -58,6 +59,10 @@ ug_filter_biquad::ug_filter_biquad() :
 
 int ug_filter_biquad::Open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// This must happen b4 first stat change arrives
 	CreateSharedLookup2( L"Moog LP Scale", lookup_table, (int) getSampleRate(), TABLE_SIZE + 2, true, SLS_ALL_MODULES );
 	CreateSharedLookup2( L"Moog LP kp", lookup_table2, (int) getSampleRate(), TABLE_SIZE + 2, true, SLS_ALL_MODULES );

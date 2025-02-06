@@ -86,7 +86,6 @@ public:
 
 	virtual void setPresetFromXml(const std::string& presetString);
 	void setPresetFromUnownedPtr(DawPreset const* preset);
-	void setMissedPreset(DawPreset const* preset);
 
 	void enableIgnoreProgramChange()
 	{

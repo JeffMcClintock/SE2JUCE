@@ -1,5 +1,6 @@
 #include "pch.h"
 #define _USE_MATH_DEFINES
+#include <mutex>
 #include <cmath>
 #include <math.h>
 #include "modules/shared/xp_simd.h"
@@ -112,6 +113,11 @@ int ug_vca::Open()
 	assert( res == 0.f );
 	scale_type = temp;
 #endif
+
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// Create volume curve lookup tables
 	CreateSharedLookup2( L"UVCA Trunc Exp Curve", shared_lookup_table, -1, VCA_TABLE_SIZE_30V+2, true, SLS_ALL_MODULES );
 

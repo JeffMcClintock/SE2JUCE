@@ -1,5 +1,6 @@
 #include <float.h>
 #include <climits>
+#include <mutex>
 #include "./SvFilter.h"
 
 REGISTER_PLUGIN2(StateVariableFilter3, L"SE SV Filter4");
@@ -124,6 +125,10 @@ void StateVariableFilter3::OnFilterSettled()
 
 int32_t StateVariableFilterBase::open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// 20kHz is about 10.5 Volts. 1Hz is about -3.7 volts. 0.01Hz = -10V
 	// -4 -> 11 Volts should cover most posibilities. 15V Range. 12 entries per volt = 180 entries.
 	const int entriesPerOctave = 12;

@@ -68,6 +68,34 @@ void FileDialogGui::onSetTrigger()
 	m_prev_trigger = pinTrigger;
 }
 
+std::string uniformPath(std::string path)
+{
+	std::string ret;
+
+	auto folderPath = path;
+
+	while (!folderPath.empty())
+	{
+		auto p = folderPath.find_last_of("\\/");
+
+		if (!ret.empty())
+			ret = '/' + ret;
+
+		if (p == std::string::npos)
+		{
+			ret = folderPath + ret;
+			folderPath.clear();
+		}
+		else
+		{
+			ret = std::string(folderPath.c_str() + p + 1) + ret;
+			folderPath = Left(folderPath, p);
+		}
+	}
+
+	return ret;
+}
+
 void FileDialogGui::OnFileDialogComplete(int32_t result)
 {
 	if (result == gmpi::MP_OK)
@@ -105,14 +133,69 @@ void FileDialogGui::OnFileDialogComplete(int32_t result)
 
 		if (fileclass)
 		{
-			auto shortName = StripPath(filepath);
+#if 0
+			// try to find a shorter filename that SynthEdit can find.
+			std::filesystem::path fullPath(filepath);
 
-			const auto r = uiHost.FindResourceU(shortName.c_str(), fileclass);
-			
-			if (filepath == r)
+			std::vector<std::filesystem::path> pathParts;
+			for (auto p : fullPath)
 			{
-				filepath = shortName;
+				pathParts.push_back(p);
 			}
+
+			std::reverse(pathParts.begin(), pathParts.end());
+
+			std::filesystem::path shortName;
+			for (auto p : pathParts)
+			{
+				shortName = shortName.empty() ? p : p / shortName;
+
+				const std::filesystem::path r = uiHost.FindResourceU(shortName.string().c_str(), fileclass);
+				if (filepath == r)
+				{
+					filepath = shortName.string();
+					break;
+				}
+			}
+#else
+			auto folderPath = filepath;
+			std::vector<std::string> pathParts;
+
+			while (!folderPath.empty())
+			{
+				auto p = folderPath.find_last_of("\\/");
+
+				if (p == std::string::npos)
+				{
+					pathParts.push_back(folderPath);
+					folderPath.clear();
+				}
+				else
+				{
+					pathParts.push_back(std::string(folderPath.c_str() + p + 1));
+					folderPath = Left(folderPath, p);
+				}
+			}
+
+			// If root folder is a network location, ignore that
+			if (!pathParts.empty() && pathParts.back().find("\\\\") == 0)
+			{
+				pathParts.pop_back();
+			}
+
+			std::string shortName;
+			for (auto p : pathParts)
+			{
+				shortName = shortName.empty() ? p : p + '/' + shortName;
+
+				const std::string r = uiHost.FindResourceU(shortName.c_str(), fileclass);
+				if (uniformPath(filepath) == uniformPath(r))
+				{
+					filepath = shortName;
+					break;
+				}
+			}
+#endif
 		}
 
 		pinFileName = filepath;

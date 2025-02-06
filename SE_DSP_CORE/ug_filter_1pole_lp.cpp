@@ -4,6 +4,7 @@
 #include <math.h>
 #include <float.h>
 #include "ug_filter_1pole_lp.h"
+#include <mutex>
 #include "ULookup.h"
 #include "conversion.h"
 #include "module_register.h"
@@ -60,6 +61,10 @@ ug_filter_1pole::ug_filter_1pole() :
 
 int ug_filter_1pole::Open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// This must happen b4 first stat change arrives
 	RUN_AT( SampleClock(), &ug_filter_1pole::OnFirstSample );
 	CreateSharedLookup2( L"1 pole l", lookup_table, (int) getSampleRate(), TABLE_SIZE + 2, true, SLS_ALL_MODULES );

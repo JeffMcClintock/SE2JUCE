@@ -2,6 +2,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <mutex>
 #include "../../modules/shared/xp_simd.h"
 #include "VoiceMute.h"
 
@@ -47,6 +48,10 @@ VoiceMute::VoiceMute(IMpUnknown* host) : MpBase(host)
 
 int32_t VoiceMute::open()
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	// subjectively 10ms or more is best, faster ramps 'pop' to various degrees.
 	const float fadeOutTimeFastMs = 5.0f; // Voice needed urgently, no spare voices available for held-back note.
 	const float fadeOutTimeSlowMs = 20.0f; // Voice stolen, fade out smoothly without artifacts.

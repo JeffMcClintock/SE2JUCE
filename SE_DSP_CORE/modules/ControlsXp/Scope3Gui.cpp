@@ -309,7 +309,7 @@ int32_t Scope3Gui::OnRender(GmpiDrawing_API::IMpDeviceContext* drawingContext)
 		darked_col.g *= 0.5f;
 		darked_col.b *= 0.5f;
 
-		auto brush2 = g.CreateSolidColorBrush(darked_col);
+		auto brush2 = dc.CreateSolidColorBrush(darked_col);
 
 		// BACKGROUND LINES
 		// horizontal line

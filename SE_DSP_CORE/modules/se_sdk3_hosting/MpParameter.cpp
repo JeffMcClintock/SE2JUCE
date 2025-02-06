@@ -31,7 +31,7 @@ bool MpParameter_base::setParameterRaw(gmpi::FieldType paramField, int32_t size,
 			// Store normalized locally.
 			rawValues_[voice].resize(size);
 			rawValues_[voice].assign((char*)data, size);
-	}
+		}
 		break;
 /* safer to be read-only.
 	case FT_ENUM_LIST:

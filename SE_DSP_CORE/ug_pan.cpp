@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <algorithm>
+#include <mutex>
 #include "ug_pan.h"
 
 #include "ug_vca.h"
@@ -272,6 +273,10 @@ float gainR = scale * panR*panR + (1.0 - scale) * panR;
 
 void ug_pan::InitFadeTables(ug_base* p_ug, ULookup * &sin_table, ULookup * &sqr_table)
 {
+	// fix for race conditions.
+	static std::mutex safeInit;
+	std::lock_guard<std::mutex> lock(safeInit);
+
 	p_ug->CreateSharedLookup2( L"Equal Power Curve", sqr_table, -1, TABLE_SIZE+2, true, SLS_ALL_MODULES );
 
 	if( !sqr_table->GetInitialised() )
