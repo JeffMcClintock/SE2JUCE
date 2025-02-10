@@ -306,7 +306,7 @@ void SeJuceController::ParamToDsp(MpParameter* param, int32_t voiceId)
 
 		auto& queue = *ControllerToStateMgrQue();
 
-		if (!my_msg_que_output_stream::hasSpaceForMessage(queue, messageSize))
+		if (!my_msg_que_output_stream::hasSpaceForMessage(&queue, messageSize))
 		{
 			// queue full. drop message.
 			// _RPTN(0, "ControllerToStateMgrQue: QUEUE FULL!!! (%d bytes message)\n", size);
