@@ -5,16 +5,16 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 	if (rawSpectrum.size() < 10)
 		return;
 
-	const int spectrumCount = static_cast<int>(rawSpectrum.size());
+const int spectrumCount = static_cast<int>(rawSpectrum.size());
+	const int spectrumCount2 = static_cast<int>(rawSpectrum.size() - 1);
 
-	constexpr int chunkyness = 2; // how much smoothing to apply to noisy data on the graph.
 	if (pixelToBin.empty())
 	{
-		InixPixelToBin(pixelToBin, width, spectrumCount, sampleRateFft);
+		InixPixelToBin(pixelToBin, width, spectrumCount2, sampleRateFft);
 
 		smoothedZoneHigh = linearZoneHigh = pixelToBin.size() - 3;
 
-		float bin_per_pixel = 0;
+		float bin_per_pixel = 0.8f;
 		for (int i = 10; i < pixelToBin.size() - 4; i++)
 		{
 			const auto& e1 = pixelToBin[i - 1];
@@ -25,23 +25,23 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 			if (distance >= bin_per_pixel)
 			{
-				// _RPTN(0, "bin_per_pixel %d: %d\n", (int)bin_per_pixel, i);
-				if (bin_per_pixel == 1)
+				_RPTN(0, "bin_per_pixel %d: %d\n", (int)bin_per_pixel, i);
+				if (bin_per_pixel <= 1.0f)
 				{
 					smoothedZoneHigh = i;
 				}
-				else if (bin_per_pixel == 2)
+				else
 				{
 					linearZoneHigh = i;
+					break;
 				}
-
 				++bin_per_pixel;
 			}
 		}
 
 		// mark all bins required in final graph. saves calcing db then discarding it.
 		dbUsed.assign(spectrumCount + 1, false);
-		for (int i = 1; i < pixelToBin.size() - 3; ++i)
+		for (int i = 0; i < pixelToBin.size() - 3; ++i)
 		{
 			auto& pb = pixelToBin[i];
 
@@ -109,16 +109,19 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 	graphValues.clear();
 
 	// calc the leftmost cubic-smoothed section
-	float x = 0.0f; // lmargin;
-	int i = 0;
-	for (; i < smoothedZoneHigh; i++)
+	int x = 0;
+	int dx = 2;
+#ifdef _DEBUG
+	dx = 1;
+#endif
+	for (; x < smoothedZoneHigh; x += dx)
 	{
 		const auto& [index
 			, fraction
 #ifdef _DEBUG
 			, hz
 #endif
-		] = pixelToBin[i];
+		] = pixelToBin[x];
 
 		assert(index >= 0);
 		assert(index + 2 < dbs.size());
@@ -134,20 +137,20 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 		const auto y = (db - displayDbTop) * dbScaler;
 
-		graphValues.push_back({ x, y });
+		graphValues.push_back({ static_cast<float>(x), y });
 
-		x += pixelToBinDx;
+		x += dx;
 	}
 
 	// calc the 2-point interpolated section
-	for (; i < linearZoneHigh; i++)
+	for (; x < linearZoneHigh; x += dx)
 	{
 		const auto& [index
 			, fraction
 #ifdef _DEBUG
 			, hz
 #endif
-		] = pixelToBin[i];
+		] = pixelToBin[x];
 
 		assert(index >= 0);
 		assert(index + 2 < dbs.size());
@@ -160,17 +163,17 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 		const auto db = y0 + (y1 - y0) * fraction;
 		const auto y = (db - displayDbTop) * dbScaler;
 
-		graphValues.push_back({ x, y });
-
-		x += pixelToBinDx;
+		graphValues.push_back({ static_cast<float>(x), y });
 	}
 
 	// calc the 'max' section where we just take the maximum value of several bins.
 	{
-		auto fromBin = (pixelToBin[i - 1].index + pixelToBin[i].index) / 2;
-		for (; i < pixelToBin.size() - 3; i += chunkyness)
+		// more smoothing to noisy data on the high end of the graph.
+		dx = 4;
+		auto fromBin = (pixelToBin[x - 1].index + pixelToBin[x].index) / 2;
+		for (; x < pixelToBin.size() - 3; x += dx)
 		{
-			const auto toBin = (pixelToBin[i].index + pixelToBin[i + 1].index) / 2;
+			const auto toBin = (pixelToBin[x].index + pixelToBin[x + 1].index) / 2;
 			const float maximumAmp = *std::max_element(capturedata + fromBin, capturedata + toBin);
 
 			float db;
@@ -185,15 +188,14 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 				assert(!isnan(db));
 			}
 
-			const auto& dbBin = pixelToBin[i].index;
+			const auto& dbBin = pixelToBin[x].index;
 			assert(dbUsed[dbBin]);
 			dbs[dbBin] = (std::max)(db, dbs[dbBin]);
 
 			const auto y = (dbs[dbBin] - displayDbTop) * dbScaler;
 
-			graphValues.push_back({ x, y });
+			graphValues.push_back({ static_cast<float>(x), y });
 
-			x += pixelToBinDx * chunkyness;
 			fromBin = toBin;
 		}
 	}
