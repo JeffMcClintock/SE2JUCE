@@ -25,7 +25,7 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 
 			if (distance >= bin_per_pixel)
 			{
-				_RPTN(0, "bin_per_pixel %d: %d\n", (int)bin_per_pixel, i);
+				// _RPTN(0, "bin_per_pixel %d: %d\n", (int)bin_per_pixel, i);
 				if (bin_per_pixel <= 1.0f)
 				{
 					smoothedZoneHigh = i;
