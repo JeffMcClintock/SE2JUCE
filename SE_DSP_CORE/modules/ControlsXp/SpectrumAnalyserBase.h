@@ -8,7 +8,8 @@ struct SpectrumAnalyserBase
 	int smoothedZoneHigh = 0; // bins below this need 4-point interpolation
 	int linearZoneHigh = 0; // bins below this need 2-point interpolation
 
-	std::vector<float> dbs;
+	std::vector<float> dbs_in;   // latest values from the Processor
+	std::vector<float> dbs_disp; // values to display, will decay over time
 	std::vector<bool> dbUsed;
 
 	struct binData
@@ -22,8 +23,12 @@ struct SpectrumAnalyserBase
 
 	std::vector< binData > pixelToBin;
 	float pixelToBinDx = 2.0f; // x increment for each entry in pixelToBin.
+	float dbToPixel = 1.0f;
 	std::vector<float> rawSpectrum;
 	float sampleRateFft = 0;
+	bool spectrumUpdateFlag = true;
+	bool spectrumDecayFlag = true;
+
 	std::vector<GmpiDrawing::Point> graphValues;
 	std::vector<GmpiDrawing::Point> graphValuesOptimized;
 	std::vector<GmpiDrawing::Point> peakHoldValues;

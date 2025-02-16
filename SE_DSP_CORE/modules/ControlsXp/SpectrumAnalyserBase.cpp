@@ -2,10 +2,9 @@
 
 void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 {
-	if (rawSpectrum.size() < 10)
+	if (rawSpectrum.size() < 10 || sampleRateFft< 1.0f)
 		return;
 
-const int spectrumCount = static_cast<int>(rawSpectrum.size());
 	const int spectrumCount2 = static_cast<int>(rawSpectrum.size() - 1);
 
 	if (pixelToBin.empty())
@@ -40,7 +39,7 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 		}
 
 		// mark all bins required in final graph. saves calcing db then discarding it.
-		dbUsed.assign(spectrumCount + 1, false);
+		dbUsed.assign(spectrumCount2 + 2, false);
 		for (int i = 0; i < pixelToBin.size() - 3; ++i)
 		{
 			auto& pb = pixelToBin[i];
@@ -64,47 +63,83 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 		}
 	}
 
-	const float inverseN = 2.0f / spectrumCount;
-	const float dbc = 20.0f * log10f(inverseN);
-
 	constexpr float displayDbTop = 6.0f;
 	constexpr float displayDbBot = -120.0f;
-
 	constexpr float clipDbAtBottom = displayDbBot - 5.0f; // -5 to have flat grph just off the bottom
+	const float inverseN = 2.0f / spectrumCount2;
+	const float dbc = 20.0f * log10f(inverseN);
 	const float safeMinAmp = powf(10.0f, (clipDbAtBottom - dbc) * 0.1f);
-
-	// convert spectrum to dB
 	const float* capturedata = rawSpectrum.data();
 
-	if (dbs.size() != spectrumCount + 1)
-		dbs.assign(spectrumCount + 1, -300.0f);
-
-	for (int i = 0; i < linearZoneHigh; ++i)
+	if (spectrumUpdateFlag)
 	{
-		const int index = i + 1;
-
-		if (!dbUsed[index])
-			continue;
-
-		float db;
-		if (capturedata[i] <= safeMinAmp)
+		// convert spectrum to dB
+		if (dbs_in.size() != spectrumCount2 + 2)
 		{
-			// save on expensive log10 call if signal is so quiet that it's off the bottom of the graph anyhow.
-			db = clipDbAtBottom;
-		}
-		else
-		{
-			// 10 is wrong? should be 20????
-			db = 10.f * log10(capturedata[i]) + dbc;
-			assert(!isnan(db));
+			dbs_in  .assign(spectrumCount2 + 2, -300.0f);
+			dbs_disp.assign(spectrumCount2 + 2, -300.0f);
 		}
 
-		dbs[index] = (std::max)(db, dbs[index]);
+		for (int i = 0; i < linearZoneHigh; ++i)
+		{
+			const int index = i + 1;
+
+			if (!dbUsed[index])
+				continue;
+
+			float db;
+			if (capturedata[i] <= safeMinAmp)
+			{
+				// save on expensive log10 call if signal is so quiet that it's off the bottom of the graph anyhow.
+				db = clipDbAtBottom;
+			}
+			else
+			{
+				// 10 is wrong? should be 20????
+				db = 10.f * log10(capturedata[i]) + dbc;
+				assert(!isnan(db));
+			}
+
+			dbs_in[index] = db;
+			dbs_disp[index] = (std::max)(db, dbs_disp[index]);
+		}
+
+		// for the dense part of the graph at right, just find local maxima of small groups. Then do the expensive conversion to dB.
+		{
+			// more smoothing to noisy data on the high end of the graph.
+			int dx = 4;
+			int i = linearZoneHigh;
+			auto fromBin = (pixelToBin[i - 1].index + pixelToBin[i].index) / 2;
+			for (; i < pixelToBin.size() - 3; i += dx)
+			{
+				const auto toBin = (pixelToBin[i].index + pixelToBin[i + 1].index) / 2;
+				const float maximumAmp = *std::max_element(capturedata + fromBin, capturedata + toBin);
+
+				float db;
+				if (maximumAmp <= safeMinAmp)
+				{
+					// save on expensive log10 call if signal is so quiet that it's off the bottom of the graph anyhow.
+					db = clipDbAtBottom;
+				}
+				else
+				{
+					db = 10.f * log10(maximumAmp) + dbc;
+					assert(!isnan(db));
+				}
+
+				const auto dbBin = pixelToBin[i].index;
+				assert(dbUsed[dbBin]);
+
+				dbs_in[dbBin] = db;
+				dbs_disp[dbBin] = (std::max)(db, dbs_disp[dbBin]);
+
+				fromBin = toBin;
+			}
+		}
+		dbs_disp[0] = dbs_disp[1]; // makes interpolation easier to have a dummy value at left.
+
+		dbToPixel = -height / (displayDbTop - displayDbBot);
 	}
-
-	dbs[0] = dbs[1]; // makes interpolation easier to have a dummy value at left.
-
-	const float dbScaler = -height / (displayDbTop - displayDbBot);
 
 	graphValues.clear();
 
@@ -124,18 +159,18 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 		] = pixelToBin[x];
 
 		assert(index >= 0);
-		assert(index + 2 < dbs.size());
+		assert(index + 2 < dbs_in.size());
 
 		assert(dbUsed[index - 1] && dbUsed[index] && dbUsed[index + 1] && dbUsed[index + 2]);
 
-		const float y0 = dbs[index - 1];
-		const float y1 = dbs[index + 0];
-		const float y2 = dbs[index + 1];
-		const float y3 = dbs[index + 2];
+		const float y0 = dbs_disp[index - 1];
+		const float y1 = dbs_disp[index + 0];
+		const float y2 = dbs_disp[index + 1];
+		const float y3 = dbs_disp[index + 2];
 
 		const auto db = (y1 + 0.5f * fraction * (y2 - y0 + fraction * (2.0f * y0 - 5.0f * y1 + 4.0f * y2 - y3 + fraction * (3.0f * (y1 - y2) + y3 - y0))));
 
-		const auto y = (db - displayDbTop) * dbScaler;
+		const auto y = (db - displayDbTop) * dbToPixel;
 
 		graphValues.push_back({ static_cast<float>(x), y });
 
@@ -153,15 +188,15 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 		] = pixelToBin[x];
 
 		assert(index >= 0);
-		assert(index + 2 < dbs.size());
+		assert(index + 2 < dbs_in.size());
 
 		assert(dbUsed[index] && dbUsed[index + 1]);
 
-		const auto& y0 = dbs[index + 0];
-		const auto& y1 = dbs[index + 1];
+		const auto& y0 = dbs_disp[index + 0];
+		const auto& y1 = dbs_disp[index + 1];
 
 		const auto db = y0 + (y1 - y0) * fraction;
-		const auto y = (db - displayDbTop) * dbScaler;
+		const auto y = (db - displayDbTop) * dbToPixel;
 
 		graphValues.push_back({ static_cast<float>(x), y });
 	}
@@ -170,33 +205,15 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 	{
 		// more smoothing to noisy data on the high end of the graph.
 		dx = 4;
-		auto fromBin = (pixelToBin[x - 1].index + pixelToBin[x].index) / 2;
 		for (; x < pixelToBin.size() - 3; x += dx)
 		{
-			const auto toBin = (pixelToBin[x].index + pixelToBin[x + 1].index) / 2;
-			const float maximumAmp = *std::max_element(capturedata + fromBin, capturedata + toBin);
-
-			float db;
-			if (maximumAmp <= safeMinAmp)
-			{
-				// save on expensive log10 call if signal is so quiet that it's off the bottom of the graph anyhow.
-				db = clipDbAtBottom;
-			}
-			else
-			{
-				db = 10.f * log10(maximumAmp) + dbc;
-				assert(!isnan(db));
-			}
-
-			const auto& dbBin = pixelToBin[x].index;
+			const auto dbBin = pixelToBin[x].index;
 			assert(dbUsed[dbBin]);
-			dbs[dbBin] = (std::max)(db, dbs[dbBin]);
 
-			const auto y = (dbs[dbBin] - displayDbTop) * dbScaler;
+			const auto db = dbs_disp[dbBin];
+			const auto y = (db - displayDbTop) * dbToPixel;
 
 			graphValues.push_back({ static_cast<float>(x), y });
-
-			fromBin = toBin;
 		}
 	}
 
@@ -205,15 +222,22 @@ const int spectrumCount = static_cast<int>(rawSpectrum.size());
 	{
 		peakHoldValues = graphValues;
 	}
-	for (int j = 0; j < graphValues.size(); ++j)
+	if (spectrumUpdateFlag)
 	{
-		peakHoldValues[j].y = (std::min)(peakHoldValues[j].y, graphValues[j].y);
+		for (int j = 0; j < graphValues.size(); ++j)
+		{
+			peakHoldValues[j].y = (std::min)(peakHoldValues[j].y, graphValues[j].y);
+		}
+
+		SimplifyGraph(peakHoldValues, peakHoldValuesOptimized);
 	}
 
-	SimplifyGraph(peakHoldValues, peakHoldValuesOptimized);
 	SimplifyGraph(graphValues, graphValuesOptimized);
 
 	updatePaths(graphValuesOptimized, peakHoldValuesOptimized);
+
+	spectrumUpdateFlag = false;
+	spectrumDecayFlag = false;
 }
 
 void SpectrumAnalyserBase::clearPeaks()
@@ -223,9 +247,9 @@ void SpectrumAnalyserBase::clearPeaks()
 
 void SpectrumAnalyserBase::decayGraph(float dbDecay)
 {
-	constexpr float minDb = -300.f;
-	for (auto& db : dbs)
+	for (int i = 0 ; i < dbs_in.size(); ++i)
 	{
-		db = (std::max)(minDb, db - dbDecay);
+		dbs_disp[i] = (std::max)(dbs_in[i], dbs_disp[i] - dbDecay);
 	}
+	spectrumDecayFlag = true;
 }
