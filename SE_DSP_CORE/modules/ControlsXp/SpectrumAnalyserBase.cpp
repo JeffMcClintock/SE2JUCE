@@ -173,8 +173,6 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 		const auto y = (db - displayDbTop) * dbToPixel;
 
 		graphValues.push_back({ static_cast<float>(x), y });
-
-		x += dx;
 	}
 
 	// calc the 2-point interpolated section
@@ -205,7 +203,8 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 	{
 		// more smoothing to noisy data on the high end of the graph.
 		dx = 4;
-		for (; x < pixelToBin.size() - 3; x += dx)
+		assert(width <= pixelToBin.size());
+		for (; x < width; x += dx)
 		{
 			const auto dbBin = pixelToBin[x].index;
 			assert(dbUsed[dbBin]);
