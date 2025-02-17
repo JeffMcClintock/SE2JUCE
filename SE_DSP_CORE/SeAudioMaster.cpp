@@ -1920,10 +1920,22 @@ void AudioMasterBase::verify_buffers(ug_base* ug, int start_pos, int sampleframe
 						oss << L"Corrupting out buffers (pre-safe zone). Samples 0 -> " << start_pos;
 						msg = oss.str();
 					}
-
+#if 0
+					for (int i = 0; i < start_pos; ++i)
+					{
+						if (!isfinite(block_ptr[i]))
+						{
+							_RPT0(0, "INF!!");
+						}
+						if (isnan(block_ptr[i]))
+						{
+							_RPT0(0, "NaN!!");
+						}
+					}
+#endif
 					int future_samples = start_pos + sampleframes;
 
-					// SSE modules are allowed to overwrite the end to complete a grounp of 4 aligned samples.
+					// SSE modules are allowed to overwrite the end to complete a group of 4 aligned samples.
 					if( (ug->flags & UGF_SSE_OVERWRITES_BUFFER_END) != 0 )
 					{
 						future_samples = (future_samples + 3) & 0xfffffc;
