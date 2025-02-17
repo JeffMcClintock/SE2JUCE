@@ -1021,7 +1021,7 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
                 combinePathAndFile(fullPath.c_str(), "bank.xmlbank");
                 nativeFileDialog.SetInitialFullPath(fullPath);
             }
-            else
+            else // Load/Save Preset
             {
                 const auto presetFolder = BundleInfo::instance()->getPresetFolder();
                 CreateFolderRecursive(presetFolder);
@@ -1050,7 +1050,20 @@ void MpController::OnSetHostControl(int hostControl, int32_t paramField, int32_t
 					nativeFileDialog.AddExtension("vstpreset", "VST3 Preset");
 				}
                 nativeFileDialog.AddExtension("*", "All Files");
-                nativeFileDialog.SetInitialFullPath(WStringToUtf8(presetFolder));
+
+				std::wstring initialPath = presetFolder;
+				if (patchCommand == 3) // save
+				{
+					const auto parameterHandle = getParameterHandle(-1, -1 - HC_PROGRAM_NAME);
+					if (auto it = ParameterHandleIndex.find(parameterHandle); it != ParameterHandleIndex.end())
+					{
+						auto p = (*it).second;
+						const auto presetName = (std::wstring) p->getValueRaw(gmpi::FieldType::MP_FT_VALUE, 0);
+						// Append preset name
+						initialPath = combinePathAndFile(initialPath, presetName) + L'.' + getNativePresetExtension();
+					}
+				}
+                nativeFileDialog.SetInitialFullPath(WStringToUtf8(initialPath));
             }
 
             nativeFileDialog.ShowAsync([this, patchCommand](int32_t result) -> void { this->OnFileDialogComplete(patchCommand, result); });
@@ -1564,6 +1577,8 @@ void MpController::OnFileDialogComplete(int patchCommand, int32_t result)
 						}
 					}
 				}
+
+				setModified(false); // needed when overwritting the same preset name, becuase it don't trigger a change to HC_PROGRAM
 			}
 			break;
 
