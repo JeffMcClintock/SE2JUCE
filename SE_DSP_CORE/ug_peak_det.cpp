@@ -20,7 +20,7 @@ REGISTER_MODULE_1(L"Peak Follower", IDS_MN_PEAK_FOLLOWER,IDS_MG_MODIFIERS,ug_pea
 }
 
 // prevent divide by zero
-#define MIN_ATTACK 0.001
+#define MIN_ATTACK 0.0001
 
 #define PN_INPUT	0
 #define PN_ATTACK	1
