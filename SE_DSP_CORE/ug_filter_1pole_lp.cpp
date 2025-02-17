@@ -189,8 +189,6 @@ void ug_filter_1pole::onSetPin(timestamp_t p_clock, UPlug* p_to_plug, state_type
 
 void ug_filter_1pole::process_fixed_freq_lp_settling(int start_pos, int sampleframes)
 {
-	doStabilityCheck();
-
 	process_fixed_freq_lp( start_pos, sampleframes );
 
 	assert( GetPlug(PN_SIGNAL)->getState() != ST_RUN );
