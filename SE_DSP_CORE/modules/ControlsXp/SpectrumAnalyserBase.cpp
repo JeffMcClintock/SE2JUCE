@@ -2,19 +2,19 @@
 
 void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 {
-	if (rawSpectrum.size() < 10 || sampleRateFft< 1.0f)
+	if (rawSpectrum.size() < 10 || sampleRateFft < 1.0f)
 		return;
 
-	const int spectrumCount2 = static_cast<int>(rawSpectrum.size() - 1);
+	const int spectrumCount2 = static_cast<int>(rawSpectrum.size()) - 1;
 
 	if (pixelToBin.empty())
 	{
 		InixPixelToBin(pixelToBin, width, spectrumCount2, sampleRateFft);
 
-		smoothedZoneHigh = linearZoneHigh = pixelToBin.size() - 3;
+		smoothedZoneHigh = linearZoneHigh = pixelToBin.size() - 1;
 
 		float bin_per_pixel = 0.8f;
-		for (int i = 10; i < pixelToBin.size() - 4; i++)
+		for (int i = 10; i < pixelToBin.size(); i++)
 		{
 			const auto& e1 = pixelToBin[i - 1];
 			const auto& e2 = pixelToBin[i];
@@ -40,7 +40,7 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 		// mark all bins required in final graph. saves calcing db then discarding it.
 		dbUsed.assign(spectrumCount2 + 2, false);
-		for (int i = 0; i < pixelToBin.size() - 3; ++i)
+		for (int i = 0; i < pixelToBin.size(); ++i)
 		{
 			auto& pb = pixelToBin[i];
 
@@ -203,6 +203,7 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 	{
 		// more smoothing to noisy data on the high end of the graph.
 		dx = 4;
+		x = linearZoneHigh;
 		assert(width <= pixelToBin.size());
 		for (; x < width; x += dx)
 		{
