@@ -16,12 +16,12 @@ struct SpectrumAnalyserBase
 	{
 		int index;
 		float fraction;
-#ifdef _DEBUG
 		float hz;
-#endif
 	};
 
 	std::vector< binData > pixelToBin;
+	std::vector<int> closestPixelToBin;
+
 	float pixelToBinDx = 2.0f; // x increment for each entry in pixelToBin.
 	float dbToPixel = 1.0f;
 	std::vector<float> rawSpectrum;

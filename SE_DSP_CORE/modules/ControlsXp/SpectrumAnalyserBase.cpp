@@ -11,6 +11,7 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 	{
 		InixPixelToBin(pixelToBin, width, spectrumCount2, sampleRateFft);
 
+		// calc the zones of the graph that need cubic/linear/none interpolation
 		smoothedZoneHigh = linearZoneHigh = pixelToBin.size() - 1;
 
 		float bin_per_pixel = 0.8f;
@@ -38,34 +39,60 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 			}
 		}
 
+		// for the right side of graph, clump bins together. Assigning each to it's nearest pixel.
+		{
+			const float bin2Hz = sampleRateFft / (2.0f * spectrumCount2);
+			closestPixelToBin.assign(spectrumCount2, 0);
+
+			int closestX = 0;
+			for (int bin = 0; bin < spectrumCount2; bin++)
+			{
+				const float hz = bin * bin2Hz;
+
+				float closest = 1000000;
+				for (int x = closestX; x < pixelToBin.size(); ++x)
+				{
+					const auto dist = fabs(pixelToBin[x].hz - hz);
+					if (dist < closest)
+					{
+						closestX = x;
+						closest = dist;
+					}
+					else if (pixelToBin[x].hz > hz) // break early rather than racing off in the wrong direction to the end of the array
+					{
+						break;
+					}
+				}
+
+				// quantize to 2 pixels in x direction.
+				const auto closestXQuantized = ((closestX - linearZoneHigh) & ~1) + linearZoneHigh;
+				closestPixelToBin[bin] = closestXQuantized;
+			}
+		}
+
 		// mark all bins required in final graph. saves calcing db then discarding it.
 		dbUsed.assign(spectrumCount2 + 2, false);
-		for (int i = 0; i < pixelToBin.size(); ++i)
+		for (int i = 0; i < pixelToBin.size(); ++i) // refactor into 3 loops
 		{
-			auto& pb = pixelToBin[i];
+			auto& index = pixelToBin[i].index;
 
-			if (pb.index > linearZoneHigh)
+			dbUsed[index] = true;
+			if (index > smoothedZoneHigh)
 			{
-				dbUsed[pb.index] = true;
-			}
-			else if (pb.index > smoothedZoneHigh)
-			{
-				dbUsed[pb.index] = true;
-				dbUsed[pb.index + 1] = true;
+				dbUsed[index + 1] = true;
 			}
 			else
 			{
-				dbUsed[pb.index - 1] = true;
-				dbUsed[pb.index + 0] = true;
-				dbUsed[pb.index + 1] = true;
-				dbUsed[pb.index + 2] = true;
+				dbUsed[(std::max)(0, index - 1)] = true;
+				dbUsed[index + 1] = true;
+				dbUsed[index + 2] = true;
 			}
 		}
 	}
 
 	constexpr float displayDbTop = 6.0f;
 	constexpr float displayDbBot = -120.0f;
-	constexpr float clipDbAtBottom = displayDbBot - 5.0f; // -5 to have flat grph just off the bottom
+	constexpr float clipDbAtBottom = displayDbBot - 5.0f; // -5 to have flat graph just off the bottom
 	const float inverseN = 2.0f / spectrumCount2;
 	const float dbc = 20.0f * log10f(inverseN);
 	const float safeMinAmp = powf(10.0f, (clipDbAtBottom - dbc) * 0.1f);
@@ -73,6 +100,8 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 
 	if (spectrumUpdateFlag)
 	{
+		dbToPixel = -height / (displayDbTop - displayDbBot);
+
 		// convert spectrum to dB
 		if (dbs_in.size() != spectrumCount2 + 2)
 		{
@@ -80,11 +109,9 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 			dbs_disp.assign(spectrumCount2 + 2, -300.0f);
 		}
 
-		for (int i = 0; i < linearZoneHigh; ++i)
+		for (int i = 0; i < pixelToBin[linearZoneHigh].index; ++i)
 		{
-			const int index = i + 1;
-
-			if (!dbUsed[index])
+			if (!dbUsed[i])
 				continue;
 
 			float db;
@@ -100,70 +127,68 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 				assert(!isnan(db));
 			}
 
-			dbs_in[index] = db;
-			dbs_disp[index] = (std::max)(db, dbs_disp[index]);
+			dbs_in[i] = db;
+			dbs_disp[i] = (std::max)(db, dbs_disp[i]);
 		}
 
 		// for the dense part of the graph at right, just find local maxima of small groups. Then do the expensive conversion to dB.
 		{
-			// more smoothing to noisy data on the high end of the graph.
-			int dx = 4;
-			int i = linearZoneHigh;
-			auto fromBin = (pixelToBin[i - 1].index + pixelToBin[i].index) / 2;
-			for (; i < pixelToBin.size() - 3; i += dx)
+//			int dx = 4;
+			float maxAmp = 0.0f;
+			int currentX = -1;
+			for (int bin = 0 ; bin < closestPixelToBin.size() ; ++bin)
 			{
-				const auto toBin = (pixelToBin[i].index + pixelToBin[i + 1].index) / 2;
-				const float maximumAmp = *std::max_element(capturedata + fromBin, capturedata + toBin);
-
-				float db;
-				if (maximumAmp <= safeMinAmp)
+				int x = closestPixelToBin[bin];
+				if (x != currentX)
 				{
-					// save on expensive log10 call if signal is so quiet that it's off the bottom of the graph anyhow.
-					db = clipDbAtBottom;
+					if (currentX >= linearZoneHigh)
+					{
+						float db;
+						if (maxAmp <= safeMinAmp)
+						{
+							// save on expensive log10 call if signal is so quiet that it's off the bottom of the graph anyhow.
+							db = clipDbAtBottom;
+						}
+						else
+						{
+							db = 10.f * log10(maxAmp) + dbc;
+							assert(!isnan(db));
+						}
+						const int sumaryBin = pixelToBin[currentX].index;
+
+						dbs_in[sumaryBin] = db;
+						dbs_disp[sumaryBin] = (std::max)(db, dbs_disp[sumaryBin]);
+					}
+					currentX = x;
+					maxAmp = 0.0f;
 				}
-				else
-				{
-					db = 10.f * log10(maximumAmp) + dbc;
-					assert(!isnan(db));
-				}
 
-				const auto dbBin = pixelToBin[i].index;
-				assert(dbUsed[dbBin]);
-
-				dbs_in[dbBin] = db;
-				dbs_disp[dbBin] = (std::max)(db, dbs_disp[dbBin]);
-
-				fromBin = toBin;
+				maxAmp = (std::max)(maxAmp, capturedata[bin]);
 			}
 		}
-		dbs_disp[0] = dbs_disp[1]; // makes interpolation easier to have a dummy value at left.
-
-		dbToPixel = -height / (displayDbTop - displayDbBot);
 	}
 
 	graphValues.clear();
 
 	// calc the leftmost cubic-smoothed section
-	int x = 0;
+	
 	int dx = 2;
 #ifdef _DEBUG
 	dx = 1;
 #endif
-	for (; x < smoothedZoneHigh; x += dx)
+	for (int x = 0; x < smoothedZoneHigh; x += dx)
 	{
 		const auto& [index
 			, fraction
-#ifdef _DEBUG
 			, hz
-#endif
 		] = pixelToBin[x];
 
 		assert(index >= 0);
 		assert(index + 2 < dbs_in.size());
 
-		assert(dbUsed[index - 1] && dbUsed[index] && dbUsed[index + 1] && dbUsed[index + 2]);
+		assert(dbUsed[(std::max)(0, index - 1)] && dbUsed[index] && dbUsed[index + 1] && dbUsed[index + 2]);
 
-		const float y0 = dbs_disp[index - 1];
+		const float y0 = dbs_disp[(std::max)(0, index - 1)];
 		const float y1 = dbs_disp[index + 0];
 		const float y2 = dbs_disp[index + 1];
 		const float y3 = dbs_disp[index + 2];
@@ -176,13 +201,11 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 	}
 
 	// calc the 2-point interpolated section
-	for (; x < linearZoneHigh; x += dx)
+	for (int x = smoothedZoneHigh; x < linearZoneHigh; x += dx)
 	{
 		const auto& [index
 			, fraction
-#ifdef _DEBUG
 			, hz
-#endif
 		] = pixelToBin[x];
 
 		assert(index >= 0);
@@ -199,22 +222,15 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 		graphValues.push_back({ static_cast<float>(x), y });
 	}
 
-	// calc the 'max' section where we just take the maximum value of several bins.
+	// plot the 'max' section where we just take the maximum value of several bins.
+	for (int x = linearZoneHigh; x < width; x += 2) // see also closestXQuantized
 	{
-		// more smoothing to noisy data on the high end of the graph.
-		dx = 4;
-		x = linearZoneHigh;
-		assert(width <= pixelToBin.size());
-		for (; x < width; x += dx)
-		{
-			const auto dbBin = pixelToBin[x].index;
-			assert(dbUsed[dbBin]);
+		const auto dbBin = pixelToBin[x].index;
 
-			const auto db = dbs_disp[dbBin];
-			const auto y = (db - displayDbTop) * dbToPixel;
+		const auto db = dbs_disp[dbBin];
+		const auto y = (db - displayDbTop) * dbToPixel;
 
-			graphValues.push_back({ static_cast<float>(x), y });
-		}
+		graphValues.push_back({ static_cast<float>(x), y });
 	}
 
 	// PEAK HOLD
