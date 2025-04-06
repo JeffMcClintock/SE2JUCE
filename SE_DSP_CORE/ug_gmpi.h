@@ -19,8 +19,10 @@ public:
 	int32_t getHandle() override;
 
 	// IEmbeddedFileSupport
-	gmpi::ReturnCode resolveFilename(const char* fileName, gmpi::api::IString* returnFullUri)  override;
-	gmpi::ReturnCode openUri(const char* fullUri, gmpi::api::IUnknown** returnStream)  override;
+	gmpi::ReturnCode findResourceUri(const char* fileName, gmpi::api::IString* returnFullUri) override;
+	gmpi::ReturnCode openUri(const char* fullUri, gmpi::api::IUnknown** returnStream) override;
+	gmpi::ReturnCode registerResourceUri(const char* fullUri) override { return gmpi::ReturnCode::NoSupport; }
+	gmpi::ReturnCode clearResourceUris() override { return gmpi::ReturnCode::NoSupport; }
 
 	// IUnknown methods
 	gmpi::ReturnCode queryInterface(const gmpi::api::Guid* iid, void** returnInterface) override;
