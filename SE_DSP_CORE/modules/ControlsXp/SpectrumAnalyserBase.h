@@ -22,7 +22,7 @@ struct SpectrumAnalyserBase
 	std::vector< binData > pixelToBin;
 	std::vector<int> closestPixelToBin;
 
-	float pixelToBinDx = 2.0f; // x increment for each entry in pixelToBin.
+//	float pixelToBinDx = 2.0f; // x increment for each entry in pixelToBin.
 	float dbToPixel = 1.0f;
 	std::vector<float> rawSpectrum;
 	float sampleRateFft = 0;

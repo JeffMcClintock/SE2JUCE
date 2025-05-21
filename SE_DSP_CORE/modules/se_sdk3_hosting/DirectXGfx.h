@@ -1341,18 +1341,21 @@ namespace gmpi
 			//	void MP_STDCALL DrawBitmap( GmpiDrawing_API::IMpBitmap* mpBitmap, GmpiDrawing::Rect destinationRectangle, float opacity, int32_t interpolationMode, GmpiDrawing::Rect sourceRectangle) override
 			void MP_STDCALL DrawBitmap(const GmpiDrawing_API::IMpBitmap* mpBitmap, const GmpiDrawing_API::MP1_RECT* destinationRectangle, float opacity, /* MP1_BITMAP_INTERPOLATION_MODE*/ int32_t interpolationMode, const GmpiDrawing_API::MP1_RECT* sourceRectangle) override
 			{
-				auto bm = ((Bitmap*)mpBitmap);
+				auto bm = (Bitmap*) mpBitmap;
+				if (!bm)
+					return;
+
 				auto bitmap = bm->GetNativeBitmap(context_);
-				if (bitmap)
-				{
-					context_->DrawBitmap(
-						bitmap,
-						(D2D1_RECT_F*)destinationRectangle,
-						opacity,
-						(D2D1_BITMAP_INTERPOLATION_MODE) interpolationMode,
-						(D2D1_RECT_F*)sourceRectangle
-					);
-				}
+				if (!bitmap)
+					return;
+
+				context_->DrawBitmap(
+					bitmap,
+					(D2D1_RECT_F*)destinationRectangle,
+					opacity,
+					(D2D1_BITMAP_INTERPOLATION_MODE)interpolationMode,
+					(D2D1_RECT_F*)sourceRectangle
+				);
 			}
 
 			void MP_STDCALL SetTransform(const GmpiDrawing_API::MP1_MATRIX_3X2* transform) override

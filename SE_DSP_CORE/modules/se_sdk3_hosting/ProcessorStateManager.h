@@ -119,6 +119,7 @@ public:
 
 	void init(class TiXmlElement* parameters_xml) override;
 	void setPresetFromXml(const std::string& presetString) override;
+	void setPresetRespectingIpc(DawPreset* preset);
 
 	// Processor informing me of self-initiated parameter changes
 	// from the real-time thread

@@ -119,7 +119,7 @@ public:
 	{
 		return L"xmlpreset";
 	}
-	std::vector< MpController::presetInfo > scanFactoryPresets() override;
+	std::vector< presetInfo > scanFactoryPresets() override;
 //	void loadFactoryPreset(int index, bool fromDaw) override;
 	std::string getFactoryPresetXml(std::string filename) override;
 

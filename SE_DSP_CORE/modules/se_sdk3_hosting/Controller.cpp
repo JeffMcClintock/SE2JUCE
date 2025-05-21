@@ -484,7 +484,7 @@ int32_t MpController::getController(int32_t moduleHandle, gmpi::IMpController** 
 	return gmpi::MP_OK;
 }
 
-std::vector< MpController::presetInfo > MpController::scanNativePresets()
+std::vector< presetInfo > MpController::scanNativePresets()
 {
 	platform_string PresetFolder = toPlatformString(BundleInfo::instance()->getPresetFolder());
 
@@ -493,7 +493,7 @@ std::vector< MpController::presetInfo > MpController::scanNativePresets()
 	return scanPresetFolder(PresetFolder, extension);
 }
 
-MpController::presetInfo MpController::parsePreset(const std::wstring& filename, const std::string& xml)
+presetInfo MpController::parsePreset(const std::wstring& filename, const std::string& xml)
 {
 	// file name overrides the name from XML
 	std::string presetName;
@@ -539,9 +539,9 @@ MpController::presetInfo MpController::parsePreset(const std::wstring& filename,
 	};
 }
 
-std::vector< MpController::presetInfo > MpController::scanPresetFolder(platform_string PresetFolder, platform_string extension)
+std::vector< presetInfo > MpController::scanPresetFolder(platform_string PresetFolder, platform_string extension)
 {
-	std::vector< MpController::presetInfo > returnValues;
+	std::vector< presetInfo > returnValues;
 
 	const auto searchString = PresetFolder + platform_string(_T("*.")) + extension;
 	const bool isXmlPreset = ToUtf8String(extension) == "xmlpreset";

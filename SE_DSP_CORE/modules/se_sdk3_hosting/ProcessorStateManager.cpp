@@ -639,7 +639,14 @@ void ProcessorStateMgr::setPresetFromXml(const std::string& presetString)
 void ProcessorStateMgrVst3::setPresetFromXml(const std::string& presetString)
 {
 	auto preset = new DawPreset(parametersInfo, presetString);
+	preset->ignoreProgramChangeActive = ignoreProgramChange;
 
+	setPresetRespectingIpc(preset);
+}
+
+// takes ownership of preset
+void ProcessorStateMgrVst3::setPresetRespectingIpc(DawPreset* preset)
+{
 	// bring current preset up-to-date
 	serviceQueue(messageQueFromProcessor);
 	serviceQueue(messageQueFromController);
@@ -647,7 +654,7 @@ void ProcessorStateMgrVst3::setPresetFromXml(const std::string& presetString)
 	{
 		const std::lock_guard<std::mutex> lock{ presetMutex };
 
-		if (ignoreProgramChange)
+		if (preset->ignoreProgramChangeActive)
 		{
 			// merge the new preset with the current one.
 			for (auto& p : preset->params)
@@ -674,7 +681,9 @@ void ProcessorStateMgrVst3::setPresetFromXml(const std::string& presetString)
 		messageQueFromController.clear();
 	}
 
-	ProcessorStateMgr::setPreset(retainPreset(preset));
+	// set the preset without messing with the IPC flag set by caller. (i.e. avoiding ProcessorStateMgr::setPreset())
+	retainPreset(preset);
+	callback(preset);
 
 #if 0 //def _DEBUG
 	auto temp = RawView(preset->params[1329619189].rawValues_[0]);

@@ -114,23 +114,34 @@ public:
 	bool isPresetModified();
 };
 
+// presets from factory.xmlpreset resource.
+struct presetInfo
+{
+	std::string name;
+	std::string category;
+	int index = -1;			// Internal Factory presets only.
+	std::wstring filename;	// External disk presets only.
+	std::size_t hash = 0;
+	bool isFactory = false;
+	bool isSession = false; // is temporary preset to accommodate preset loaded from DAW session (but not an existing preset)
+};
+
+struct IPresetsModel
+{
+	virtual int getPresetCount() = 0;
+	virtual int getPresetIndex() = 0; // index according to controller (not nesc order displayed in combo)
+	virtual void setPresetIndex(int) = 0;
+	virtual presetInfo getPresetInfo(int index) = 0;
+	virtual std::pair<bool, bool> CategorisePresetName(const std::string& name) = 0;
+	virtual void SavePresetAs(const std::string& presetName) = 0;
+	virtual void DeletePreset(int presetIndex) = 0;
+	virtual bool isPresetModified() = 0;
+};
+
 class MpController : public IGuiHost2, public interThreadQueUser, public TimerClient
 {
 	friend class UndoManager;
 	friend class SubPresetManager;
-
-public:
-	// presets from factory.xmlpreset resource.
-	struct presetInfo
-	{
-		std::string name;
-		std::string category;
-		int index = -1;			// Internal Factory presets only.
-		std::wstring filename;	// External disk presets only.
-		std::size_t hash = 0;
-		bool isFactory = false;
-		bool isSession = false; // is temporary preset to accommodate preset loaded from DAW session (but not an existing preset)
-	};
 
 protected:
 	static const int timerPeriodMs = 35;
@@ -236,12 +247,12 @@ public:
 	}
 	bool isPresetModified();
 
-	MpController::presetInfo parsePreset(const std::wstring& filename, const std::string& xml);
-	std::vector< MpController::presetInfo > scanNativePresets();
-	virtual std::vector< MpController::presetInfo > scanFactoryPresets() = 0;
+	presetInfo parsePreset(const std::wstring& filename, const std::string& xml);
+	std::vector< presetInfo > scanNativePresets();
+	virtual std::vector< presetInfo > scanFactoryPresets() = 0;
 //	virtual void loadFactoryPreset(int index, bool fromDaw) = 0;
 	virtual std::string getFactoryPresetXml(std::string filename) = 0;
-	std::vector<MpController::presetInfo> scanPresetFolder(platform_string PresetFolder, platform_string extension);
+	std::vector<presetInfo> scanPresetFolder(platform_string PresetFolder, platform_string extension);
 
 	virtual void ParamToDsp(MpParameter* param, int32_t voice = 0);
 //	void HostControlToDsp(MpParameter* param, int32_t voice = 0);

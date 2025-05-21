@@ -633,7 +633,7 @@ namespace GmpiDrawing
 
 	template<class T> PointBase<T> CenterPoint(const RectBase<T>& r)
 	{
-		return PointBase<T>(0.5f * (r.left + r.right), 0.5f * (r.top + r.bottom));
+		return PointBase<T>((r.left + r.right) / (T)2, (r.top + r.bottom) / (T)2);
 	}
 
 	typedef RectBase<float> Rect;
@@ -2139,8 +2139,7 @@ namespace GmpiDrawing
 
 	class Factory : public GmpiSdk::Internal::Object
 	{
-		std::unordered_map<std::string, std::pair<float, float>> availableFonts; // font family name, body-size, cap-height.
-		gmpi_sdk::mp_shared_ptr<GmpiDrawing_API::IMpFactory2> factory2;
+		inline static std::unordered_map<std::string, std::pair<float, float>> availableFonts; // font family name, body-size, cap-height.
 
 	public:
 		GMPIGUISDK_DEFINE_CLASS(Factory, GmpiSdk::Internal::Object, GmpiDrawing_API::IMpFactory);
@@ -2209,12 +2208,11 @@ namespace GmpiDrawing
 			// "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif (test each)
 			const char* fallBackFontFamilyName = "Arial";
 
-			if (!factory2)
+			if (availableFonts.empty())
 			{
+				gmpi_sdk::mp_shared_ptr<GmpiDrawing_API::IMpFactory2> factory2;
 				if (gmpi::MP_OK == Get()->queryInterface(GmpiDrawing_API::SE_IID_FACTORY2_MPGUI, factory2.asIMpUnknownPtr()))
 				{
-					assert(availableFonts.empty());
-
 					availableFonts.insert(std::make_pair(fallBackFontFamilyName, std::make_pair(0.0f, 0.0f)));
 
 					for (int32_t i = 0; true; ++i)

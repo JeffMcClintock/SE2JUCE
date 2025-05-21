@@ -862,7 +862,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 					// Convert to D2D format and cache.
 					auto hr = nativeContext_->CreateBitmapFromWicBitmap(
 						diBitmap_,
-						&props, //NULL,
+						&props,
 						&nativeBitmap_
 					);
 
