@@ -184,7 +184,7 @@ void UgDebugInfo::VerfyBlocksEnd( int buffer_offset, int blocksize )
 
 void UgDebugInfo::CpuToGui()
 {
-	_RPTN(0, "     CpuToGui %f\n", cpuMeasuedCycles);
+//	_RPTN(0, "     CpuToGui %f\n", cpuMeasuedCycles);
 
 	const float cpu = cpuMeasuedCycles * ug_base::cpu_conversion_const;
 	const float peakCpu = cpuPeak * ug_base::cpu_conversion_const2;

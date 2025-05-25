@@ -513,6 +513,19 @@ void SeAudioMaster::BuildDspGraph(
 #endif
 }
 
+void SeAudioMaster::ApplyPinDefaultChanges(std::unordered_map<int64_t, std::string>& extraPinDefaultChanges)
+{
+	for (auto& p : extraPinDefaultChanges)
+	{
+		const auto handle = p.first >> 32;
+		const auto pinIdx = static_cast<int32_t>(p.first & 0xFFFFFFFF);
+		const auto& value = p.second;
+
+		auto module = dynamic_cast<ug_base*>(m_handle_map[handle]);
+		module->GetPlug(pinIdx)->SetDefault2(value.c_str());
+	}
+}
+
 int32_t SeAudioMaster::RegisterIoModule(class ISpecialIoModule* m)
 {
 #if defined( SE_EDIT_SUPPORT )
@@ -535,6 +548,14 @@ void SeAudioMaster::DoProcess(int sampleframes, const float* const* inputs, floa
 	if (audioOutModule)
 	{
 		audioOutModule->setIoBuffers(outputs, numOutputs);
+	}
+	else
+	{
+		// send silence.
+		for (int chan = 0; chan < numOutputs; ++chan)
+		{
+			std::fill(outputs[chan], outputs[chan] + sampleframes, 0.0f);
+		}
 	}
 
 	if (audioInModule)
@@ -1336,7 +1357,11 @@ void SeAudioMaster::OnUiMsg(int p_msg_id, my_input_stream& p_stream)
 		getShell()->EnableIgnoreProgramChange();
 		return;
 	}
-
+	else if (p_msg_id == id_to_long2("RSRT")) // Restart Processor
+	{
+		getShell()->DoAsyncRestart();
+		return;
+	}
 #endif
 
 	dsp_msg_target::OnUiMsg( p_msg_id, p_stream );

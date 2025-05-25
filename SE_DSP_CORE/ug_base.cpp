@@ -2023,7 +2023,6 @@ void ug_base::SendPendingOutputChanges()
 	}
 }
 
-#if 0
 void ug_base::OnUiNotify2( int p_msg_id, my_input_stream& p_stream )
 {
 	switch( p_msg_id )
@@ -2038,13 +2037,20 @@ void ug_base::OnUiNotify2( int p_msg_id, my_input_stream& p_stream )
 			// When 
 			if (pinIdx < plugs.size())
 			{
-				GetPlug(pinIdx)->SetDefault2(WStringToUtf8(defaultValue).c_str());
+				const auto valueUtf8 = WStringToUtf8(defaultValue);
+
+				// Store the default value in the AudioMaster for use if the DSP is restarted (e.g. oversampling change).
+				const int64_t handleAndPinIdx = (int64_t)Handle() << 32 | pinIdx;
+
+				auto& extraPinDefaultChanges = *AudioMaster()->getShell()->getExtraPinDefaultChanges();
+				extraPinDefaultChanges[handleAndPinIdx] = valueUtf8;
+
+				GetPlug(pinIdx)->SetDefault2(valueUtf8.c_str());
 			}
 		}
 		break;
 	}
 }
-#endif
 
 void ug_base::AttachDebugger()
 {

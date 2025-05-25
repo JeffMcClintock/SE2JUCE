@@ -827,20 +827,14 @@ void init(std::map<int32_t, paramInfo>& parametersInfo, class TiXmlElement* para
 				p.meta = JmUnicodeConversions::Utf8ToWstring(s);
 		}
 
-		//if (Private == 0 && p.tag != -1)
-		//{
-		//	//			normalizedValues[p.tag] = std::make_unique<std::atomic<float>>(0.0f);
-		//	tagToHandle[p.tag] = ParameterHandle;
-		//}
-#if 0 // paraminfo don't need to store midi learn, as it starts off blank anyhow
-		parameter_xml->QueryIntAttribute("MIDI", &(p.MidiAutomation));
-		if (p.MidiAutomation != -1)
+		parameter_xml->QueryIntAttribute("MIDI", &(p.midiAutomation));
+		if (p.midiAutomation != -1)
 		{
 			std::string temp;
 			parameter_xml->QueryStringAttribute("MIDI_SYSEX", &temp);
-			p.MidiAutomationSysex = Utf8ToWstring(temp);
+			p.midiAutomationSysex = Utf8ToWstring(temp);
 		}
-#endif
+
 		// Default values from patch list.
 		const auto dataType = p.dataType;
 		ParseXmlPreset(
@@ -898,8 +892,8 @@ void ProcessorStateMgrVst3::init(TiXmlElement* parameters_xml)
 	{
 		auto& presetMutableParam = presetMutable.params[p.first];
 		presetMutableParam.dataType = p.second.dataType;
-		presetMutableParam.MidiAutomation = -1;
-		presetMutableParam.MidiAutomationSysex.clear();
+		presetMutableParam.MidiAutomation = p.second.midiAutomation;
+		presetMutableParam.MidiAutomationSysex = p.second.midiAutomationSysex;
 
 		for (auto& v : p.second.defaultRaw)
 			presetMutableParam.rawValues_.push_back({ v.data(), v.size() });

@@ -193,7 +193,7 @@ public:
 
 	// communication
 	void message(std::wstring msg, int typ = 0);
-	virtual void OnUiNotify2(int /*p_msg_id*/, my_input_stream& /*p_stream*/) {}
+	virtual void OnUiNotify2(int /*p_msg_id*/, my_input_stream& /*p_stream*/);
 	virtual void OnUiMsg(int p_msg_id, my_input_stream& p_stream) override;
 	// polyphonic setup
 	FeedbackTrace* CalcSortOrder3(int& maxSortOrderGlobal);

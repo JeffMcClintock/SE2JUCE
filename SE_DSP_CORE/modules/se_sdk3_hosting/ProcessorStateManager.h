@@ -25,6 +25,9 @@ struct paramInfo
 	int32_t hostControl = -1;
 	int32_t tag = -1;
 
+	int32_t midiAutomation = -1;
+	std::wstring midiAutomationSysex;
+
 #ifdef _DEBUG
 	std::string name;
 #endif

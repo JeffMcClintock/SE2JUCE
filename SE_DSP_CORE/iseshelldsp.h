@@ -53,6 +53,7 @@ public:
 	virtual int32_t SeMessageBox(const wchar_t* msg, const wchar_t* title, int flags) = 0;
 
 	virtual std::unordered_map<int32_t, int32_t>& GetModuleLatencies() = 0;
+	virtual std::unordered_map<int64_t, std::string>* getExtraPinDefaultChanges() {return {};}; // Editor only
 
 	virtual int RegisterIoModule(ISpecialIoModule*) = 0;
 	virtual void onSetParameter(int32_t handle, int32_t field, RawView rawValue, int voiceId) = 0;

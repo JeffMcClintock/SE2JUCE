@@ -144,6 +144,17 @@ public:
 		DrawRotarySwitch(&dc, os, r);
 	}
 
+	bool widgetHitTest(GmpiDrawing::Point point) override
+	{
+		if (!Widget::widgetHitTest(point))
+			return false;
+
+		point.x += drawOffset.width;
+		point.y += drawOffset.height;
+
+		return bitmapHitTest2(point);
+	}
+
 	virtual void onPointerMove(int32_t flags, GmpiDrawing_API::MP1_POINT point) override
 	{
 		BitmapWidget::onPointerMove(flags, point);

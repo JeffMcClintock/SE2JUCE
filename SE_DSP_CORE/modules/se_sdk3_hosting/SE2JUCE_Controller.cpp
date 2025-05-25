@@ -143,11 +143,11 @@ std::string SeJuceController::getFactoryPresetXml(std::string filename)
 	return {};
 }
 
-std::vector< presetInfo > SeJuceController::scanFactoryPresets()
+std::vector< MpController::presetInfo > SeJuceController::scanFactoryPresets()
 {
 	const char* xmlPresetExt = ".xmlpreset";
 
-	std::vector< presetInfo > returnValues;
+	std::vector< MpController::presetInfo > returnValues;
 
 	for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
 	{

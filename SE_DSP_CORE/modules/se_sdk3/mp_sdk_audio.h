@@ -555,7 +555,9 @@ public:
 			else
 			{
 				// 8 byte pointer stored in parm3/parm4.
-				value_ = *reinterpret_cast<gmpi::ISharedBlob**>(const_cast<int32_t*>(&(e->parm3)));
+				// value_ = *reinterpret_cast<gmpi::ISharedBlob**>(const_cast<int32_t*>(&(e->parm3)));
+				const void* ptr = &(e->parm3);
+				value_ = *(gmpi::ISharedBlob**)ptr;
 			}
 
 			freshValue_ = true;

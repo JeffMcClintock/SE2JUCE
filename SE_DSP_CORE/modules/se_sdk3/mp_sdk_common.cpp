@@ -351,6 +351,11 @@ bool MpBlob::operator==( const MpBlob& other ) const
 	return true;
 }
 
+bool MpBlob::operator!=(const MpBlob& other) const
+{
+	return !operator==(other);
+}
+
 bool MpBlob::compare( char* data, int size )
 {
 	if( size_ != static_cast<size_t>(size) )

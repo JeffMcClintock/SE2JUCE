@@ -542,6 +542,7 @@ public:
 	void SetModuleLatency(int32_t handle, int32_t latency) override;
 	void CpuFunc();
 	int32_t RegisterIoModule(class ISpecialIoModule* m) override;
+	void ApplyPinDefaultChanges(std::unordered_map<int64_t, std::string>& extraPinDefaultChanges);
 
 	timestamp_t m_sample_clock = {};
 	timestamp_t block_start_clock;

@@ -718,10 +718,11 @@ enum FieldType {
 	, MP_FT_IGNORE_PROGRAM_CHANGE
 	, MP_FT_PRIVATE
 	, MP_FT_AUTOMATION				// int
-	, MP_FT_AUTOMATION_SYSEX			// STRING
+	, MP_FT_AUTOMATION_SYSEX		// STRING
 	, MP_FT_DEFAULT					// same type as parameter
-	, MP_FT_GRAB						// (mouse down) bool
+	, MP_FT_GRAB					// (mouse down) bool
 	, MP_FT_NORMALIZED				// float
+	, MP_FT_STATEFUL				// bool
 };
 
 class IMpParameterObserver : public IMpUnknown
@@ -1126,7 +1127,8 @@ struct MpBlob
 		setValueRaw((size_t)size, data);
 	}
 	const MpBlob &operator=( const MpBlob& other );
-	bool operator==( const MpBlob& other ) const;
+	bool operator==(const MpBlob& other) const;
+	bool operator!=(const MpBlob& other) const;
 	bool compare( char* data, int size );
 	bool operator!=( const MpBlob& other );
 	int32_t getSize() const;
