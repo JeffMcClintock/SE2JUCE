@@ -338,3 +338,15 @@ public:
 	virtual void OnLatencyChanged() {}
 	virtual MpParameter_native* makeNativeParameter(int ParameterTag, bool isInverted = false) = 0;
 };
+
+struct IPresetsModel
+{
+	virtual int getPresetCount() = 0;
+	virtual int getPresetIndex() = 0; // index according to controller (not nesc order displayed in combo)
+	virtual void setPresetIndex(int) = 0;
+	virtual MpController::presetInfo getPresetInfo(int index) = 0;
+	virtual std::pair<bool, bool> CategorisePresetName(const std::string& name) = 0;
+	virtual void SavePresetAs(const std::string& presetName) = 0;
+	virtual void DeletePreset(int presetIndex) = 0;
+	virtual bool isPresetModified() = 0;
+};
