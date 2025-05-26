@@ -274,6 +274,9 @@ void SE2JUCE_Processor::changeProgramName (int, const juce::String&)
 //==============================================================================
 void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    m_maxSamplesPerBlock = samplesPerBlock;
+    m_sampleRate = sampleRate;
+
     timeInfo.resetToDefault();
     memset(&timeInfoSe, 0, sizeof(timeInfoSe));
     timeInfoSe.tempo = 120.0;
@@ -341,6 +344,16 @@ bool SE2JUCE_Processor::isBusesLayoutSupported (const BusesLayout& layouts) cons
 void SE2JUCE_Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    if (processor.reinitializeFlag)
+    {
+        processor.prepareToPlay(
+            this,
+            static_cast<int32_t>(m_sampleRate),
+            m_maxSamplesPerBlock,
+            !isNonRealtime()
+        );
+    }
 
     if (getPlayHead() && getPlayHead()->getCurrentPosition(timeInfo))
     {
