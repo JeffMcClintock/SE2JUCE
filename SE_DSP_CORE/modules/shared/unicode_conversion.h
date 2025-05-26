@@ -72,9 +72,12 @@ inline std::string WStringToUtf8(const std::wstring& p_cstring )
 		NULL
 	);
 #else
-	const auto size = wcstombs(0, p_cstring.c_str(), 0);
+	const auto size = std::wcstombs(0, p_cstring.c_str(), 0);
+    if(static_cast<std::size_t>(-1) == size) // invalid chars
+        return res;
+    
 	res.resize(size);
-	wcstombs((char*)res.data(), p_cstring.c_str(), size);
+	std::wcstombs((char*)res.data(), p_cstring.c_str(), size);
 #endif
 #endif
 	return res;
