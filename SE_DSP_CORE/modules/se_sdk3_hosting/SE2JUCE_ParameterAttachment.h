@@ -60,7 +60,7 @@ struct SeParameterAttachment2 : SeParameterAttachment
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId)
         {
@@ -150,7 +150,7 @@ struct SeParameterAttachmentSlider : SeParameterAttachment
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(float))
         {
@@ -266,7 +266,7 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
 	}
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
         {
@@ -379,7 +379,7 @@ struct SeParameterAttachmentButtonDisabler2 : SeParameterAttachment
     {}
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (gmpi::MP_FT_VALUE != fieldId)
             return gmpi::MP_OK;
@@ -468,7 +468,7 @@ struct ButtonStateManager : SeParameterAttachment, public juce::MouseListener
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
         {
