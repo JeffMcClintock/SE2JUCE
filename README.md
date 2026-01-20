@@ -17,22 +17,23 @@ Also SE2JUCE requires you to have access to the source-code of any SEMs you wish
 # Prerequisites
 
 Install Visual Studio Community or your IDE of choice. https://visualstudio.microsoft.com/vs/
+
  When installing select only the "Desktop development with C++" workload.
 
 Install SynthEdit 1.5. https://synthedit.com/downloads/?url=/downloads
+
 Get a SynthEdit license if you don't already have one. This is required for the JUCE export feature.
 
 Install CMake Windows 64 Installer. https://cmake.org/download/
 
 Install git for Windows: https://git-scm.com/install/windows
+
  (untick "Windows Explorer Integration", "Use Notepad as Git's default editor", and select default for everything else)
 
 Recomended: Install a graphical git client, e.g. GitHub Desktop for Windows. https://desktop.github.com/download/
 
 # Getting Started with the PD303 example
 Use git to clone the SE2JUCE_Projects repository: https://github.com/JeffMcClintock/SE2JUCE_Projects 
-
-BUILDING THE EXAMPLE PROJECT - PD303
 
 * Open SynthEdit and open the project: Documents/Github/SE2JUCE_Plugins/PD303/SE_Project/PD303.se1
 
@@ -42,24 +43,24 @@ BUILDING THE EXAMPLE PROJECT - PD303
 
 * Open CMake GUI
 
-*  Under "where is the source code" enter the location of SE2JUCE_Plugins folder. e.g. ...\Documents\Github\SE2JUCE_Plugins
+* Under "where is the source code" enter the location of SE2JUCE_Projects folder. e.g. ...\Documents\Github\SE2JUCE_Projects
 * Under "where to build the binaries" enter ...\Documents\SE2JUCE_Projects\build (or anywhere you prefer).
 
-* Click 'Configure", and choose the default compiler, Visual Studio. Choose to "create the build folder". Ignore "Error in configuation, project files may be invalid".
+* Click 'Configure", and choose the default compiler, Visual Studio. Choose to "create the build folder".
 
 * Tick "SE_LOCAL_BUILD"
 
 * Click "Generate"
 
-* Click "Open Project". Build and try out the plugin
+* Click "Open Project". Build and try out the plugins.
 
 Advanced (optional):
 * add VST2 headers to JUCE if you need to make VST2 plugins.
-* get AAX SDK if you need it. https://www.avid.com/alliance-partner-program/aax-connectivity-toolkit
+* get AAX SDK if you need it, and enter its location into the CMake GUI. https://www.avid.com/alliance-partner-program/aax-connectivity-toolkit
 
 # Exporting your own plugin
 
-Copy the entire PD303 folder, rename it and edit the two cmakelists.txt files, changing the plugin name etc
+Copy the entire ...SE2JUCE_Projects\PD303 folder, rename it and edit the two CMakeLists.txt files, changing the plugin name etc
 
 # Missing modules
 
@@ -75,7 +76,7 @@ When you run the standalone, it will crash (assert) at the point where it is try
 You should see in the 'Output' Window a list of the missing modules.
 <img src="Docs/Images/SE2JUCE_MIssingModule2.PNG"/>
 
-In the example above, its the 'SE Keyboard (MIDI)' that is missing from the build.
+In the example above, it's the 'SE Keyboard (MIDI)' that is missing from the build.
 
 # Adding an additional module
 
