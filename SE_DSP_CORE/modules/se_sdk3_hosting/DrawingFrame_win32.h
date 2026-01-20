@@ -11,7 +11,9 @@ using namespace GmpiGuiHosting;
 #include <string>
 #include <memory>
 #include <chrono>
+#include <dxgi1_6.h>
 #include <d3d11_1.h>
+#include <dwmapi.h>
 #include "DirectXGfx.h"
 #include "TimerManager.h"
 #include "../../conversion.h"
@@ -27,6 +29,105 @@ namespace SynthEdit2
 
 namespace GmpiGuiHosting
 {
+// helper
+inline float calcWhiteLevelForHwnd(HWND windowHandle)
+{
+	auto parent = ::GetAncestor(windowHandle, GA_ROOT);
+	RECT m_windowBoundsRoot;
+	GetWindowRect(parent, &m_windowBoundsRoot);
+
+	RECT m_windowBounds;
+	DwmGetWindowAttribute(parent, DWMWA_EXTENDED_FRAME_BOUNDS, &m_windowBounds, sizeof(m_windowBounds));
+
+	/*
+	// get bounds of window. dosn't handle DPI
+	GetWindowRect(windowHandle, &m_windowBounds);
+	*/
+	GmpiDrawing::RectL appWindowRect{ m_windowBounds.left, m_windowBounds.top, m_windowBounds.right, m_windowBounds.bottom };
+
+	// get all the monitor paths.
+	uint32_t numPathArrayElements{};
+	uint32_t numModeArrayElements{};
+
+	GetDisplayConfigBufferSizes(
+		QDC_ONLY_ACTIVE_PATHS,
+		&numPathArrayElements,
+		&numModeArrayElements
+	);
+
+	std::vector<DISPLAYCONFIG_PATH_INFO> pathInfo;
+	std::vector<DISPLAYCONFIG_MODE_INFO> modeInfo;
+
+	pathInfo.resize(numPathArrayElements);
+	modeInfo.resize(numModeArrayElements);
+
+	QueryDisplayConfig(
+		QDC_ONLY_ACTIVE_PATHS,
+		&numPathArrayElements,
+		pathInfo.data(),
+		&numModeArrayElements,
+		modeInfo.data(),
+		nullptr
+	);
+
+	DISPLAYCONFIG_TARGET_DEVICE_NAME targetName{};
+	targetName.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+	targetName.header.size = sizeof(targetName);
+
+	DISPLAYCONFIG_SDR_WHITE_LEVEL white_level{};
+	white_level.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+	white_level.header.size = sizeof(white_level);
+
+	// check against each path (monitor)
+	float whiteMult{ 1.0f };
+	int bestIntersectArea = -1;
+	for (auto& path : pathInfo)
+	{
+		const int idx = path.sourceInfo.modeInfoIdx;
+
+		if (idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+			continue;
+
+		const auto& sourceMode = modeInfo[idx].sourceMode;
+
+		const GmpiDrawing::RectL outputRect
+		{
+			  sourceMode.position.x
+			, sourceMode.position.y
+			, static_cast<int32_t>(sourceMode.position.x + sourceMode.width)
+			, static_cast<int32_t>(sourceMode.position.y + sourceMode.height)
+		};
+
+		const auto intersectRect = Intersect(appWindowRect, outputRect);
+		const int intersectArea = intersectRect.getWidth() * intersectRect.getHeight();
+		if (intersectArea <= bestIntersectArea)
+			continue;
+
+		// Get monitor handle for this path's target
+		targetName.header.adapterId = path.targetInfo.adapterId;
+		white_level.header.adapterId = path.targetInfo.adapterId;
+		targetName.header.id = path.targetInfo.id;
+		white_level.header.id = path.targetInfo.id;
+
+		if (DisplayConfigGetDeviceInfo(&targetName.header) != ERROR_SUCCESS)
+			continue;
+
+		if (DisplayConfigGetDeviceInfo(&white_level.header) != ERROR_SUCCESS)
+			continue;
+
+		// divide by 1000 to get a factor
+		const auto lwhiteMult = white_level.SDRWhiteLevel / 1000.f;
+
+//		_RPTWN(0, L"Monitor %s [%d, %d] white level %f\n", targetName.monitorFriendlyDeviceName, outputRect.left, outputRect.top, lwhiteMult);
+
+		bestIntersectArea = intersectArea;
+		whiteMult = lwhiteMult;
+	}
+//	_RPTWN(0, L"Best white level %f\n", whiteMult);
+
+	return whiteMult;
+}
+
 	// Base class for DrawingFrame (VST3 Plugins) and MyFrameWndDirectX (SynthEdit 1.4+ Panel View).
 	class DrawingFrameBase : public gmpi_gui::IMpGraphicsHost, public gmpi::IMpUserInterfaceHost2, public TimerClient
 	{
@@ -34,9 +135,24 @@ namespace GmpiGuiHosting
 		bool firstPresent = false;
 		UpdateRegionWinGdi updateRegion_native;
 		std::unique_ptr<gmpi::directx::GraphicsContext> context;
-		gmpi_sdk::mp_shared_ptr<IGraphicsRedrawClient> frameUpdateClient;
+
+		// HDR support. Above swapChain so these get released first.
+		gmpi::directx::ComPtr<ID2D1Effect> hdrWhiteScaleEffect;
+		gmpi::directx::ComPtr<::ID2D1DeviceContext> hdrRenderTargetDC;
+		gmpi::directx::ComPtr<ID2D1BitmapRenderTarget> hdrRenderTarget;
+		gmpi::directx::ComPtr<ID2D1Bitmap> hdrBitmap;
+
+		float windowWhiteLevel{}; // swapchain may choose to use a different white level than the monitor in 8-bit mode.
+
+		// https://learn.microsoft.com/en-us/windows/win32/direct3darticles/high-dynamic-range
+		inline static const DXGI_FORMAT bestFormat = DXGI_FORMAT_R16G16B16A16_FLOAT; // Proper gamma-correct blending.
+		inline static const DXGI_FORMAT fallbackFormat = DXGI_FORMAT_B8G8R8A8_UNORM; // shitty linear blending.
 
 	protected:
+		bool monitorChanged = false;
+
+		gmpi_sdk::mp_shared_ptr<IGraphicsRedrawClient> frameUpdateClient;
+
 		GmpiDrawing::SizeL swapChainSize = {};
 
 		ID2D1DeviceContext* mpRenderTarget = {};
@@ -50,6 +166,7 @@ namespace GmpiGuiHosting
 		GmpiDrawing::Matrix3x2 viewTransform;
 		GmpiDrawing::Matrix3x2 DipsToWindow;
 		GmpiDrawing::Matrix3x2 WindowToDips;
+		int pollHdrChangesCount = 100;
 		int toolTiptimer = 0;
 		bool toolTipShown;
 		HWND tooltipWindow;
@@ -61,9 +178,14 @@ namespace GmpiGuiHosting
 		GmpiDrawing::Point cubaseBugPreviousMouseMove = { -1,-1 };
 
 	public:
+		std::function<void()> clientInvalidated; // called from Paint if monitor white-level changed since last check.
+		float calcWhiteLevel();
+		void recreateSwapChainAndClientAsync();
+
 		static const int viewDimensions = 7968; // DIPs (divisible by grids 60x60 + 2 24 pixel borders)
 		inline static bool m_disable_gpu = false;
-
+		inline static bool m_disable_deep_color = false;
+		
 		gmpi::directx::Factory DrawingFactory;
 
 		DrawingFrameBase() :
@@ -96,6 +218,15 @@ namespace GmpiGuiHosting
 		// to help re-create device when lost.
 		void ReleaseDevice()
 		{
+			if (hdrWhiteScaleEffect)
+			{
+				hdrWhiteScaleEffect->SetInput(0, nullptr);
+				hdrWhiteScaleEffect = nullptr;
+			}
+			hdrBitmap = nullptr;
+			hdrRenderTargetDC = nullptr;
+			hdrRenderTarget = nullptr;
+
 			if (mpRenderTarget)
 				mpRenderTarget->Release();
 			if (m_swapChain)
@@ -105,26 +236,12 @@ namespace GmpiGuiHosting
 			m_swapChain = nullptr;
 		}
 
-		void ResizeSwapChainBitmap()
-		{
-			mpRenderTarget->SetTarget(nullptr);
-			if (S_OK == m_swapChain->ResizeBuffers(0,
-				0, 0,
-				DXGI_FORMAT_UNKNOWN,
-				0))
-			{
-				CreateDeviceSwapChainBitmap();
-			}
-			else
-			{
-				ReleaseDevice();
-			}
-		}
+		void InitClientSize();
 
 		void CreateDevice();
 		void CreateDeviceSwapChainBitmap();
 
-		void AddView(gmpi_gui_api::IMpGraphics4* pcontainerView)
+		void AddView(gmpi_gui_api::IMpGraphics4* pcontainerView) // aka addClient
 		{
 			gmpi_gui_client = pcontainerView;
 			pcontainerView->queryInterface(IGraphicsRedrawClient::guid, frameUpdateClient.asIMpUnknownPtr());
@@ -135,7 +252,11 @@ namespace GmpiGuiHosting
 
 			if(pinHost)
 				pinHost->setHost(static_cast<gmpi_gui::IMpGraphicsHost*>(this));
+
+			InitClientSize();
 		}
+
+		void detachAndRecreate();
 
 		void OnPaint();
 		virtual HWND getWindowHandle() = 0;

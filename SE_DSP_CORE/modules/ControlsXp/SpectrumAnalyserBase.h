@@ -22,7 +22,6 @@ struct SpectrumAnalyserBase
 	std::vector< binData > pixelToBin;
 	std::vector<int> closestPixelToBin;
 
-//	float pixelToBinDx = 2.0f; // x increment for each entry in pixelToBin.
 	float dbToPixel = 1.0f;
 	std::vector<float> rawSpectrum;
 	float sampleRateFft = 0;
@@ -34,7 +33,7 @@ struct SpectrumAnalyserBase
 	std::vector<GmpiDrawing::Point> peakHoldValues;
 	std::vector<GmpiDrawing::Point> peakHoldValuesOptimized;
 
-	void updateSpectrumGraph(int width, int height);
+	void updateSpectrumGraph(int width, int height, float displayDbTop, float displayDbBot);
 	void decayGraph(float dbDecay);
 	void clearPeaks();
 	virtual void updatePaths(const std::vector<GmpiDrawing::Point>& graphValuesOptimized, const std::vector<GmpiDrawing::Point>& peakHoldValuesOptimized) = 0;

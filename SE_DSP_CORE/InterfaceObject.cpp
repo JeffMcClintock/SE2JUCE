@@ -458,35 +458,35 @@ void InterfaceObject::Export(class Json::Value& pins_json, ExportFormatType targ
 		pin_json["type"] = "audio"; // combined "float"/"rate=audio" -> just "audio".
 	}
 
-	char *direction = 0; // or "in" (default)
+	const char *direction = 0; // or "in" (default)
 	if( GetDirection() == DR_OUT )
 	{
 		direction = "out";
 	}
 	else
 	{
-		wstring default = GetDefault(0);
-		if( !default.empty() )
+		wstring default_s = GetDefault(0);
+		if( !default_s.empty() )
 		{
 			bool needsDefault = true;
 			// In SDK3 Audio data defaults are literal (not volts).
 			if( GetDatatype() == DT_FSAMPLE || GetDatatype() == DT_FLOAT || GetDatatype() == DT_DOUBLE )
 			{
-				float d = StringToFloat(default); // won't cope with large 64bit doubles.
+				float d = StringToFloat(default_s); // won't cope with large 64bit doubles.
 
 				if( GetDatatype() == DT_FSAMPLE )
 				{
 					d *= 0.1f; // Volts to actual value.
 				}
 
-				default = FloatToString(d);
+				default_s = FloatToString(d);
 
 				needsDefault = d != 0.0f;
 			}
 			if( GetDatatype() == DT_ENUM || GetDatatype() == DT_BOOL || GetDatatype() == DT_INT || GetDatatype() == DT_INT64 )
 			{
-				int d = StringToInt(default); // won't cope with large 64bit ints.
-				default = IntToString(d);
+				int d = StringToInt(default_s); // won't cope with large 64bit ints.
+				default_s = IntToString(d);
 
 				needsDefault = d != 0;
 			}
@@ -494,7 +494,7 @@ void InterfaceObject::Export(class Json::Value& pins_json, ExportFormatType targ
 			if( needsDefault )
 			{
 				//pinXml->SetAttribute("default", WStringToUtf8(default));
-				pin_json["default"] = WStringToUtf8(default);
+				pin_json["default"] = WStringToUtf8(default_s);
 			}
 		}
 	}

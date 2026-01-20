@@ -1036,7 +1036,7 @@ CArchive& AFXAPI operator>>(CArchive& ar, std::wstring& pOb)
 	return ar;
 }
 
-CArchive& AFXAPI operator<<(CArchive& ar, std::wstring& pOb)
+CArchive& AFXAPI operator<<(CArchive& ar, const std::wstring& pOb)
 {
 	ar << CString( pOb.c_str() );
 	return ar;
@@ -1051,7 +1051,7 @@ CArchive& AFXAPI operator>>(CArchive& ar, std::string& pOb)
 	return ar;
 }
 
-CArchive& AFXAPI operator<<(CArchive& ar, std::string& pOb)
+CArchive& AFXAPI operator<<(CArchive& ar, const std::string& pOb)
 {
 	ar << (int) pOb.size();
 	ar.Write( pOb.data(), pOb.size() );

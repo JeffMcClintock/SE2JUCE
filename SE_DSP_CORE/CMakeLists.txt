@@ -91,8 +91,30 @@ DspFilters/Params.h
 DspFilters/PoleFilter.h
 DspFilters/State.h
 DspFilters/Types.h
+DspFilterJeff.h
 )
 
+if(SE2JUCE)
+set(srcs_dspfilters ${srcs_dspfilters}
+modules/Filters/ButterworthLp.h
+modules/Filters/ButterworthLp.cpp
+modules/Filters/IIR_Filters2.cpp      
+)
+endif()
+
+# Build srcs_dspfilters into an object library so we can apply per-target compiler flags.
+add_library(dspfilters_objs OBJECT ${srcs_dspfilters})
+
+# Disable "fast math" for the dspfilters object target. screws up Butterworth HP in Release mode only
+# MSVC: use /fp:precise to avoid /fp:fast; GCC/Clang: -fno-fast-math.
+target_compile_options(dspfilters_objs PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/fp:precise>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fno-fast-math>
+)
+
+target_compile_definitions(dspfilters_objs PUBLIC 
+    SE_USE_LIB_FACTORY=1
+)
 
 set(srcs
 ../Shared/AuPreset.h
@@ -153,7 +175,6 @@ CVoiceList.h
 datatype_to_id.cpp
 datatype_to_id.h
 denormal_fixer.h
-DspFilterJeff.h
 DspPatchManagerProxy.cpp
 DspPatchManagerProxy.h
 DspRingBufferReader.h
@@ -468,7 +489,6 @@ modules/UserSetting/UserSettingTextGui.cpp
 modules/VaFilters/SvFilter.cpp
 modules/BPMClock3/BpmClock3.cpp
 modules/BPMClock3/BpmTempo.cpp
-modules/Filters/ButterworthLp.cpp
 modules/Converters/Converters.cpp
 modules/Converters/BlobToBlob2.cpp
 modules/ImpulseResponse/ImpulseResponse.cpp
@@ -509,7 +529,6 @@ modules/SubControlsXp/Image2GuiXp.h
 modules/SubControlsXp/TextSubcontrol.h
 modules/UserSetting/SettingFile.h
 modules/VaFilters/SvFilter.h
-modules/Filters/ButterworthLp.h
 modules/ControlsXp/FreqAnalyser.h
 modules/Increment3/Increment3Gui.h
 modules/OscillatorNaive/OscillatorNaive.h
@@ -566,7 +585,6 @@ modules/PolyphonyControl/PolyphonyControlGui.h
 
 modules/ControlsXp/ImpulseResponse2.cpp      
 modules/ImpulseResponse/Impulse.cpp      
-modules/Filters/IIR_Filters2.cpp      
 
 )
 endif()
@@ -594,14 +612,14 @@ MARK_AS_ADVANCED (COREFOUNDATION_LIBRARY)
 endif()
 
 include (GenerateExportHeader)
-add_library(${PROJECT_NAME} STATIC ${sdk_srcs} ${srcs} ${srcs_json} ${srcs_modules_internal} ${srcs_xml} ${srcs_dspfilters})
+add_library(${PROJECT_NAME} STATIC ${sdk_srcs} ${srcs} ${srcs_json} ${srcs_modules_internal} ${srcs_xml} $<TARGET_OBJECTS:dspfilters_objs>)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
   $<$<CONFIG:Debug>:_DEBUG>
   $<$<CONFIG:Release>:NDEBUG>
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 if(APPLE)
 
@@ -617,7 +635,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${COREFOUNDATION_LIBRARY} )
 endif()
 
 IF(WIN32)
-target_link_libraries(${PROJECT_NAME} d3d11.lib d2d1 dwrite windowscodecs)
+target_link_libraries(${PROJECT_NAME} Dwmapi dxguid d3d11.lib d2d1 dwrite windowscodecs)
 endif()
 
 target_compile_definitions (${PROJECT_NAME} PRIVATE -D_UNICODE -DUNICODE -DSE_TARGET_PLUGIN)

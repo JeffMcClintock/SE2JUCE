@@ -140,6 +140,7 @@ UPlug* ug_base::GetPlug(int p_index)
 }
 #endif
 
+#if 0 // mistake I think. pins are referenced by index, not ID.
 UPlug* ug_base::GetPlugById(int id)
 {
 	// 99% of the time ID is the same as index.
@@ -172,6 +173,7 @@ UPlug* ug_base::GetPlugById(int id)
 
 	return {};
 }
+#endif
 
 // big problem with dynamic plugs, this code assumes each plug appears
 // in same order as ListInterface() produces
@@ -350,7 +352,10 @@ void ug_base::UpdateInputVariable(SynthEditEvent* e)
 
 	case DT_BOOL:
 	{
-		*((bool*)p->io_variable) = cast_new_value != 0;
+		if (1 == e->parm2)
+			*((bool*)p->io_variable) = *(bool*)e->Data(); // GMPI bool
+		else
+			*((bool*)p->io_variable) = cast_new_value != 0; // SDK3 bool (int32_t)
 	}
 	break;
 

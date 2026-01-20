@@ -113,18 +113,18 @@ public:
 			return;
 		}
 
-		if( currentValue_ == targetValue_ )
-		{
-			if( inverseTransitionTime_ < adaptiveHi_ )
-			{
-				inverseTransitionTime_ *= 1.05; // slower 'decay', kind of peak follower.
-			}
-		}
-		else
+		if (currentValue_ == targetValue_) // too fast, slow down a bit.
 		{
 			if( inverseTransitionTime_ > adaptiveLo_ )
 			{
 				inverseTransitionTime_ *= 0.9;
+			}
+		}
+		else
+		{
+			if (inverseTransitionTime_ < adaptiveLo_)
+			{
+				inverseTransitionTime_ *= 1.05; // slower 'decay', kind of peak follower.
 			}
 		}
 

@@ -22,6 +22,8 @@ Install Visual Studio or your IDE of choice. https://visualstudio.microsoft.com/
 
 Install CMake. https://cmake.org/download/
 
+Install git. https://git-scm.com/downloads
+
 # Getting Started with the PD303 example
 clone SE2JUCE repo. https://github.com/JeffMcClintock/SE2JUCE
 

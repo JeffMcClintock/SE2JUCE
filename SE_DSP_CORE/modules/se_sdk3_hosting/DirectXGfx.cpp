@@ -145,7 +145,6 @@ namespace gmpi
 			writeFactory(nullptr)
 			, pIWICFactory(nullptr)
 			, m_pDirect2dFactory(nullptr)
-			, DX_support_sRGB(true)
 		{
 		}
 
@@ -799,13 +798,6 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 				return gmpi::MP_FAIL;
 			}
 */
-#if	ENABLE_HDR_SUPPORT
-			// invalidate HDR bitmap
-			if (nativeBitmap_HDR_ && 0 != (flags & GmpiDrawing_API::MP1_BITMAP_LOCK_WRITE))
-			{
-				nativeBitmap_HDR_ = {};
-			}
-#endif
 
 			gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
 			b2.Attach(new bitmapPixels(nativeBitmap_, diBitmap_, true, flags));
@@ -823,12 +815,6 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 					nativeBitmap_->Release();
 					nativeBitmap_ = nullptr;
 				}
-#if	ENABLE_HDR_SUPPORT
-				if (nativeBitmap_HDR_)
-				{
-					nativeBitmap_HDR_ = {};
-				}
-#endif
 
 				nativeContext_ = nativeContext;
 #if 0 //defined(_DEBUG)
@@ -876,127 +862,6 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 					return nullptr;
 				}
 			}
-
-#if	ENABLE_HDR_SUPPORT
-			if (factory->isHdr())
-			{
-				// https://walbourn.github.io/windows-imaging-component-and-windows-8/
-
-				if (!nativeBitmap_HDR_)
-				{
-					// Create a WIC bitmap to draw on.
-					const auto bitmapSize = nativeBitmap_->GetPixelSize();
-					gmpi::directx::ComWrapper<IWICBitmap> diBitmap_HDR_;
-					HRESULT hr = factory->getWicFactory()->CreateBitmap(
-						static_cast<UINT>(bitmapSize.width),
-						static_cast<UINT>(bitmapSize.height),
-						GUID_WICPixelFormat64bppPRGBAHalf,
-						WICBitmapNoCache,
-						diBitmap_HDR_.put()
-					);
-
-					if (SUCCEEDED(hr))
-					{
-						// Create a WIC render target.
-						gmpi::directx::ComWrapper<ID2D1RenderTarget> pWICRenderTarget;
-						D2D1_RENDER_TARGET_PROPERTIES renderTargetProperties = D2D1::RenderTargetProperties(
-							D2D1_RENDER_TARGET_TYPE_DEFAULT,
-							D2D1::PixelFormat(DXGI_FORMAT_R16G16B16A16_FLOAT, D2D1_ALPHA_MODE_PREMULTIPLIED)
-						);
-
-						hr = factory->getFactory()->CreateWicBitmapRenderTarget(
-							diBitmap_HDR_,
-							renderTargetProperties,
-							pWICRenderTarget.put()
-						);
-
-						if (SUCCEEDED(hr))
-						{
-							// Create a device context from the WIC render target.
-							gmpi::directx::ComWrapper<ID2D1DeviceContext> pDeviceContext;
-							hr = pWICRenderTarget->QueryInterface(IID_PPV_ARGS(pDeviceContext.put()));
-
-							if (SUCCEEDED(hr))
-							{
-								// Convert original image to D2D format
-								D2D1_BITMAP_PROPERTIES props;
-								props.dpiX = props.dpiY = 96;
-								if (factory->getPlatformPixelFormat() == GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB)
-								{
-									props.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-								}
-								else
-								{
-									props.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-								}
-								props.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-
-								gmpi::directx::ComWrapper<ID2D1Bitmap> pSourceBitmap;
-								hr = pDeviceContext->CreateBitmapFromWicBitmap(
-									diBitmap_,
-									&props,
-									pSourceBitmap.getAddressOf()
-								);
-
-								// create whitescale effect
-								gmpi::directx::ComWrapper<ID2D1Effect> m_whiteScaleEffect;
-								{
-									// White level scale is used to multiply the color values in the image; this allows the user
-									// to adjust the brightness of the image on an HDR display.
-									pDeviceContext->CreateEffect(CLSID_D2D1ColorMatrix, m_whiteScaleEffect.getAddressOf());
-
-									// SDR white level scaling is performing by multiplying RGB color values in linear gamma.
-									// We implement this with a Direct2D matrix effect.
-									D2D1_MATRIX_5X4_F matrix = D2D1::Matrix5x4F(
-										factory->whiteMult, 0, 0, 0,  // [R] Multiply each color channel
-										0, factory->whiteMult, 0, 0,  // [G] by the scale factor in 
-										0, 0, factory->whiteMult, 0,  // [B] linear gamma space.
-										0, 0, 0, 1,		 // [A] Preserve alpha values.
-										0, 0, 0, 0);	 //     No offset.
-
-									m_whiteScaleEffect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, matrix);
-
-									// increase the bit-depth of the filter, else it does a shitty 8-bit conversion. Which results in serious degredation of the image.
-									if (nativeContext->IsBufferPrecisionSupported(D2D1_BUFFER_PRECISION_16BPC_FLOAT))
-									{
-										auto hr = m_whiteScaleEffect->SetValue(D2D1_PROPERTY_PRECISION, D2D1_BUFFER_PRECISION_16BPC_FLOAT);
-									}
-									else if (nativeContext->IsBufferPrecisionSupported(D2D1_BUFFER_PRECISION_32BPC_FLOAT))
-									{
-										auto hr = m_whiteScaleEffect->SetValue(D2D1_PROPERTY_PRECISION, D2D1_BUFFER_PRECISION_32BPC_FLOAT);
-									}
-								}
-
-								if (SUCCEEDED(hr))
-								{
-									// Set the effect input.
-									m_whiteScaleEffect->SetInput(0, pSourceBitmap.get());
-
-									// Begin drawing on the device context.
-									pDeviceContext->BeginDraw();
-
-									// Draw the effect onto the device context.
-									pDeviceContext->DrawImage(m_whiteScaleEffect.get());
-
-									// End drawing.
-									hr = pDeviceContext->EndDraw();
-								}
-							}
-						}
-					}
-
-					if (SUCCEEDED(hr))
-					{
-						auto hr = nativeContext_->CreateBitmapFromWicBitmap(
-							diBitmap_HDR_,
-							nativeBitmap_HDR_.put()
-						);
-					}
-				}
-
-				return nativeBitmap_HDR_.get();
-			}
-#endif
 
 			return nativeBitmap_;
 		}
@@ -1134,15 +999,6 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 
 //			HRESULT hr = context_->CreateSolidColorBrush(*(D2D1_COLOR_F*)color, &b);
 
-#if	ENABLE_HDR_SUPPORT
-			const D2D1_COLOR_F c
-			{
-				color->r * whiteMult,
-				color->g * whiteMult,
-				color->b * whiteMult,
-				color->a
-			};
-#else
 			const D2D1_COLOR_F c
 			{
 				color->r,
@@ -1150,7 +1006,6 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 				color->b,
 				color->a
 			};
-#endif
 
 			ID2D1SolidColorBrush* b = nullptr;
 			HRESULT hr = context_->CreateSolidColorBrush(c, &b);
@@ -1158,11 +1013,7 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 			if (hr == 0)
 			{
 				gmpi_sdk::mp_shared_ptr<gmpi::IMpUnknown> b2;
-				b2.Attach(new SolidColorBrush(b, factory
-#if	ENABLE_HDR_SUPPORT
-					, whiteMult
-#endif
-				));
+				b2.Attach(new SolidColorBrush(b, factory));
 
 				b2->queryInterface(GmpiDrawing_API::SE_IID_SOLIDCOLORBRUSH_MPGUI, reinterpret_cast<void **>(solidColorBrush));
 			}
@@ -1189,15 +1040,9 @@ return gmpi::MP_FAIL; // creating WIC from D2DBitmap not implemented fully.
 			for (uint32_t i = 0; i < gradientStopsCount; ++i)
 			{
 				stops[i].color = D2D1::ColorF(
-#if	ENABLE_HDR_SUPPORT
-					gradientStops[i].color.r * whiteMult,
-					gradientStops[i].color.g * whiteMult,
-					gradientStops[i].color.b * whiteMult,
-#else
 					gradientStops[i].color.r,
 					gradientStops[i].color.g,
 					gradientStops[i].color.b,
-#endif
 					gradientStops[i].color.a
 				);
 				stops[i].position = gradientStops[i].position;

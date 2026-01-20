@@ -23,6 +23,8 @@ enum ParameterFieldType { FT_VALUE
                           , FT_DEFAULT				// same type as parameter
                           , FT_GRAB					// (mouse down) bool
                           , FT_NORMALIZED			// float
+                          , FT_STATEFUL				// bool. aka persistant
+                          , FT_HINT					// std::string
 
                           , FT_HOST_PARAMETER = 50	// bool
 						  , FT_VST_PARAMETER_INDEX

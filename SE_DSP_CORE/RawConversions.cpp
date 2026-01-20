@@ -9,6 +9,12 @@ int RawSize(const std::wstring& value)
 	return (int) (sizeof(wchar_t) * value.size());
 }
 
+template<>
+int RawSize(const std::string& value)
+{
+	return (int)value.size();
+}
+
 typedef wchar_t* wide_char_ptr;
 
 template<>
@@ -23,6 +29,11 @@ int RawSize<wide_char_ptr>(const wide_char_ptr& value)
 	return (int) (sizeof(wchar_t) * wcslen(value));
 }
 
+template<>
+const void* RawData3<std::string>(const std::string& value)
+{
+	return value.data();
+};
 
 template<>
 const void* RawData3<struct MpBlob>(const struct MpBlob& value)

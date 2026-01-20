@@ -1121,7 +1121,7 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 		pinXml->SetAttribute("rate", "audio");
 	}
 
-	char *direction = 0; // or "in" (default)
+	const char *direction = 0; // or "in" (default)
 	if (pin->GetDirection() == DR_OUT)
 	{
 		direction = "out";
@@ -1270,7 +1270,7 @@ void Module_Info::SaveModuleInfoPinXml(InterfaceObject* pin, ExportFormatType fo
 		}
 	}
 
-	char *direction = 0; // or "in" (default)
+	const char *direction = 0; // or "in" (default)
 	if (pin->GetDirection() == DR_OUT)
 	{
 		direction = "out";
@@ -1559,7 +1559,7 @@ tinyxml2::XMLElement* Module_Info::Export(tinyxml2::XMLElement* element, ExportF
 			pluginXml->LinkEndChild(DspXml);
 
 			// graphicsApi.
-			char* graphicsApi = 0;
+			const char* graphicsApi = 0;
 			switch (getWindowType())
 			{
 			case MP_WINDOW_TYPE_WPF:

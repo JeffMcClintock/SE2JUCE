@@ -103,6 +103,15 @@ ModuleViewStruct::ModuleViewStruct(Json::Value* context, class ViewBase* pParent
 		auto& pin = it.second;
 		pinViewInfo info{};
 		info.name = convert.to_bytes(pin->GetName());
+
+		/*
+		auto& name_e = pin_element["Name"];
+		if (name_e.isNull())
+		else
+			info.name = pin_element["Name"].asString();
+		*/
+
+
 		info.direction = pin->GetDirection();
 		info.datatype = pin->GetDatatype();
 		info.isGuiPlug = false;
@@ -120,12 +129,18 @@ ModuleViewStruct::ModuleViewStruct(Json::Value* context, class ViewBase* pParent
 		const auto& pins_element = module_element["Pins"];
 		if (!pins_element.isNull())
 		{
-			int pinId = 0;
+			int gui_pinId = 0;
+			int dsp_pinIdx = 0;
 			for (auto& pin_element : pins_element)
 			{
-				const auto& id_e = pin_element["Id"];
+				const auto& dsp_idx_e = pin_element["Idx"]; // DSP pins *always* have the DSP Index.
+				const bool isGuiPin = dsp_idx_e.isNull();
+				if (!dsp_idx_e.isNull())
+					dsp_pinIdx = dsp_idx_e.asInt();
+
+				const auto& id_e = pin_element["Id"]; // GUI pins have the Id only if not sequential (then it is assumed).
 				if (!id_e.isNull())
-					pinId = id_e.asInt();
+					gui_pinId = id_e.asInt();
 
 				// IO Pins.
 				auto& directionE = pin_element["Direction"];
@@ -133,12 +148,12 @@ ModuleViewStruct::ModuleViewStruct(Json::Value* context, class ViewBase* pParent
 				if (!directionE.empty() && !datatypeE.empty()) // I/O Plugs.
 				{
 					pinViewInfo info{};
-					info.name = pin_element["Name"].asString();
+					info.name = pin_element["name"].asString();
 					info.direction = (char)directionE.asInt();
 					info.datatype = (char)datatypeE.asInt();
 					auto& isGuiPin = pin_element["GuiPin"];
 					info.isGuiPlug = !isGuiPin.empty();
-					info.plugDescID = pinId; // pin->getPlugDescID(nullptr);
+					info.plugDescID = gui_pinId; // pin->getPlugDescID(nullptr);
 					info.isIoPlug = true; // TODO!! pin->isIoPlug(nullptr);
 					info.isVisible = true;
 					info.isAutoduplicatePlug = false;
@@ -157,8 +172,8 @@ ModuleViewStruct::ModuleViewStruct(Json::Value* context, class ViewBase* pParent
 							if (p.plugDescID == autoCopyId && p.isAutoduplicatePlug) // could possibly clash if both GUI and DSP autoduplicating plugins exist.
 							{
 								pinViewInfo info(p);
-								if (!pin_element["Name"].isNull())
-									info.name = pin_element["Name"].asString();
+								if (!pin_element["name"].isNull())
+									info.name = pin_element["name"].asString();
 								// info.plugDescID = pinId; //? what
 								info.isAutoduplicatePlug = false;
 
@@ -167,9 +182,38 @@ ModuleViewStruct::ModuleViewStruct(Json::Value* context, class ViewBase* pParent
 							}
 						}
 					}
+					else
+					{
+						// nameable (but not autoduplicate)
+						const auto& name_e = pin_element["name"];
+						if (!name_e.isNull())
+						{
+							if (isGuiPin)
+							{
+								plugs_[gui_pinId].name = name_e.asString();
+							}
+							else
+							{
+								int i = 0;
+								for (auto& p : plugs_)
+								{
+									if (p.isGuiPlug)
+										continue;
+
+									if (i == dsp_pinIdx)
+									{
+										p.name = name_e.asString();
+										break;
+									}
+									++i;
+								}
+							}
+						}
+					}
 				}
 
-				++pinId; // Allows pinIdx to default to 1 + prev Idx. TODO, only used by slider2, could add this to exportXml.
+				if (isGuiPin)
+					++gui_pinId; // Allows pinIdx to default to 1 + prev Idx. TODO, only used by slider2, could add this to exportXml.
 			}
 		}
 	}
@@ -538,7 +582,7 @@ GmpiDrawing::Rect ModuleViewStruct::GetCpuRect()
 #if defined(SE_EDIT_SUPPORT)
 void ModuleViewStruct::RenderCpu(Graphics& g)
 {
-	auto child_rect = GetCpuRect();
+	const auto child_rect = GetCpuRect();
 	g.PushAxisAlignedClip(child_rect);
 
 	const auto rectBottom = child_rect.bottom;
@@ -629,7 +673,7 @@ void ModuleViewStruct::RenderCpu(Graphics& g)
 
 	// PEAK.
 	{
-		float x = 0.f;
+		float x = child_rect.left;
 		const float* graph = cpuInfo->peaks;
 		for (int k = 0; k < graphSize; ++k)
 		{
@@ -661,7 +705,7 @@ void ModuleViewStruct::RenderCpu(Graphics& g)
 		plot.clear();
 		plotSimplified.clear();
 
-		float x = 0.f;
+		float x = child_rect.left;
 		const float* graph = cpuInfo->values;
 		for (int k = 0; k < graphSize; ++k)
 		{
@@ -1442,7 +1486,7 @@ PathGeometry ModuleViewStruct::CreateModuleOutline(Factory& factory)
 
 			if (vc is Plug)
 			{
-				 PlugViewModel pm = (PlugViewModel)vc.DataContext;
+				 PlugView Model pm = (PlugView Model)vc.DataContext;
 				if (pm.isUiPlug())
 				{
 					hasGuiPins = true;

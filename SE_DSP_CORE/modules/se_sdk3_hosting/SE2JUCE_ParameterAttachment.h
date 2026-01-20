@@ -60,7 +60,7 @@ struct SeParameterAttachment2 : SeParameterAttachment
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId)
         {
@@ -150,7 +150,7 @@ struct SeParameterAttachmentSlider : SeParameterAttachment
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(float))
         {
@@ -166,7 +166,7 @@ template <typename T = int32_t>
 struct SeParameterAttachmentButton : SeParameterAttachment
 {
     juce::Button& button;
-    T enumVal = -1;
+    int32_t enumVal = -1;
     T onVal = 1;
     T offVal = 0;
 
@@ -174,7 +174,7 @@ struct SeParameterAttachmentButton : SeParameterAttachment
         IGuiHost2* pcontroller
         , juce::Button& pbutton
         , int32_t pparameterHandle
-        , T penumVal = 1
+        , int32_t penumVal = 1
         , T poffVal = 0
         , T ponVal = 1
     )
@@ -266,7 +266,7 @@ struct SeParameterAttachmentBoolButton : SeParameterAttachment
 	}
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(bool))
         {
@@ -379,7 +379,7 @@ struct SeParameterAttachmentButtonDisabler2 : SeParameterAttachment
     {}
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (gmpi::MP_FT_VALUE != fieldId)
             return gmpi::MP_OK;
@@ -468,7 +468,7 @@ struct ButtonStateManager : SeParameterAttachment, public juce::MouseListener
     }
 
     // gmpi::IMpParameterObserver
-    int32_t MP_STDCALL setParameter(int32_t /*pparameterHandle*/, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
+    int32_t MP_STDCALL setParameter(int32_t pparameterHandle, int32_t fieldId, int32_t /*voice*/, const void* data, int32_t size) override
     {
         if (/*parameterHandle == pparameterHandle &&*/ gmpi::MP_FT_VALUE == fieldId && size == sizeof(int32_t))
         {

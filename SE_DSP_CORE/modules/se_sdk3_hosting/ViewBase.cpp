@@ -543,6 +543,8 @@ namespace SynthEdit2
 #ifdef DEBUG_HIT_TEST
 		_RPT3(0, "ViewBase::onPointerDown(%x, (%f, %f))\n", flags, point.x, point.y);
 #endif
+		Presenter()->NotDragging();
+
 		// handle edge-case of mouse clicking without any prior 'OnMove' (e.g. after clicking to make a pop-up menu disapear).
 		// ensures that 'mouseOverObject' is correct.
 		if (lastMovePoint != point)
@@ -796,6 +798,8 @@ namespace SynthEdit2
 
 	int32_t ViewBase::onPointerUp(int32_t flags, GmpiDrawing_API::MP1_POINT point)
 	{
+		Presenter()->NotDragging();
+
 		if(mouseCaptureObject)
 		{
 			mouseCaptureObject->onPointerUp(flags, point);

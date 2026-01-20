@@ -68,7 +68,7 @@ public:
 	static std::string toXML( const T& value );
 
 #if defined( SE_SUPPORT_MFC )
-	static void MfcArchiveWrite( class CArchive& ar, T& value )
+	static void MfcArchiveWrite( class CArchive& ar, const T& value )
 	{
 		ar << value;
 	};
@@ -135,14 +135,14 @@ std::string MyTypeTraits<double>::toXML( const double& value );
 #if defined( SE_SUPPORT_MFC )
 
 template<>
-void MyTypeTraits<MpBlob>::MfcArchiveWrite( class CArchive& ar, MpBlob& value )
+inline void MyTypeTraits<MpBlob>::MfcArchiveWrite( class CArchive& ar, const MpBlob& value )
 {
 	ar << (int) value.getSize();
 	ar.Write( value.getData(), value.getSize() );
 }
 
 template<>
-void MyTypeTraits<MpBlob>::MfcArchiveRead( class CArchive& ar, MpBlob& value )
+inline void MyTypeTraits<MpBlob>::MfcArchiveRead( class CArchive& ar, MpBlob& value )
 {
 	int size;
 	ar >> size;

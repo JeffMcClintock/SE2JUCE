@@ -7,6 +7,7 @@
 #include "HostControls.h"
 #include "modules/se_sdk2/se_datatypes.h"
 #include "midi_defs.h"
+#include <unordered_map>
 
 using namespace std;
 
@@ -128,8 +129,14 @@ static const HostControlStruct lookup[] =
 	{L"Processor/ClearTails"	, HC_CLEAR_TAILS				, DT_INT,  ControllerType::None}, // a 'trigger' style HC. Actual value don't matter, only that it changed.
 	{L"Processor/DiagnosticFlags", HC_DIAGNOSTIC_FLAGS			, DT_INT,  ControllerType::None},
 	{L"Processor/Offline"		, HC_PROCESSOR_OFFLINE			, DT_BOOL, ControllerType::None},
+	{ L"Process/Bypass"			, HC_PROCESS_BYPASS  			, DT_BOOL, ControllerType::None },
 
 	// MAINTAIN ORDER TO PRESERVE OLDER WAVES EXPORTS DSP.XML consistancy
+};
+
+std::unordered_map<std::wstring, HostControls> GMPI2_alternate_spellings = {
+	  {L"Time/Numerator"  , HC_TIME_NUMERATOR}
+	, {L"Time/Denominator", HC_TIME_DENOMINATOR}
 };
 
 HostControls StringToHostControl( const wstring& txt )
@@ -155,6 +162,12 @@ HostControls StringToHostControl( const wstring& txt )
 
 		if( j == size )
 		{
+			// GMPI 2.0 alternate spellings
+			if (auto it = GMPI2_alternate_spellings.find(txt); it != GMPI2_alternate_spellings.end())
+			{
+				return it->second;
+			}
+
 			// Avoiding msg box in plugin
 			assert(false);
 //			GetApp()->SeMessageBox( errorText ,MB_OK|MB_ICONSTOP );

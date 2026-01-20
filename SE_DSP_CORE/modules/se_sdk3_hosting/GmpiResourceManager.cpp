@@ -322,7 +322,7 @@ int32_t GmpiResourceManager::OpenUri(const char* fullUri, gmpi::IProtectedFile2*
 	sp = strstr(fullUri, "global");
 	if (sp != nullptr) // special magic 'file'.
 	{
-		std::string skinName(fullUri, sp - fullUri - 1);
+		std::string skinName(fullUri, (std::max)((int64_t)0, sp - fullUri - 1));
 		std::string temp = SkinMgr::Instance()->getEffectiveFontInfo(Utf8ToWstring(skinName).c_str());
 		*returnStream = new ProtectedMemFile2(temp.data(), temp.size());
 		return gmpi::MP_OK;

@@ -658,12 +658,13 @@ public:
 			}
 		}
 		lines.push_back(newMessage);
-
+#ifdef _WIN32
 #ifdef _DEBUG
 		if (newMessage.find(L"Note On") != std::string::npos)
 		{
 			_RPTW1(_CRT_WARN, L"MM: %s\n", newMessage.c_str());
 		}
+#endif
 #endif
 		if (lines.size() > 14)
 			lines.pop_front();

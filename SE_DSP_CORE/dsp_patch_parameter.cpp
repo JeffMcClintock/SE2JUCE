@@ -739,6 +739,10 @@ void dsp_patch_parameter_base::vst_automate2(timestamp_t timestamp, int voice, c
 		// There is no way of distinguishing in VST3 processor if change came from user, or from automation.
 		// So we send MIDI controllers regardless. MIDI output is kind of pointless in VST3 anyhow.
 		outputMidiAutomation(false, voice);
+#else
+
+		// lastMidiValue_ represents the *previous* value of the parameter, we need to clear it otherwise a change back to the prev value will fail to send MIDI.
+		lastMidiValue_[voice] = INT_MAX;
 #endif
 
 		OnValueChanged(voice, timestamp);

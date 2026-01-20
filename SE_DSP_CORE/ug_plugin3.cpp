@@ -60,12 +60,18 @@ ug_base* ug_plugin3Base::Clone( CUGLookupList& UGLookupList )
 }
 
 // set an output pin
-int32_t ug_plugin3Base::setPin(int32_t blockRelativeTimestamp, int32_t id, int32_t size, const void* data)
+int32_t ug_plugin3Base::setPin(int32_t blockRelativeTimestamp, int32_t pinIndex, int32_t size, const void* data)
 {
+#if 0 // mistake
 	auto pin = GetPlugById(id);
 
 	if(!pin)
 		return gmpi::MP_FAIL;
+#endif
+	if (pinIndex < 0 || pinIndex >= plugs.size())
+		return gmpi::MP_FAIL;
+
+	auto& pin = plugs[pinIndex];
 
 	if (pin->Direction != DR_OUT)
 	{
@@ -91,12 +97,18 @@ int32_t ug_plugin3Base::setPin(int32_t blockRelativeTimestamp, int32_t id, int32
 	return gmpi::MP_OK;
 }
 
-int32_t ug_plugin3Base::setPinStreaming( int32_t blockRelativeTimestamp, int32_t id, int32_t is_streaming)
+int32_t ug_plugin3Base::setPinStreaming( int32_t blockRelativeTimestamp, int32_t pinIndex, int32_t is_streaming)
 {
+#if 0 // mistake
 	auto pin = GetPlugById(id);
 
 	if (!pin)
 		return gmpi::MP_FAIL;
+#endif
+	if (pinIndex < 0 || pinIndex >= plugs.size())
+		return gmpi::MP_FAIL;
+
+	auto& pin = plugs[pinIndex];
 
 	if(pin->Direction != DR_OUT)
 	{

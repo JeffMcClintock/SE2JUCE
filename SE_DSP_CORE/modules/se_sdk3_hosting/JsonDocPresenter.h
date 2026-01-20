@@ -115,6 +115,7 @@ public:
 	{}
 	void DragSelection(GmpiDrawing_API::MP1_SIZE offset) override
 	{}
+	void NotDragging() override {}
 
 	virtual IPresenter* CreateSubPresenter(int32_t containerHandle) override
 	{
@@ -365,6 +366,7 @@ public:
 
 		view->UpdateCablesBounds();
 	}
+	void NotDragging() override {}
 
 	IPresenter* CreateSubPresenter(int32_t containerHandle) override
 	{

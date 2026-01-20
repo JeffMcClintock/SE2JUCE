@@ -12,112 +12,128 @@
 
 // #define LOG_DIRECTX_CALLS
 
-#define ENABLE_HDR_SUPPORT 0
+#define ENABLE_HDR_SUPPORT 1
 
 namespace gmpi
 {
 	namespace directx
 	{
-		// Helper for managing lifetime of Direct2D interface pointers
-		template<class wrappedObjT>
-		class ComWrapper
+	// Helper for managing lifetime of Direct2D interface pointers
+	template<class wrappedObjT>
+	class ComPtr
+	{
+		mutable wrappedObjT* obj = {};
+
+	public:
+		ComPtr() {}
+
+		explicit ComPtr(wrappedObjT* newobj)
 		{
-			mutable wrappedObjT* obj = {};
+			Assign(newobj);
+		}
+		ComPtr(const ComPtr<wrappedObjT>& value)
+		{
+			Assign(value.obj);
+		}
+		// Attach object without incrementing ref count. For objects created with new.
+		void Attach(wrappedObjT* newobj)
+		{
+			wrappedObjT* old = obj;
+			obj = newobj;
 
-		public:
-			ComWrapper() {}
+			if (old)
+			{
+				old->Release();
+			}
+		}
 
-			explicit ComWrapper(wrappedObjT* newobj)
+		~ComPtr()
+		{
+			if (obj)
 			{
-				Assign(newobj);
+				obj->Release();
 			}
-			ComWrapper(const ComWrapper<wrappedObjT>& value)
-			{
-				Assign(value.obj);
-			}
-			// Attach object without incrementing ref count. For objects created with new.
-			void Attach(wrappedObjT* newobj)
-			{
-				wrappedObjT* old = obj;
-				obj = newobj;
+		}
+		inline operator wrappedObjT* ()
+		{
+			return obj;
+		}
+		const wrappedObjT* operator=(wrappedObjT* value)
+		{
+			Assign(value);
+			return value;
+		}
+		ComPtr<wrappedObjT>& operator=(ComPtr<wrappedObjT>& value)
+		{
+			Assign(value.get());
+			return *this;
+		}
+		bool operator==(const wrappedObjT* other) const
+		{
+			return obj == other;
+		}
+		bool operator==(const ComPtr<wrappedObjT>& other) const
+		{
+			return obj == other.obj;
+		}
+		wrappedObjT* operator->() const
+		{
+			return obj;
+		}
 
-				if (old)
-				{
-					old->Release();
-				}
-			}
+		wrappedObjT*& get()
+		{
+			return obj;
+		}
 
-			~ComWrapper()
+		wrappedObjT** getAddressOf()
+		{
+			assert(obj == 0); // Free it before you re-use it!
+			return &obj;
+		}
+		wrappedObjT** put()
+		{
+			if (obj)
 			{
-				if (obj)
-				{
-					obj->Release();
-				}
-			}
-			inline operator wrappedObjT* ()
-			{
-				return obj;
-			}
-			const wrappedObjT* operator=(wrappedObjT* value)
-			{
-				Assign(value);
-				return value;
-			}
-			ComWrapper<wrappedObjT>& operator=(ComWrapper<wrappedObjT>& value)
-			{
-				Assign(value.get());
-				return *this;
-			}
-			bool operator==(const wrappedObjT* other) const
-			{
-				return obj == other;
-			}
-			bool operator==(const ComWrapper<wrappedObjT>& other) const
-			{
-				return obj == other.obj;
-			}
-			wrappedObjT* operator->() const
-			{
-				return obj;
-			}
-
-			wrappedObjT*& get()
-			{
-				return obj;
-			}
-
-			wrappedObjT** getAddressOf()
-			{
-				assert(obj == 0); // Free it before you re-use it!
-				return &obj;
-			}
-			wrappedObjT** put()
-			{
-				if (obj)
-				{
-					obj->Release();
-					obj = {};
-				}
-
-				return &obj;
+				obj->Release();
+				obj = {};
 			}
 
-			bool isNull() const
-			{
-				return obj == nullptr;
-			}
+			return &obj;
+		}
 
-		private:
-			// Attach object and increment ref count.
-			inline void Assign(wrappedObjT* newobj)
+		void** put_void()
+		{
+			return (void**)put();
+		}
+
+		bool isNull() const
+		{
+			return obj == nullptr;
+		}
+
+		template<typename I>
+		ComPtr<I> as()
+		{
+			ComPtr<I> returnInterface;
+			if (obj)
 			{
-				Attach(newobj);
-				if (newobj)
-				{
-					newobj->AddRef();
-				}
+				obj->QueryInterface(__uuidof(I), returnInterface.put_void());
 			}
-		};
+			return returnInterface;
+		}
+
+	private:
+		// Attach object and increment ref count.
+		inline void Assign(wrappedObjT* newobj)
+		{
+			Attach(newobj);
+			if (newobj)
+			{
+				newobj->AddRef();
+			}
+		}
+	};
 
 
 		inline void SafeRelease(IUnknown* object)
@@ -189,18 +205,9 @@ namespace gmpi
 
 		class SolidColorBrush final : /* Simulated: public GmpiDrawing_API::IMpSolidColorBrush,*/ public Brush
 		{
-#if	ENABLE_HDR_SUPPORT
-			float whiteMult = 1.0f;
-#endif
 		public:
 			SolidColorBrush(ID2D1SolidColorBrush* b, GmpiDrawing_API::IMpFactory *factory
-#if	ENABLE_HDR_SUPPORT
-				, float pwhiteMult
-#endif
 			) : Brush(b, factory)
-#if	ENABLE_HDR_SUPPORT
-				, whiteMult(pwhiteMult)
-#endif
 			{}
 
 			inline ID2D1SolidColorBrush* nativeSolidColorBrush()
@@ -212,15 +219,6 @@ namespace gmpi
 			virtual void MP_STDCALL SetColor(const GmpiDrawing_API::MP1_COLOR* color) // simulated: override
 			{
 //				D2D1::ConvertColorSpace(D2D1::ColorF*) color);
-#if	ENABLE_HDR_SUPPORT
-				const D2D1_COLOR_F c
-				{
-					color->r * whiteMult,
-					color->g * whiteMult,
-					color->b * whiteMult,
-					color->a
-				};
-#else
 				const D2D1_COLOR_F c
 				{
 					color->r,
@@ -228,7 +226,6 @@ namespace gmpi
 					color->b,
 					color->a
 				};
-#endif
 
 				nativeSolidColorBrush()->SetColor(c);
 			}
@@ -236,19 +233,12 @@ namespace gmpi
 			{
 				auto b = nativeSolidColorBrush()->GetColor();
 
-#if	ENABLE_HDR_SUPPORT
-				GmpiDrawing_API::MP1_COLOR c;
-				c.a = b.a;
-				c.r = b.r / whiteMult;
-				c.g = b.g / whiteMult;
-				c.b = b.b / whiteMult;
-#else
 				GmpiDrawing_API::MP1_COLOR c;
 				c.a = b.a;
 				c.r = b.r;
 				c.g = b.g;
 				c.b = b.b;
-#endif
+
 				return c;
 			}
 
@@ -806,9 +796,6 @@ namespace gmpi
 			ID2D1Bitmap* nativeBitmap_;
 			ID2D1DeviceContext* nativeContext_;
 			IWICBitmap* diBitmap_ = {};
-#if	ENABLE_HDR_SUPPORT
-			gmpi::directx::ComWrapper<ID2D1Bitmap1> nativeBitmap_HDR_;
-#endif
 			class Factory* factory;
 #ifdef _DEBUG
 			std::string debugFilename;
@@ -1118,18 +1105,9 @@ namespace gmpi
 			std::vector<std::wstring> supportedFontFamiliesLowerCase;
 			std::vector<std::string> supportedFontFamilies;
 			std::map<std::wstring, std::wstring> GdiFontConversions;
-			bool DX_support_sRGB;
 
 		public:
 			static std::wstring_convert<std::codecvt_utf8<wchar_t>> stringConverter; // cached, as constructor is super-slow.
-
-#if	ENABLE_HDR_SUPPORT
-			float whiteMult = 1.0f;
-			bool isHdr() const
-			{
-				return whiteMult != 1.0f;
-			}
-#endif
 
 			// for diagnostics only.
 			auto getDirectWriteFactory()
@@ -1145,14 +1123,10 @@ namespace gmpi
 				return m_pDirect2dFactory;
 			}
 
-			void setSrgbSupport(bool s)
-			{
-				DX_support_sRGB = s;
-			}
-			
 			GmpiDrawing_API::IMpBitmapPixels::PixelFormat getPlatformPixelFormat()
 			{
-				return DX_support_sRGB ? GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB : GmpiDrawing_API::IMpBitmapPixels::kBGRA;
+//				return DX_support_sRGB ? GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB : GmpiDrawing_API::IMpBitmapPixels::kBGRA;
+				return GmpiDrawing_API::IMpBitmapPixels::kBGRA_SRGB;
 			}
 
 			Factory();
@@ -1216,15 +1190,9 @@ namespace gmpi
 			Factory* factory;
 			std::vector<GmpiDrawing_API::MP1_RECT> clipRectStack;
 			std::wstring_convert<std::codecvt_utf8<wchar_t>>* stringConverter; // cached, as constructor is super-slow.
-#if	ENABLE_HDR_SUPPORT
-			float whiteMult = 1.0f; // cached for speed.
-#endif
 			void Init()
 			{
 				stringConverter = &(factory->stringConverter);
-#if	ENABLE_HDR_SUPPORT
-				whiteMult = factory->whiteMult;
-#endif
 			}
 
 		public:
@@ -1247,13 +1215,6 @@ namespace gmpi
 			{
 				context_->Release();
 			}
-
-#if	ENABLE_HDR_SUPPORT
-			bool isHdr() const
-			{
-				return factory->isHdr();
-			}
-#endif
 
 			ID2D1DeviceContext* native()
 			{
@@ -1283,15 +1244,6 @@ namespace gmpi
 				_RPT0(_CRT_WARN, "context_->Clear(c);\n");
 				_RPT0(_CRT_WARN, "}\n");
 #endif
-#if	ENABLE_HDR_SUPPORT
-				const D2D1_COLOR_F c
-				{
-					clearColor->r * whiteMult,
-					clearColor->g * whiteMult,
-					clearColor->b * whiteMult,
-					clearColor->a
-				};
-#else
 				const D2D1_COLOR_F c
 				{
 					clearColor->r,
@@ -1299,7 +1251,6 @@ namespace gmpi
 					clearColor->b,
 					clearColor->a
 				};
-#endif
 				context_->Clear(&c);
 			}
 
@@ -1620,7 +1571,7 @@ namespace gmpi
 
 			GMPI_REFCOUNT;
 		};
-
+#if 0
 		// Direct2D context tailored to devices without sRGB high-color support. i.e. Windows 7.
 		class GraphicsContext_Win7 : public GraphicsContext
 		{
@@ -1667,5 +1618,6 @@ namespace gmpi
 				context_->Clear((D2D1_COLOR_F*)&color);
 			}
 		};
+#endif
 	} // Namespace
 } // Namespace

@@ -46,8 +46,8 @@ public:
 	GMPI_REFCOUNT_NO_DELETE
 
 	// IMpHost methods
-	int32_t setPin(int32_t blockRelativeTimestamp, int32_t pinId, int32_t size, const void* data) override;
-	int32_t setPinStreaming(int32_t timestamp, int32_t id, int32_t is_streaming) override;
+	int32_t setPin(int32_t blockRelativeTimestamp, int32_t pinIndex, int32_t size, const void* data) override;
+	int32_t setPinStreaming(int32_t timestamp, int32_t pinIndex, int32_t is_streaming) override;
 	int32_t getBlockSize(int32_t& return_val) override;
 	int32_t getSampleRate(float& return_val) override;
 	int32_t sleep() override;

@@ -81,11 +81,37 @@ inline juce::String displayRealNumber(float value, int /*maxLen*/)
     return juce::String(txt);
 }
 
+// no decimals over 20.0
 inline juce::String displayRealNumberD(double value)
 {
     // real number with a sensible number of decimal places
     char txt[12];
     if (fabs(value) < 20.)
+    {
+#if defined(_MSC_VER)
+        sprintf_s(txt, "%2.1f", value);
+#else
+        sprintf(txt, "%2.1f", value);
+#endif
+    }
+    else
+    {
+#if defined(_MSC_VER)
+        sprintf_s(txt, "%3.0f", value);
+#else
+        sprintf(txt, "%3.0f", value);
+#endif
+    }
+
+    return juce::String(txt);
+}
+
+// no decimals over 10.0
+inline juce::String displayRealNumberD2(double value)
+{
+    // real number with a sensible number of decimal places
+    char txt[12];
+    if (fabs(value) < 10.)
     {
 #if defined(_MSC_VER)
         sprintf_s(txt, "%2.1f", value);

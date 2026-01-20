@@ -6,7 +6,6 @@
 #include "BundleInfo.h"
 // #include "dsp_patch_manager.h" // enable for logging only
 
-//==============================================================================
 SE2JUCE_Processor::SE2JUCE_Processor(
     std::unique_ptr<SeJuceController> pController,
     std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter
@@ -34,7 +33,7 @@ SE2JUCE_Processor::SE2JUCE_Processor(
 #endif
 {
 #ifdef _DEBUG
-    _RPT0(0, "\nSE2JUCE_Processor::SE2JUCE_Processor()\n");
+    //_RPT0(0, "\nSE2JUCE_Processor::SE2JUCE_Processor()\n");
 #endif
     BundleInfo::instance()->initPresetFolder(JucePlugin_Manufacturer, JucePlugin_Name);
 
@@ -196,7 +195,7 @@ void SE2JUCE_Processor::parameterGestureChanged(int parameterIndex, bool gesture
 SE2JUCE_Processor::~SE2JUCE_Processor()
 {
 #ifdef _DEBUG
-    _RPT0(0, "\nSE2JUCE_Processor::~SE2JUCE_Processor()\n");
+    //_RPT0(0, "\nSE2JUCE_Processor::~SE2JUCE_Processor()\n");
 #endif
 }
 
@@ -290,7 +289,7 @@ void SE2JUCE_Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
         !isNonRealtime()
     );
 #ifdef _DEBUG
-    _RPT0(0, "\nSE2JUCE_Processor::prepareToPlay()\n");
+    //_RPT0(0, "\nSE2JUCE_Processor::prepareToPlay()\n");
 #endif
 
     OnLatencyChanged();
@@ -456,17 +455,11 @@ void SE2JUCE_Processor::getStateInformation (juce::MemoryBlock& destData)
 #ifdef _DEBUG
     {
         auto xml = chunk.substr(0, 500);
-        _RPTN(0, "\nSE2JUCE_Processor::getStateInformation()\n %s\n\n", xml.c_str());
+
+        //_RPTN(0, "\nSE2JUCE_Processor::getStateInformation()\n %s\n\n", xml.c_str());
     }
 #endif
-#if 0 // def _DEBUG
-    static int count = 0;
-    count++;
-    std::string filename("/Users/jeffmcclintock/getState");
-    filename += std::to_string(count) + ".txt";
-    std::ofstream out(filename.c_str());
-    out << chunk;
-#endif
+
     destData.replaceAll(chunk.data(), chunk.size());
 }
 
@@ -484,17 +477,10 @@ void SE2JUCE_Processor::setStateInformation (const void* data, int sizeInBytes)
 #ifdef _DEBUG
     {
         auto xml = chunk.substr(0, 500);
+
         _RPTN(0, "\nSE2JUCE_Processor::setStateInformation()\n %s\n\n", xml.c_str());
     }
 #endif
-#endif
-#if 0 //def _DEBUG
-    static int count = 0;
-    count++;
-    std::string filename("/Users/jeffmcclintock/setState");
-    filename += std::to_string(count) + ".txt";
-    std::ofstream out(filename.c_str());
-    out << chunk;
 #endif
 
     presetCount++;

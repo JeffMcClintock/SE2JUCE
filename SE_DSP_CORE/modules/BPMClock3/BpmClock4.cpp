@@ -120,6 +120,7 @@ void BpmClock4::subProcess2(int sampleFrames)
 
 void BpmClock4::CalcIncrement(float overmultiplier)
 {
+	// ug_oversampler_in::TransmitInitialPinValues() will transmit value 0 on all pins, actual value will arrive a few samples later.
 	assert(pinHostBpm.getValue() > 0);
 
 //	increment = pinHostBpm / (multiplier * getSampleRate() * 60.0f);

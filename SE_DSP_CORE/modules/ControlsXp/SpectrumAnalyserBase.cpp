@@ -1,6 +1,6 @@
 #include "./SpectrumAnalyserBase.h"
 
-void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
+void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height, float displayDbTop, float displayDbBot)
 {
 	if (rawSpectrum.size() < 10 || sampleRateFft < 1.0f)
 		return;
@@ -90,9 +90,9 @@ void SpectrumAnalyserBase::updateSpectrumGraph(int width, int height)
 		}
 	}
 
-	constexpr float displayDbTop = 6.0f;
-	constexpr float displayDbBot = -120.0f;
-	constexpr float clipDbAtBottom = displayDbBot - 5.0f; // -5 to have flat graph just off the bottom
+	//const float displayDbTop = this->pin 6.0f;
+	//const float displayDbBot = -120.0f;
+	const float clipDbAtBottom = displayDbBot - 5.0f; // -5 to have flat graph just off the bottom
 	const float inverseN = 2.0f / spectrumCount2;
 	const float dbc = 20.0f * log10f(inverseN);
 	const float safeMinAmp = powf(10.0f, (clipDbAtBottom - dbc) * 0.1f);

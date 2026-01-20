@@ -55,6 +55,7 @@ namespace SynthEdit2
 		virtual bool AddPatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin, int colorIndex, bool placeAtBack = false) = 0;
 		virtual void RemovePatchCable(int32_t fromModule, int fromPin, int32_t toModule, int toPin) = 0;
 		virtual void DragSelection(GmpiDrawing_API::MP1_SIZE offset) = 0;
+		virtual void NotDragging() = 0;
 		virtual void DragNode(int32_t fromModule, int32_t nodeIdx, GmpiDrawing_API::MP1_POINT point) = 0;
 		virtual void InsertNode(int32_t fromLine, int32_t nodeInsertIdx, GmpiDrawing_API::MP1_POINT point) = 0;
 		virtual void ResizeModule(int handle, int dragNodeX, int dragNodeY, GmpiDrawing_API::MP1_SIZE) = 0;

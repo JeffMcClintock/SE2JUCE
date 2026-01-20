@@ -215,10 +215,10 @@ struct MpEvent
 	int32_t timeDelta;	// Relative to block.
 	int32_t eventType;	// See MpEventType enumeration.
 	int32_t parm1;		// Pin index if needed.
-	int32_t parm2;		// Sizeof additional data. >4 implies extraData points to value.
-	int32_t parm3;		// Pin value (if 4 bytes or less).
-	int32_t parm4;		// Voice ID.
-	char* extraData;	// Additional data.
+	int32_t parm2;		// Sizeof pin data.
+	int32_t parm3;		// Pin value (if 1-4 bytes).
+	int32_t parm4;		// Pin value additional (if 5-8 bytes).
+	char* extraData;	// Additional pin data, if it's larger than 8 bytes.
 	MpEvent* next;		// Next event in list.
 };
 
