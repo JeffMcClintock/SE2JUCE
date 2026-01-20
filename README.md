@@ -5,7 +5,7 @@ SE2JUCE supports exporting SynthEdit projects to C++ JUCE projects.
 
 JUCE Projects
 * Can target more plugin formats than SynthEdit alone, like AAX, Standalone, VST2 and CLAP etc.
-* Hide all resources and SEMs inside a single binary file.
+* Hides all resources and SEMs inside a single binary file.
 * Can display the GUI you created in SynthEdit, or a custom GUI made with JUCE.
 
 (SynthEdit GUIs are supported on macOS and Windows, but not Linux or IOS)
@@ -16,51 +16,50 @@ Also SE2JUCE requires you to have access to the source-code of any SEMs you wish
 
 # Prerequisites
 
+Install Visual Studio Community or your IDE of choice. https://visualstudio.microsoft.com/vs/
+ When installing select only the "Desktop development with C++" workload.
+
 Install SynthEdit 1.5. https://synthedit.com/downloads/?url=/downloads
+Get a SynthEdit license if you don't already have one. This is required for the JUCE export feature.
 
-Install Visual Studio or your IDE of choice. https://visualstudio.microsoft.com/vs/
+Install CMake Windows 64 Installer. https://cmake.org/download/
 
-Install CMake. https://cmake.org/download/
+Install git for Windows: https://git-scm.com/install/windows
+ (untick "Windows Explorer Integration", "Use Notepad as Git's default editor", and select default for everything else)
 
-Install git. https://git-scm.com/downloads
+Recomended: Install a graphical git client, e.g. GitHub Desktop for Windows. https://desktop.github.com/download/
 
 # Getting Started with the PD303 example
-clone SE2JUCE repo. https://github.com/JeffMcClintock/SE2JUCE
+Use git to clone the SE2JUCE_Projects repository: https://github.com/JeffMcClintock/SE2JUCE_Projects 
 
-get JUCE. https://juce.com/get-juce/download
+BUILDING THE EXAMPLE PROJECT - PD303
 
-Optional:
+* Open SynthEdit and open the project: Documents/Github/SE2JUCE_Plugins/PD303/SE_Project/PD303.se1
+
+* Choose menu "File/Export Juce" This will copy the project and its skin to the 'Resources' folder of the JUCE project.
+
+* Close SynthEdit
+
+* Open CMake GUI
+
+*  Under "where is the source code" enter the location of SE2JUCE_Plugins folder. e.g. ...\Documents\Github\SE2JUCE_Plugins
+* Under "where to build the binaries" enter ...\Documents\SE2JUCE_Projects\build (or anywhere you prefer).
+
+* Click 'Configure", and choose the default compiler, Visual Studio. Choose to "create the build folder". Ignore "Error in configuation, project files may be invalid".
+
+* Tick "SE_LOCAL_BUILD"
+
+* Click "Generate"
+
+* Click "Open Project". Build and try out the plugin
+
+Advanced (optional):
 * add VST2 headers to JUCE if you need to make VST2 plugins.
 * get AAX SDK if you need it. https://www.avid.com/alliance-partner-program/aax-connectivity-toolkit
 
-clone SE2JUCE_Projects repo. This provides an example plugin you can copy. https://github.com/JeffMcClintock/SE2JUCE_Projects
+# Exporting your own plugin
 
-(to export your own plugin, copy the entire PD303 folder, rename it and edit the two cmakelists.txt files, changing the plugin name etc)
-
-Open SynthEdit
-
-open project from SE2JUCE_Plugins/PD303/SE_Project/PD303.se1
-
-Choose menu "File/Export Juce" This will copy the project and its skin to the 'Resources' folder of the JUCE project.
-
-close SE
-
-Open CMake GUI
-
-Under "where is the source code" enter the location of SE2JUCE_Plugins folder
-
-Under "where to build the binaries" enter something like ...\Documents\SE2JUCE_Projects_Build (or anywhere you prefer to put the temporary files created during the build).
-
-Click 'Configure", and choose whatever IDE you prefer. Ignore the error message.
-
-Look for the variables 'JUCE_FOLDER_HERE' and 'SE2JUCE_FOLDER_HERE'. Browse for your actual JUCE folder, and the correct SE2JUCE folder
-tick 'JUCE_COPY_PLUGIN_AFTER_BUILD'
-
-click 'generate'
-
-click 'open project' (your IDE should open)
-
-build and try out the plugin
+Copy the entire PD303 folder, rename it and edit the two cmakelists.txt files, changing the plugin name etc
 
 # Missing modules
 
