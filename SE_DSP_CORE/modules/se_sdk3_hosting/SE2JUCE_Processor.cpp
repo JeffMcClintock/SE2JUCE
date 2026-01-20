@@ -35,6 +35,9 @@ SE2JUCE_Processor::SE2JUCE_Processor(
 #ifdef _DEBUG
     //_RPT0(0, "\nSE2JUCE_Processor::SE2JUCE_Processor()\n");
 #endif
+    if (!controller)
+		controller = std::move(std::make_unique<SeJuceController>(dawStateManager));
+
     BundleInfo::instance()->initPresetFolder(JucePlugin_Manufacturer, JucePlugin_Name);
 
     processor.connectPeer(controller.get());

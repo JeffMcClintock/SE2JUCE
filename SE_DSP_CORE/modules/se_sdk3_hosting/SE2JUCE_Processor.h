@@ -43,7 +43,7 @@ protected:
 
 public:
     //==============================================================================
-    SE2JUCE_Processor(std::unique_ptr<SeJuceController> pcontroller, std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter = {});
+    SE2JUCE_Processor(std::unique_ptr<SeJuceController> pcontroller = {}, std::function<juce::AudioParameterFloatAttributes(int32_t)> customizeParameter = {});
     ~SE2JUCE_Processor() override;
 
     // IShellServices interface
