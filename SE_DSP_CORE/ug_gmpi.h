@@ -20,7 +20,7 @@ public:
 	int32_t getHandle() override;
 
 	// IPinCount
-	int32_t getAutoduplicatePinCount() override;
+	int32_t getAutoduplicatePinCount_deprecated() override;
 	void listPins(gmpi::api::IUnknown* callback) override;
 	// IEmbeddedFileSupport
 	gmpi::ReturnCode findResourceUri(const char* fileName, gmpi::api::IString* returnFullUri) override;

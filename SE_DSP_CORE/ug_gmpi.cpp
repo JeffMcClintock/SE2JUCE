@@ -122,7 +122,7 @@ gmpi::ReturnCode ug_gmpi::openUri(const char* fullUri, gmpi::api::IUnknown** ret
 	return *returnStream ? gmpi::ReturnCode::Ok : gmpi::ReturnCode::Fail;
 }
 
-int32_t ug_gmpi::getAutoduplicatePinCount()
+int32_t ug_gmpi::getAutoduplicatePinCount_deprecated()
 {
 	if (auto& pindesc = getModuleType()->plugs; !pindesc.empty())
 	{
