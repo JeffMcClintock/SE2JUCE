@@ -800,18 +800,16 @@ void init(std::map<int32_t, paramInfo>& parametersInfo, class TiXmlElement* para
 		parameter_xml->QueryIntAttribute("Private", &Private);
 		p.private_ = Private != 0;
 
-		if (p.dataType == gmpi::PinDatatype::String || p.dataType == gmpi::PinDatatype::Blob)
+		if (p.dataType == gmpi::PinDatatype::String || p.dataType == gmpi::PinDatatype::WideString || p.dataType == gmpi::PinDatatype::Blob || p.dataType == gmpi::PinDatatype::Blob2)
 		{
 			Private = 1; // VST and AU can't handle this type of parameter.
 		}
-		else
-		{
-			if (Private != 0)
+
+		if (Private == 0)
 			{
 				// Check parameter is numeric and a valid type.
 				assert(p.dataType == gmpi::PinDatatype::Enum || p.dataType == gmpi::PinDatatype::Float64 || p.dataType == gmpi::PinDatatype::Bool || p.dataType == gmpi::PinDatatype::Float32 || p.dataType == gmpi::PinDatatype::Int32 || p.dataType == gmpi::PinDatatype::Int64);
 			}
-		}
 
 		parameter_xml->QueryIntAttribute("HostControl", &p.hostControl);
 		int ignorePc = 0;
