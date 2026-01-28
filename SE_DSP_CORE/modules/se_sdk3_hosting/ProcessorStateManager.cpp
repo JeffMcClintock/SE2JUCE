@@ -806,10 +806,10 @@ void init(std::map<int32_t, paramInfo>& parametersInfo, class TiXmlElement* para
 		}
 
 		if (Private == 0)
-			{
-				// Check parameter is numeric and a valid type.
-				assert(p.dataType == gmpi::PinDatatype::Enum || p.dataType == gmpi::PinDatatype::Float64 || p.dataType == gmpi::PinDatatype::Bool || p.dataType == gmpi::PinDatatype::Float32 || p.dataType == gmpi::PinDatatype::Int32 || p.dataType == gmpi::PinDatatype::Int64);
-			}
+		{
+			// Check parameter is numeric and a valid type.
+			assert(p.dataType == gmpi::PinDatatype::Enum || p.dataType == gmpi::PinDatatype::Float64 || p.dataType == gmpi::PinDatatype::Bool || p.dataType == gmpi::PinDatatype::Float32 || p.dataType == gmpi::PinDatatype::Int32 || p.dataType == gmpi::PinDatatype::Int64);
+		}
 
 		parameter_xml->QueryIntAttribute("HostControl", &p.hostControl);
 		int ignorePc = 0;
