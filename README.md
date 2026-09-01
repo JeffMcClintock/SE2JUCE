@@ -1,5 +1,7 @@
 <img src="Docs/Images/SE2JUCE.gif"/>
 
+# Note: SE2JUCE is now SynthEditlib https://github.com/JeffMcClintock/SynthEditLib
+
 # Introduction 
 SE2JUCE supports exporting SynthEdit projects to C++ JUCE projects.
 
